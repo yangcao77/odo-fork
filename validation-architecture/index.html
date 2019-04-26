@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Validation architecture</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Validation architecture</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>User-specified input needs to be validated as early as possible, i.e. before being sent to the remote server so that the user can benefit from fast feedback. <code>odo</code> therefore defines an input validation architecture in order to validate user-specified values.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="architecture">Architecture</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>structs</code> holding user-specified values can <code>extend</code> the <code>Validatable</code> type (through embedding) to provide metadata to the validation system. In particular, <code>Validatable</code> fields allow the developer to specify whether this particular value needs to specified (<code>Required</code>) and which kind of
+values it accepts so that the validation system can perform basic validation.</p>
+</div>
+<div class="paragraph">
+<p>Additionally, the developer can specify an array of <code>Validator</code> functions that also need to be applied to the input value. When <code>odo</code> interacts with the user and expects the user to provide values for some parameters, the developer of the associated command can therefore <code>decorate</code> their data structure meant to receive the user input with the <code>Validatable</code> type so that <code>odo</code> can automatically perform validation of provided values. This is used in conjunction with the library we use to deal with user interaction (<code>survey</code>) which allows developer to specify a <code>Validator</code> function to validate values provided by users. Developers can use the <code>GetValidatorFor</code> function to have <code>odo</code> automatically create an appropriate validator for the expected value based on metadata provided via <code>Validatable</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="default-validators">Default validators</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>odo</code> provides default validators in the <code>validation</code> package (<code>validators.go</code> file) to validate that a value can be converted to an <code>int</code> (<code>IntegerValidator</code>), that the value is a valid Kubernetes name (<code>NameValidator</code>) or a so-called <code>NilValidator</code> which is a noop validator used as a default validator when none is provided or can be inferred from provided metadata. More validators could be provided, in particular, validators based on <code>Validatable.Type</code>, which currently only map <code>IntegerValidator</code> to <code>Validatable</code> with <code>integer</code> as <code>Type</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="creating-a-validator">Creating a validator</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Validators are defined as follows: <code>type Validator func(interface{}) error</code>. Therefore, providing new validators is as easy as providing a function taking an <code>interface{}</code> as parameter and returning a non-nil error if validation failed for any reason. If the value is deemed valid, the function then returns <code>nil</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If a plugin system is developed for <code>odo</code>, new validators could be a provided through plugins.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>

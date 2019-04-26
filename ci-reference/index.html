@@ -12,7 +12,7 @@
   <!-- Descriptions -->
   <meta name="description" content="OpenShift Do
 ">
-  <title>OpenShift Do</title>
+  <title>ci-reference</title>
 
 
   <!-- Favicons -->
@@ -114,27 +114,70 @@
 
     <main>
 
-    <style type="text/css" media="screen">
-  .container {
-    margin: 10px auto;
-    max-width: 600px;
-    text-align: center;
-  }
-  h1 {
-    margin: 30px 0;
-    font-size: 4em;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-</style>
-
-<div class="container">
-  <h1>404</h1>
-
-  <p><strong>Page not found :(</strong></p>
-  <p>The requested page could not be found.</p>
+    <h1>ci-reference</h1>
+<div class="sect1">
+<h2 id="running-integration-test-job-in-travis-ci">Running integration test job in Travis CI</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For default oc, use the configuration in <code>.travis.yaml</code>. For example:</p>
 </div>
-
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Run main e2e tests
+    - &lt;&lt;: *base-test
+      stage: test
+      name: "Main e2e tests"
+      script:
+        - ./scripts/oc-cluster.sh
+        - make bin
+        - sudo cp odo /usr/bin
+        - oc login -u developer
+        - make test-main-e2e</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you need to run <code>odo</code> integration tests against a specific version of Openshift, use env variable <code>OPENSHIFT_CLIENT_BINARY_URL</code> to pass the <a href="https://github.com/openshift/origin/releases">released</a> oc client URL in <code>.travis.yaml</code>. For oc v3.10.0, use the configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Run main e2e tests
+    - &lt;&lt;: *base-test
+      stage: test
+      name: "Main e2e tests"
+      script:
+        - OPENSHIFT_CLIENT_BINARY_URL=https://github.com/openshift/origin/releases/download/v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz ./scripts/oc-cluster.sh
+        - make bin
+        - sudo cp odo /usr/bin
+        - oc login -u developer
+        - make test-main-e2e</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="running-integration-tests-on-prow">Running integration tests on Prow</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Prow is the Kubernetes or OpenShift way of managing workflow, including tests. To get tests, you need to raise PR to <code>openshift/release</code> repository setting up appropriate ci operator config and job files. Reference for the same is available in the repository.</p>
+</div>
+<div class="paragraph">
+<p>Note that prow gives you a bare bones cluster, so we need to pre-configure the same so that the cluster is in state expected such as auth being configured and so on.</p>
+</div>
+<div class="paragraph">
+<p>You can do this by running <code>$ make configure-installer-tests-cluster</code> before running actual tests. This script is configurable with environment variables as:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>CI</code>: If this environment is set, then initial setup is skipped in favor of only configuring authentication. Use this only with OpenShift CI.</p>
+</li>
+<li>
+<p><code>DEFAULT_INSTALLER_ASSETS_DIR</code>: The location where OpenShift installer creates assets such as kube admin password and the kubeconfig file.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 
     </main>
   </div>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Examples</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a class="active" href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Examples</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>odo</code> is compatible with any language or run time listed within the OpenShift catalog of component types. In order to access the component over the web, you can create a URL using <code>odo url create</code>.</p>
+</div>
+<div class="paragraph">
+<p>This can be found by using <code>odo catalog list components</code>.</p>
+</div>
+<div class="paragraph">
+<p>Example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">NAME        PROJECT       TAGS
+dotnet      openshift     2.0,latest
+httpd       openshift     2.4,latest
+java        openshift     8,latest
+nginx       openshift     1.10,1.12,1.8,latest
+nodejs      openshift     0.10,4,6,8,latest
+perl        openshift     5.16,5.20,5.24,latest
+php         openshift     5.5,5.6,7.0,7.1,latest
+python      openshift     2.7,3.3,3.4,3.5,3.6,latest
+ruby        openshift     2.0,2.2,2.3,2.4,latest
+wildfly     openshift     10.0,10.1,8.1,9.0,latest</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="examples-from-git-repositories">Examples from Git repositories</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="httpd">httpd</h3>
+<div class="paragraph">
+<p>This example helps build and serve static content via httpd on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/httpd-container/blob/master/2.4/root/usr/share/container-scripts/httpd/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create httpd --git https://github.com/openshift/httpd-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="java">java</h3>
+<div class="paragraph">
+<p>This example helps build and run fat JAR Java applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/fabric8io-images/s2i/blob/master/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create java --git https://github.com/spring-projects/spring-petclinic.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="nodejs">nodejs</h3>
+<div class="paragraph">
+<p>Build and run Node.js applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/s2i-nodejs-container/blob/master/8/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create nodejs --git https://github.com/openshift/nodejs-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="perl">perl</h3>
+<div class="paragraph">
+<p>This example helps build and run Perl applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/s2i-perl-container/blob/master/5.26/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create perl --git https://github.com/openshift/dancer-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="php">php</h3>
+<div class="paragraph">
+<p>This example helps build and run PHP applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/s2i-php-container/blob/master/7.1/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create php --git https://github.com/openshift/cakephp-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="python">python</h3>
+<div class="paragraph">
+<p>This example helps build and run Python applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/s2i-python-container/blob/master/3.6/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create python --git https://github.com/openshift/django-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="ruby">ruby</h3>
+<div class="paragraph">
+<p>This example helps build and run Ruby applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/sclorg/s2i-ruby-container/blob/master/2.5/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create ruby --git https://github.com/openshift/ruby-ex.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly">wildfly</h3>
+<div class="paragraph">
+<p>This example helps build and run WildFly applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see <a href="https://github.com/openshift-s2i/s2i-wildfly/blob/master/README.md">here</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create wildfly --git https://github.com/openshift/openshift-jee-sample.git</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="binary-example">Binary example</h3>
+
+</div>
+<div class="sect2">
+<h3 id="java-2">java</h3>
+<div class="paragraph">
+<p>Java can be used to deploy binary artifact, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ git clone https://github.com/spring-projects/spring-petclinic.git
+$ cd spring-petclinic
+$ mvn package
+$ odo create java test3 --binary target/*.jar
+$ odo push</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="wildfly-2">wildfly</h3>
+<div class="paragraph">
+<p>WildFly can be used to deploy a binary application as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ wget -O example.war 'https://github.com/appuio/hello-world-war/blob/master/repo/ch/appuio/hello-world-war/1.0.0/hello-world-war-1.0.0.war?raw=true'
+$ odo create wildfly --binary example.war</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>

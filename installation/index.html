@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Installation Guide</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a class="active" href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Installation Guide</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This document provides information on the installation of <code>odo</code> on various operating systems and the location of the binaries and the releases.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The latest <code>odo</code> binaries are available on <a href="https://dl.bintray.com/odo/odo/latest/">Bintray</a>.</p>
+</li>
+<li>
+<p>The latest <code>odo</code> releases are available on
+<a href="https://github.com/openshift/odo/releases/latest">Github</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="installing-odo">Installing <code>odo</code></h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="macos">macOS</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Access the repository using the Homebrew Tap as follows:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ brew tap kadel/odo</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Install from the latest Master build or the latest released version:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>For the latest Master build use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ brew install kadel/odo/odo --HEAD</pre>
+</div>
+</div>
+</li>
+<li>
+<p>For the latest released version use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ brew install kadel/odo/odo</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="ubuntu-or-debian">Ubuntu or Debian</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Add the GPG key from the Bintray used to sign repositories:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ curl -L https://bintray.com/user/downloadSubjectPublicKey?username=bintray | apt-key add -</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Add the repository to <code>/etc/apt/sources.list</code>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>For the latest Master builds use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ echo "deb https://dl.bintray.com/odo/odo-deb-dev stretch main" | sudo tee -a /etc/apt/sources.list</pre>
+</div>
+</div>
+</li>
+<li>
+<p>For the latest signed releases use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ echo "deb https://dl.bintray.com/odo/odo-deb-releases stretch main" | sudo tee -a /etc/apt/sources.list</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Install <code>odo</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre># apt-get update
+# apt-get install odo</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="fedora-centos-or-rhel">Fedora, CentOS, or RHEL</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Access the <code>odo</code> repository:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>From the latest builds:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Download the <code>odo</code> repository to <code>/etc/yum.repods.d/</code> using:</p>
+<div class="listingblock">
+<div class="content">
+<pre># curl -L https://bintray.com/odo/odo-rpm-dev/rpm -o /etc/yum.repos.d/bintray-odo-odo-rpm-dev.repo</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the content of the file and ensure that you see the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre># cat /etc/yum.repos.d/bintray-odo-odo-rpm-dev.repo
+[bintraybintray-odo-odo-rpm-dev]
+name=bintray-odo-odo-rpm-dev
+baseurl=https://dl.bintray.com/odo/odo-rpm-dev
+gpgcheck=0
+repo_gpgcheck=0
+enabled=1</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>From the latest release:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Download the <code>odo</code> repository to <code>/etc/yum.repods.d/</code> using:</p>
+<div class="listingblock">
+<div class="content">
+<pre># curl -L https://bintray.com/odo/odo-rpm-releases/rpm -o /etc/yum.repos.d/bintray-odo-odo-rpm-releases.repo</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Verify the content of the file and ensure that you see the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre># cat /etc/yum.repos.d/bintray-odo-odo-rpm-releases.repo
+[bintraybintray-odo-odo-rpm-releases]
+name=bintray-odo-odo-rpm-releases
+baseurl=https://dl.bintray.com/odo/odo-rpm-releases
+gpgcheck=0
+repo_gpgcheck=0
+enabled=1</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Install <code>odo</code>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>For CentOS or RHEL use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ yum install odo</pre>
+</div>
+</div>
+</li>
+<li>
+<p>For Fedora use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ dnf install odo</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="windows">Windows</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download the latest file from the Bintray <a href="https://dl.bintray.com/odo/odo/latest/windows-amd64/odo.exe">odo.exe</a>
+or from the latest release page on <a href="https://github.com/openshift/odo/releases">GitHub</a>.</p>
+</li>
+<li>
+<p>Extract the file and add the location of extracted binary to your <code>GOPATH/bin</code> directory (see below to create a Go binary directory)</p>
+</li>
+</ol>
+</div>
+<div class="sect3">
+<h4 id="setting-a-path-variable-for-windows-78">Setting a PATH variable for Windows 7/8</h4>
+<div class="paragraph">
+<p>The following example demonstrates how to set up a path variable. Your binaries can be located in any location but for the purpose of this example we will use <code>C:\go-bin</code> as the location.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create a folder at <code>C:\go-bin</code>.</p>
+</li>
+<li>
+<p>Right click on <strong>Start</strong> and click on <strong>Control Panel</strong>.</p>
+</li>
+<li>
+<p>Select <strong>System and Security</strong> and then click on <strong>System</strong>.</p>
+</li>
+<li>
+<p>From the menu on the left, select the <strong>Advanced systems settings</strong> and click the <strong>Environment Variables</strong> button at the bottom.</p>
+</li>
+<li>
+<p>Select <strong>Path</strong> from the <strong>Variable</strong> section and click <strong>Edit</strong>.</p>
+</li>
+<li>
+<p>Click <strong>New</strong> and type <code>C:\go-bin</code> into the field or click <strong>Browse</strong> and select the directory, and click <strong>OK</strong>.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="setting-a-path-variable-for-windows-10">Setting a PATH variable for Windows 10</h4>
+<div class="paragraph">
+<p>You can edit <code>Environment Variables</code> faster using search as follows:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Left click on <strong>Search</strong> and type <code>env</code> or <code>environment</code>.</p>
+</li>
+<li>
+<p>Select <strong>Edit environment variables for your account</strong> and follow steps 5 and 6 listed above.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>

@@ -12,7 +12,7 @@
   <!-- Descriptions -->
   <meta name="description" content="OpenShift Do
 ">
-  <title>OpenShift Do</title>
+  <title>Logging in <code>odo</code></title>
 
 
   <!-- Favicons -->
@@ -105,7 +105,7 @@
           
         
           
-            <li><a href="/logging/">Logging</a></li>
+            <li><a class="active" href="/logging/">Logging</a></li>
           
         
       </ul>
@@ -114,27 +114,66 @@
 
     <main>
 
-    <style type="text/css" media="screen">
-  .container {
-    margin: 10px auto;
-    max-width: 600px;
-    text-align: center;
-  }
-  h1 {
-    margin: 30px 0;
-    font-size: 4em;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-</style>
-
-<div class="container">
-  <h1>404</h1>
-
-  <p><strong>Page not found :(</strong></p>
-  <p>The requested page could not be found.</p>
+    <h1>Logging in <code>odo</code></h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://godoc.org/github.com/golang/glog">Glog</a> is used for V style logging in <code>odo</code>.</p>
 </div>
-
+</div>
+</div>
+<div class="sect1">
+<h2 id="working">Working</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Every <code>odo</code> command takes an optional flag <code>-v</code> that must be used with an integer log level in the range from 0-9. Any INFO severity log statement that is logged at a level lesser than or equal to the one passed with the command alongside <code>-v</code> flag will be logged to STDOUT.</p>
+</div>
+<div class="paragraph">
+<p>All ERROR severity level log messages will always be logged regardless of the passed <code>v</code> level.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="usage">Usage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Every source file that requires logging will need to import glog:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ import "github.com/golang/glog"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Any default debug level severity messages need to be logged using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ glog.V(4).Infof(msg, args...)`</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For more information on level logging conventions please refer
+<a href="https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-output-verbosity-and-debugging">here</a>.</p>
+</div>
+<div class="paragraph">
+<p>Error messages can be logged as under:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ glog.Errorf(msg, args...)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Warning messages can be logged as under:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ glog.Warningf(msg, args...)</pre>
+</div>
+</div>
+</div>
+</div>
 
     </main>
   </div>

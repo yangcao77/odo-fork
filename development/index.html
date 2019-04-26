@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Development Guide</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a class="active" href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Development Guide</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#submitting-a-pull-requestpr">Submitting a pull request(PR)</a></li>
+<li><a href="#reviewing-a-pr">Reviewing a PR</a></li>
+<li><a href="#test-driven-development">Test Driven Development</a></li>
+<li><a href="#dependency-management">Dependency management</a></li>
+<li><a href="#release-guide">Release guide</a></li>
+<li><a href="#odo-bot">odo-bot</a></li>
+<li><a href="#licenses">Licenses</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="submitting-a-pull-requestpr">Submitting a pull request(PR)</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="https://help.github.com/en/articles/fork-a-repo">Fork</a> the <a href="https://github.com/openshift/odo"><code>odo</code></a> repository.</p>
+</li>
+<li>
+<p>Clone your fork:</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The following commands assume that you have the <code>$GOPATH</code> environment variable properly set. We highly recommend you place <code>odo</code> code into the $GOPATH.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ git clone https://github.com/&lt;YOUR_GITHUB_USERNAME&gt;/odo.git $GOPATH/src/github.com/openshift/odo
+$ cd $GOPATH/src/github.com/openshift/odo
+$ git remote add upstream 'https://github.com/openshift/odo'</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When cloning <code>odo</code>, the Windows terminal such as PowerShell or CMD may throw a <strong>Filename too long</strong> error. To avoid such an error, set your Git configuration as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ git config --system core.longpaths true</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create a branch, refer to the guidelines below in the sections below, and create a PR with your changes. If your PR is still in-progress, indicate this with a label or add WIP in your PR title.</p>
+<div class="paragraph">
+<p>A PR must include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Descriptive context that outlines what has been changed and why</p>
+</li>
+<li>
+<p>A link to the active or open issue it fixes (if applicable)</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="reviewing-a-pr">Reviewing a PR</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="pr-review-process">PR review process</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Once you submit a PR, the @openshift-ci-robot automatically requests two reviews from reviewers and suggests an approver based on <code>OWNERS</code> files.</p>
+</li>
+<li>
+<p>After a reviewer is satisfied with the changes he adds <code>/lgtm</code> (looks good to me) as a comment to the PR. This applies the <strong>lgtm</strong> label.</p>
+</li>
+<li>
+<p>The approver then reviews the PR and if satisfied, adds
+<code>/approve</code> as a comment to the PR. This applies the <strong>approve</strong> label.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>After the PR has <strong>lgtm</strong> and <strong>approve</strong> labels and the required tests pass, the bot automatically merges the PR.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If you are a maintainer and have write access to the <code>odo</code> repository, modify your git configuration so that you do not accidentally push to upstream:
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ git remote set-url --push upstream no_push</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="what-to-look-out-for-when-reviewing-a-pull-request">What to look out for when reviewing a pull request:</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>Have tests been added?</p>
+</li>
+<li>
+<p>Does the feature or fix work locally?</p>
+</li>
+<li>
+<p>Is the code understandable, have comments been added to the code?</p>
+</li>
+<li>
+<p>A PR should pass all the pre-submit tests, all request changes must be resolved, and needs at least two approving reviews. If you apply the <code>/lgtm</code> label before it meets this criteria, put it on hold with the <code>/hold</code> label immediately. You can use <code>/lgtm cancel</code> to cancel your <code>/lgtm</code> and use <code>/hold cancel</code> once you are ready to approve it. This especially applies to draft PRs.</p>
+</li>
+<li>
+<p>Approvers can use <code>/approve</code> and <code>/approve cancel</code> to approve or hold their approval respectively.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="about-prow">About Prow</h3>
+<div class="paragraph">
+<p><code>odo</code> uses the <a href="https://github.com/kubernetes/test-infra/tree/master/prow">Prow</a> infrastucture for CI testing.
+* It uses <a href="https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md">OWNERS</a> files to determine who can approve and lgtm a PR.
+* Prow has two levels of OWNERS, <strong>Approvers</strong> and <strong>Reviewers</strong>
+<strong> <strong>Approvers</strong> look for holistic acceptance criteria, including
+dependencies with other features, forward and backward compatibility, API and flag definitions, etc. In essence, the high levels of design
+</strong> <strong>Reviewers</strong> look for general code quality, correctness, sane software engineering, style, etc. In essence, the quality of the actual code itself.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Avoid merging the PR manually, unless it is an emergency and  you have the required permissions). Prow’s tide component automatically merges the PR once all the conditions are met.
+It also ensures that post-submit tests (tests that run before merge) valiate the PR.</p>
+</li>
+<li>
+<p>Use the <a href="https://deck-ci.svc.ci.openshift.org/command-help">command-help</a> to see the list of possible bot commands.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="test-driven-development">Test Driven Development</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We follow the Test Driven Development(TDD) workflow in our development process. You can read more about it <a href="/docs/tdd-workflow.md">here</a>.</p>
+</div>
+<div class="sect2">
+<h3 id="unit-tests">Unit tests</h3>
+<div class="paragraph">
+<p>Unit tests for <code>odo</code> functions are written using package
+<a href="https://godoc.org/k8s.io/client-go/kubernetes/fake">fake</a>. This allows us to create a fake client, and then mock the API calls defined under <a href="https://github.com/openshift/client-go">OpenShift client-go</a> and <a href="https://godoc.org/k8s.io/client-go">k8s client-go</a>.</p>
+</div>
+<div class="paragraph">
+<p>The tests are written in golang using the <a href="https://golang.org/pkg/testing/">pkg/testing</a> package.</p>
+</div>
+<div class="sect3">
+<h4 id="writing-unit-tests">Writing unit tests</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Identify the APIs used by the function to be tested.</p>
+</li>
+<li>
+<p>Initialize the fake client along with the relevant client sets.
+The following example explains the initialization of fake clients and the creation of fake objects.</p>
+<div class="paragraph">
+<p>The function <code>GetImageStreams</code> in <a href="https://github.com/openshift/odo/blob/master/pkg/occlient/occlient.go"><code>pkg/occlient.go</code></a> fetches imagestream objects through the API:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-go" data-lang="go">func (c *Client) GetImageStreams(namespace string) ([]imagev1.ImageStream, error) {
+        imageStreamList, err := c.imageClient.ImageStreams(namespace).List(metav1.ListOptions{})
+        if err != nil {
+                return nil, errors.Wrap(err, "unable to list imagestreams")
+        }
+        return imageStreamList.Items, nil
+}</code></pre>
+</div>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>For writing the tests, start by initializing the fake client using the function <code>FakeNew()</code> which initializes the image clientset harnessed by <code>GetImageStreams</code> function:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-go" data-lang="go">client, fkclientset := FakeNew()</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>In the <code>GetImageStreams</code> functions, the list of imagestreams is fetched through the API. While using fake client, this list can be emulated using a <a href="https://github.com/kubernetes/client-go/blob/master/testing/fake.go"><code>PrependReactor</code></a> interface:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-go" data-lang="go"> fkclientset.ImageClientset.PrependReactor("list", "imagestreams", func(action ktesting.Action) (bool, runtime.Object, error) {
+         return true, fakeImageStreams(tt.args.name, tt.args.namespace), nil
+     })</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>PrependReactor</code> expects <code>resource</code> and <code>verb</code> to be passed in as arguments. Get this information by looking at the <a href="https://github.com/openshift/client-go/blob/master/image/clientset/versioned/typed/image/v1/fake/fake_imagestream.go"><code>List</code> function for fake imagestream</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-go" data-lang="go">func (c *FakeImageStreams) List(opts v1.ListOptions) (result *image_v1.ImageStreamList, err error) {
+        obj, err := c.Fake.Invokes(testing.NewListAction(imagestreamsResource, imagestreamsKind, c.ns, opts), &amp;image_v1.ImageStreamList{})
+    ...
+}
+ func NewListAction(resource schema.GroupVersionResource, kind schema.GroupVersionKind, namespace string, opts interface{}) ListActionImpl {
+        action := ListActionImpl{}
+        action.Verb = "list"
+        action.Resource = resource
+        action.Kind = kind
+        action.Namespace = namespace
+        labelSelector, fieldSelector, _ := ExtractFromListOptions(opts)
+        action.ListRestrictions = ListRestrictions{labelSelector, fieldSelector}
+         return action
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>List</code> function internally calls <code>NewListAction</code> defined in <a href="https://github.com/kubernetes/client-go/blob/master/testing/actions.go"><code>k8s.io/client-go/testing/actions.go</code></a>.
+From these functions, we see that the <code>resource</code> and <code>verb</code> to be passed into the <code>PrependReactor</code> interface are <code>imagestreams</code> and <code>list</code> respectively.</p>
+</div>
+<div class="paragraph">
+<p>You can see the entire test function <code>TestGetImageStream</code> in <a href="https://github.com/openshift/odo/blob/master/pkg/occlient/occlient_test.go"><code>pkg/occlient/occlient_test.go</code></a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom home directory. It can be used in environments where a user and home directory are not resolvable.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>In the case where functions fetch or create new objects through the APIs, add a <a href="https://godoc.org/k8s.io/client-go/testing#Fake.AddReactor">reactor</a> interface returning fake objects.</p>
+</li>
+<li>
+<p>Verify the objects returned.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="integration-tests">Integration tests</h3>
+<div class="paragraph">
+<p>Integration tests, otherwise known as end-2-end (e2e) tests are used within <code>odo</code>. All tests can be found in the <code>tests/e2e</code> directory and can be called using functions within <code>makefile</code>.</p>
+</div>
+<div class="ulist">
+<div class="title">Prerequisites:</div>
+<ul>
+<li>
+<p>A <code>minishift</code> or OpenShift environment with Service Catalog enabled:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ MINISHIFT_ENABLE_EXPERIMENTAL=y minishift start --extra-clusterup-flags "--enable=*,service-catalog,automation-service-broker,template-service-broker"</pre>
+</div>
+</div>
+</li>
+<li>
+<p><code>odo</code> and <code>oc</code> binaries in <code>$PATH</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<div class="title">Procedure:</div>
+<p>To deploy an e2e test:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the entire suite use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ make test-e2e</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the main tests use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ make test-main-e2e</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the component tests use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ make test-cmp-e2e</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the service catalog tests use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ make test-service-e2e</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can run a subset of tests with ginkgo by using focused specs mechanism <a href="https://onsi.github.io/ginkgo/#focused-specs" class="bare">https://onsi.github.io/ginkgo/#focused-specs</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="race-conditions">Race conditions</h3>
+<div class="paragraph">
+<p>Test failures during the execution of the integration tests do occur. For example, the following error has been encountered multiple times:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Operation cannot be fulfilled on deploymentconfigs.apps.openshift.io "component-app": the object has been modified; please apply your changes to the latest version and try again</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The reason this happens is because the <em>read DeploymentConfig</em> or <em>update DC in memory</em> or <em>call Update</em> actions can potentially fail due to the DC being updated concurrently by some other component, usually by Kubernetes or OpenShift itself.</p>
+</div>
+<div class="paragraph">
+<p>Thus it is recommended to avoid the read, update-in-memory, or push-update actions as much as possible. One remedy is to use the <code>Patch</code> operation, for more information see the <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/"><code>Resource Operations</code></a> section. Another remedy would be to retry the operation when the optimistic concurrency error is encountered.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="dependency-management">Dependency management</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>odo</code> uses <code>glide</code> to manage dependencies. <code>glide</code> is not strictly required for building <code>odo</code> but it is required when managing dependencies under the <code>vendor/</code> directory.</p>
+</div>
+<div class="paragraph">
+<p>If you want to make changes to dependencies please make sure that <code>glide</code> is installed and is in your <code>$PATH</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="installing-glide">Installing <code>glide</code></h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download <code>glide</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ go get -u github.com/Masterminds/glide</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Check that <code>glide</code> is working</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ glide --version</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-glide-to-add-a-new-dependency">Using glide to add a new dependency</h3>
+<div class="sect3">
+<h4 id="adding-a-new-dependency">Adding a new dependency</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Update the <code>glide.yaml</code> file. Add the new package or sub-packages to the <code>glide.yaml</code> file. You can add a whole new package as a dependency or just a few sub-packages.</p>
+</li>
+<li>
+<p>Run <code>glide update --strip-vendor</code> to get the new dependencies.</p>
+</li>
+<li>
+<p>Commit the updated <code>glide.yaml</code>, <code>glide.lock</code> and <code>vendor</code> files to git.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="updating-dependencies">Updating dependencies</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Set new package version in <code>glide.yaml</code> file.</p>
+</li>
+<li>
+<p>Run <code>glide update --strip-vendor</code> to update dependencies</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="release-guide">Release guide</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="releasing-a-new-version">Releasing a new version</h3>
+<div class="paragraph">
+<p>Making artifacts for a new release is automated. When a new git tag is created, the Travis-ci deploy job automatically builds binaries and uploads it to the GitHub release page.</p>
+</div>
+<div class="paragraph">
+<p>To release a new version:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create a PR that:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Updates the version in the following files:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="/cmd/version.go"><code>cmd/version.go</code></a></p>
+</li>
+<li>
+<p><a href="/scripts/install.sh"><code>scripts/install.sh</code></a></p>
+</li>
+<li>
+<p><a href="/README.md"><code>README.md</code></a></p>
+<div class="paragraph">
+<p>There is a helper script <a href="/scripts/bump-version.sh">scripts/bump-version.sh</a> that changes version number in all the files listed above (expect <code>odo.rb</code>).</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Updates the CLI reference documentation in the <code>docs/cli-reference.md</code> file:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ make generate-cli-reference</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Merge the above PR.</p>
+</li>
+<li>
+<p>Once the PR is merged create and push the new git tag for the version.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ git tag v0.0.1
+$ git push upstream v0.0.1</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Or</strong> create the new release using the GitHub site (this must be a proper release and not a draft).</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Do not upload any binaries for the release. When the new tag is created, Travis-CI starts a special deploy job. This job builds the binaries automatically (using <code>make prepare-release</code>) and then uploads it to the GitHub release page. When the job finishes you should see the binaries on the GitHub release page. The release is now marked as a draft.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Update the descriptions and publish the release.</p>
+</li>
+<li>
+<p>Verify that packages have been uploaded to the <code>rpm</code> and <code>deb</code> repositories.</p>
+</li>
+<li>
+<p>Update the Homebrew package:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Download the current release <code>.tar.gz</code> file and retrieve the <code>sha256</code> value.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ RELEASE=X.X.X
+wget https://github.com/openshift/odo/archive/v$RELEASE.tar.gz
+sha256sum v$RELEASE.tar.gz</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create a PR to update the <a href="https://github.com/kadel/homebrew-odo/blob/master/Formula/odo.rb"><code>odo.rb</code></a> file
+in <a href="https://github.com/kadel/homebrew-odo"><code>kadel/homebrew-odo</code></a>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Confirm the binaries are available in the GitHub release page.</p>
+</li>
+<li>
+<p>Create a PR and update the file <code>build/VERSION</code> with the  latest version number.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="odo-bot">odo-bot</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://github.com/odo-bot">odo-bot</a> is the GitHub user that provides automation for certain tasks in <code>odo</code>.</p>
+</div>
+<div class="paragraph">
+<p>It uses the <code>.travis.yml</code> script to upload binaries to the GitHub release page using the <strong>deploy-github-release</strong>
+personal access token.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="licenses">Licenses</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>odo</code> uses <a href="https://github.com/frapposelli/wwhrd">wwhrd</a> to  check license compatibility of vendor packages. The configuration for <code>wwhrd</code> is stored in <a href="https://github.com/openshift/odo/blob/master/wwhrd.yml"><code>.wwhrd.yml</code></a>.</p>
+</div>
+<div class="paragraph">
+<p>The <code>whitelist</code> section is for licenses that are always allowed. The <code>blacklist</code> section is for licenses that are never allowed and will always fail a build. Any licenses that are not explicitly mentioned come under the <code>exceptions</code> secion and need to be explicitly allowed by adding the import path to the exceptions.</p>
+</div>
+<div class="paragraph">
+<p>More details about the license compatibility check tool can be found <a href="https://github.com/frapposelli/wwhrd">here</a></p>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>

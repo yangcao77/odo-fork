@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>OpenShift Do</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/main.css" rel="stylesheet" type="text/css">
+  <link href="/css/hljs-github.min.css" rel="stylesheet" type="text/css">
+
+  <body>
+    <header>
+      <div id="hero">
+        <div class="inner">
+          <div class="left">
+            <img class="hero-logo" src="img/logo.png" style="" title="">
+          </div>
+          <div class="right">
+            <h2>odo</h2>
+            <p><a class="button" href="/getting-started">Get Started</a> <a class="button white" href="https://github.com/openshift/odo" target="_blank">GitHub</a></p>
+          </div>
+        </div>
+        <div class="features">
+          <section>
+            <h3>Deploy with one command</h3>
+            <p><code>odo</code> is a command-line tool that brings continuous development to OpenShift.</p>
+          </section>
+          <section>
+            <h3>Get started faster</h3>
+            <p>No need to use OpenShift YAML files. Create and deploy your applications instantly.</p>
+          </section>
+          <section>
+            <h3>Multiple frameworks</h3>
+            <p>Ruby, Java, .NET, Node.js, Perl, and Python are readily available.</p>
+          </section>
+        </div>
+      </div>
+      <nav class="links">
+        <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h2>Take application source code and let OpenShift do the rest</h2>
+        <p>The <code>odo</code> tool uses <a href="https://github.com/openshift/source-to-image">Source-to-Image</a> to create reproducible container images from source code. <code>odo</code> handles the complex task of building, pushing, and deploying your source code.</p>
+        <p><strong>Want to get started? Follow the instructions below or our Katacoda tutorial: <a href="https://www.katacoda.com/mjelen/courses/introduction/developing-with-odo">Developing with <code>odo</code></a>.</strong></p>
+        <pre><code class="bash"># Download the latest release from GitHub:
+# https://github.com/redhat-developer/odo/releases
+# Or run:
+$ curl -L https://github.com/redhat-developer/odo/raw/master/scripts/install.sh | bash
+
+# Start your local development environment
+$ minishift start
+
+# Download the Node.js example directory
+$ git clone https://github.com/openshift/nodejs-ex &amp;&amp; cd nodejs-ex
+
+# Now, let's deploy your application!
+$ odo create nodejs
+
+# Push your source code to the application
+$ odo push
+
+# Last, we'll create a way to access the application
+$ odo url create
+  nodejs - nodejs-myproject.192.168.42.147.nip.io
+
+# Test it with curl, or visit the URL
+$ curl nodejs-myproject.192.168.42.147.nip.io</code></pre>
+      </section>
+      <section>
+        <h2>Demo</h2>
+        <script id="asciicast-55u0cNbqEa1NBekgOu8xmeW1d" src="https://asciinema.org/a/55u0cNbqEa1NBekgOu8xmeW1d.js" async></script>
+      </section>
+    </main>
+    <footer>
+      <a class="button" href="/getting-started">Get Started</a>
+      <div class="content">
+        <nav>
+          <h3>Documentation</h3>
+          <div>
+            <ul>
+            
+                <li><a href="/getting-started/">Getting Started</a></li>
+            
+                <li><a href="/installation/">Installation</a></li>
+            
+                <li><a href="/examples/">Examples</a></li>
+            
+            </ul>
+            <ul>
+            
+            </ul>
+          </div>
+        </nav>
+        <nav>
+          <h3>Links</h3>
+          <ul>
+          
+              <li><a href="http://chat.openshift.io">Chat</a></li>
+          
+              <li><a href="https://github.com/redhat-developer/odo/releases">Releases</a></li>
+          
+              <li><a href="https://github.com/redhat-developer/odo">GitHub</a></li>
+          
+          </ul>
+        </nav>
+      </div>
+      <div class="copyright">
+        <img src="/img/redhat-logo.png" class="redhat-logo"></img>
+        <p>
+        Copyright ©2019 Red Hat, Inc.
+        </p>
+      </div>
+    </footer>
+    <div></div>
+  </body>
+
+</html>

@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Overview of the Odo (OpenShift Do) CLI Structure</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a class="active" href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Overview of the Odo (OpenShift Do) CLI Structure</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example application</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Creating and deploying a Node.js project
+  git clone https://github.com/openshift/nodejs-ex &amp;&amp; cd nodejs-ex
+  odo create nodejs
+  odo push
+
+  # Accessing your Node.js component
+  odo url create</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Odo (OpenShift Do) is a CLI tool for running OpenShift applications in a
+fast and automated matter. Odo reduces the complexity of deployment by
+adding iterative development without the worry of deploying your source
+code.</p>
+</div>
+<div class="paragraph">
+<p>Find more information at <a href="https://github.com/openshift/odo" class="bare">https://github.com/openshift/odo</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="syntax">Syntax</h2>
+<div class="sectionbody">
+<div class="sect4">
+<h5 id="list-of-commands">List of Commands</h5>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 21%;">
+<col style="width: 79%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">NAME</th>
+<th class="tableblock halign-left valign-top">DESCRIPTION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#app">app</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform application operations (delete, describe, list)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#catalog">catalog</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Catalog related operations (describe, list,
+search)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#component">component</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Components of an application (create,
+delete, describe, get, link, list, log, push, unlink, update, watch)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#config">config</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies configuration settings (set, unset,
+view)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#create">create</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Create a new component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#delete">delete</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delete an existing component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#describe">describe</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Describe the given component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#link">link</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Link component to a service or component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#list">list</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List all components in the current application</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#log">log</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Retrieve the log for the given component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#login">login</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Login to cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#logout">logout</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Log out of the current OpenShift session</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#preference">preference</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies preference settings (set, unset,
+view)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#project">project</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform project operations (create, delete,
+get, list, set)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#push">push</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Push source code to a component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#service">service</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform service catalog operations (create,
+delete, list)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#storage">storage</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform storage operations (create, delete,
+list, mount, unmount)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#unlink">unlink</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unlink component to a service or component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#update">update</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Update the source code path of a component</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#url">url</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expose component to the outside world (create, delete,
+list)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#utils">utils</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Utilities for terminal commands and modifying Odo
+configurations (terminal)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#version">version</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Print the client version information</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#watch">watch</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Watch for changes, update component on change</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="cli-structure">CLI Structure</h5>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">odo --alsologtostderr --log_backtrace_at --log_dir --logtostderr --skip-connection-check --stderrthreshold --v --vmodule : Odo (OpenShift Do) (app, catalog, component, config, create, delete, describe, link, list, log, login, logout, preference, project, push, service, storage, unlink, update, url, utils, version, watch)
+    app : Perform application operations (delete, describe, list)
+        delete --force --output --project : Delete the given application
+        describe --output --project : Describe the given application
+        list --output --project : List all applications in the current project
+    catalog : Catalog related operations (describe, list, search)
+        describe : Describe catalog item (service)
+            service : Describe a service
+        list : List all available component &amp; service types. (components, services)
+            components : List all components available.
+            services : Lists all available services
+        search : Search available component &amp; service types. (component, service)
+            component : Search component type in catalog
+            service : Search service type in catalog
+    component --app --context --project --short : Components of an application (create, delete, describe, get, link, list, log, push, unlink, update, watch)
+        create --app --binary --context --cpu --env --git --max-cpu --max-memory --memory --min-cpu --min-memory --port --project --ref : Create a new component
+        delete --app --context --force --project : Delete an existing component
+        describe --app --context --output --project : Describe the given component
+        get --app --context --project --short : Get currently active component
+        link --app --component --context --port --project --wait --wait-for-target : Link component to a service or component
+        list --app --context --output --project : List all components in the current application
+        log --app --context --follow --project : Retrieve the log for the given component
+        push --config --context --ignore --show-log --source : Push source code to a component
+        unlink --app --component --context --port --project --wait : Unlink component to a service or component
+        update --app --context --git --local --project --ref : Update the source code path of a component
+        watch --app --context --delay --ignore --project : Watch for changes, update component on change
+    config : Modifies configuration settings (set, unset, view)
+        set --context --env --force : Set a value in odo config file
+        unset --context --env --force : Unset a value in odo config file
+        view --context : View current configuration values
+    create --app --binary --context --cpu --env --git --max-cpu --max-memory --memory --min-cpu --min-memory --port --project --ref : Create a new component
+    delete --app --context --force --project : Delete an existing component
+    describe --app --context --output --project : Describe the given component
+    link --app --component --context --port --project --wait --wait-for-target : Link component to a service or component
+    list --app --context --output --project : List all components in the current application
+    log --app --context --follow --project : Retrieve the log for the given component
+    login --certificate-authority --insecure-skip-tls-verify --password --token --username : Login to cluster
+    logout : Log out of the current OpenShift session
+    preference : Modifies preference settings (set, unset, view)
+        set --force : Set a value in odo config file
+        unset --force : Unset a value in odo preference file
+        view : View current preference values
+    project --short : Perform project operations (create, delete, get, list, set)
+        create --wait : Create a new project
+        delete --force : Delete a project
+        get --short : Get the active project
+        list --output : List all the projects
+        set --short : Set the current active project
+    push --config --context --ignore --show-log --source : Push source code to a component
+    service : Perform service catalog operations (create, delete, list)
+        create --app --parameters --plan --project --wait : Create a new service from service catalog using the plan defined and deploy it on OpenShift.
+        delete --app --force --project : Delete an existing service
+        list --app --project : List all services in the current application
+    storage : Perform storage operations (create, delete, list, mount, unmount)
+        create --app --component --output --path --project --size : Create storage and mount to a component
+        delete --app --component --force --project : Delete storage from component
+        list --all --app --component --output --project : List storage attached to a component
+        mount --app --component --path --project : mount storage to a component
+        unmount --app --component --project : Unmount storage from the given path or identified by its name, from the current component
+    unlink --app --component --context --port --project --wait : Unlink component to a service or component
+    update --app --context --git --local --project --ref : Update the source code path of a component
+    url : Expose component to the outside world (create, delete, list)
+        create --app --component --context --output --port --project : Create a URL for a component
+        delete --app --component --context --force --project : Delete a URL
+        list --app --component --context --output --project : List URLs
+    utils : Utilities for terminal commands and modifying Odo configurations (terminal)
+        terminal : Add Odo terminal support to your development environment
+    version --client : Print the client version information
+    watch --app --context --delay --ignore --project : Watch for changes, update component on change</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="app">app</h3>
+<div class="paragraph">
+<p><code>app</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using app</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Delete the application
+  odo app delete myapp
+  # Describe 'webapp' application,
+  odo app describe webapp
+  # List all applications in the current project
+  odo app list
+
+  # List all applications in the specified project
+  odo app list --project myproject</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Performs application operations related to your OpenShift project.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="catalog">catalog</h3>
+<div class="paragraph">
+<p><code>catalog [options]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using catalog</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Get the supported components
+  odo catalog list components
+
+  # Get the supported services from service catalog
+  odo catalog list services
+
+  # Search for a component
+  odo catalog search component python
+
+  # Search for a service
+  odo catalog search service mysql
+
+  # Describe a service
+  odo catalog describe service mysql-persistent</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Catalog related operations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="component">component</h3>
+<div class="paragraph">
+<p><code>component</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using component</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">odo component
+create
+
+  See sub-commands individually for more examples</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="config">config</h3>
+<div class="paragraph">
+<p><code>config</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using config</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # For viewing the current local configuration
+  odo config view
+
+  # Set a configuration value in the local config
+  odo config set Type java
+  odo config set Name test
+  odo config set MinMemory 50M
+  odo config set MaxMemory 500M
+  odo config set Memory 250M
+  odo config set Ignore false
+  odo config set MinCPU 0.5
+  odo config set MaxCPU 2
+  odo config set CPU 1
+
+  # Set a env variable in the local config
+  odo config set --env KAFKA_HOST=kafka --env KAFKA_PORT=6639
+
+  # Unset a configuration value in the local config
+  odo config unset Type
+  odo config unset Name
+  odo config unset MinMemory
+  odo config unset MaxMemory
+  odo config unset Memory
+  odo config unset Ignore
+  odo config unset MinCPU
+  odo config unset MaxCPU
+  odo config unset CPU
+
+  # Unset a env variable in the local config
+  odo config unset --env KAFKA_HOST --env KAFKA_PORT</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Modifies Odo specific configuration settings within the config file.</p>
+</div>
+<div class="paragraph">
+<p>Available Local Parameters: Application - Application is the name of
+application the component needs to be part of CPU - The minimum and
+maximum CPU a component can consume Ignore - Consider the .odoignore
+file for push and watch MaxCPU - The maximum cpu a component can consume
+MaxMemory - The maximum memory a component can consume Memory - The
+minimum and maximum Memory a component can consume MinCPU - The minimum
+cpu a component can consume MinMemory - The minimum memory a component
+is provided Name - The name of the component Ports - Ports to be opened
+in the component Project - Project is the name of the project the
+component is part of Ref - Git ref to use for creating component from
+git source SourceLocation - The path indicates the location of binary
+file or git source SourceType - Type of component source -
+git/binary/local Type - The type of component Url - Url to access the
+compoent</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="create">create</h3>
+<div class="paragraph">
+<p><code>create &lt;component_type&gt; [component_name] [flags]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using create</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Create new Node.js component with the source in current directory.
+  odo create nodejs
+
+  # A specific image version may also be specified
+  odo create nodejs:latest
+
+  # Create new Node.js component named 'frontend' with the source in './frontend' directory
+  odo create nodejs frontend --context ./frontend
+
+  # Create a new Node.js component of version 6 from the 'openshift' namespace
+  odo create openshift/nodejs:6 --context /nodejs-ex
+
+  # Create new Wildfly component with binary named sample.war in './downloads' directory
+  odo create wildfly wildly --binary ./downloads/sample.war
+
+  # Create new Node.js component with source from remote git repository
+  odo create nodejs --git https://github.com/openshift/nodejs-ex.git
+
+  # Create new Node.js git component while specifying a branch, tag or commit ref
+  odo create nodejs --git https://github.com/openshift/nodejs-ex.git --ref master
+
+  # Create new Node.js git component while specifying a tag
+  odo create nodejs --git https://github.com/openshift/nodejs-ex.git --ref v1.0.1
+
+  # Create new Node.js component with the source in current directory and ports 8080-tcp,8100-tcp and 9100-udp exposed
+  odo create nodejs --port 8080,8100/tcp,9100/udp
+
+  # Create new Node.js component with the source in current directory and env variables key=value and key1=value1 exposed
+  odo create nodejs --env key=value,key1=value1
+
+  # For more examples, visit: https://github.com/openshift/odo/blob/master/docs/examples.md
+  odo create python --git https://github.com/openshift/django-ex.git
+
+  # Passing memory limits
+  odo create nodejs --memory 150Mi
+  odo create nodejs --min-memory 150Mi --max-memory 300 Mi
+
+  # Passing cpu limits
+  odo create nodejs --cpu 2
+  odo create nodejs --min-cpu 200m --max-cpu 2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create a configuration describing a component to be deployed on
+OpenShift.</p>
+</div>
+<div class="paragraph">
+<p>If a component name is not provided, it&#8217;ll be auto-generated.</p>
+</div>
+<div class="paragraph">
+<p>By default, builder images will be used from the current namespace. You
+can explicitly supply a namespace by using: odo create
+namespace/name:version If version is not specified by default, latest
+will be chosen as the version.</p>
+</div>
+<div class="paragraph">
+<p>A full list of component types that can be deployed is available using:
+'odo catalog list'</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="delete">delete</h3>
+<div class="paragraph">
+<p><code>delete &lt;component_name&gt;</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using delete</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Delete component named 'frontend'.
+  odo delete frontend</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Delete an existing component.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="describe">describe</h3>
+<div class="paragraph">
+<p><code>describe [component_name]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using describe</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Describe nodejs component,
+  odo describe nodejs</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Describe the given component.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="link">link</h3>
+<div class="paragraph">
+<p><code>link &lt;service&gt; --component [component] OR link &lt;component&gt; --component [component]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using link</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Link the current component to the 'my-postgresql' service
+  odo link my-postgresql
+
+  # Link component 'nodejs' to the 'my-postgresql' service
+  odo link my-postgresql --component nodejs
+
+  # Link current component to the 'backend' component (backend must have a single exposed port)
+  odo link backend
+
+  # Link component 'nodejs' to the 'backend' component
+  odo link backend --component nodejs
+
+  # Link current component to port 8080 of the 'backend' component (backend must have port 8080 exposed)
+  odo link backend --port 8080</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Link component to a service or component</p>
+</div>
+<div class="paragraph">
+<p>If the source component is not provided, the current active component is
+assumed. In both use cases, link adds the appropriate secret to the
+environment of the source component. The source component can then
+consume the entries of the secret as environment variables.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="paragraph">
+<p>We have created a frontend application called 'frontend' using: odo
+create nodejs frontend</p>
+</div>
+<div class="paragraph">
+<p>We&#8217;ve also created a backend application called 'backend' with port 8080
+exposed: odo create nodejs backend --port 8080</p>
+</div>
+<div class="paragraph">
+<p>We can now link the two applications: odo link backend --component
+frontend</p>
+</div>
+<div class="paragraph">
+<p>Now the frontend has 2 ENV variables it can use:
+COMPONENT_BACKEND_HOST=backend-app COMPONENT_BACKEND_PORT=8080</p>
+</div>
+<div class="paragraph">
+<p>If you wish to use a database, we can use the Service Catalog and link
+it to our backend: odo service create dh-postgresql-apb --plan dev -p
+postgresql_user=luke -p postgresql_password=secret odo link
+dh-postgresql-apb</p>
+</div>
+<div class="paragraph">
+<p>Now backend has 2 ENV variables it can use: DB_USER=luke
+DB_PASSWORD=secret</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="list">list</h3>
+<div class="paragraph">
+<p><code>list</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using list</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # List all components in the application
+  odo list</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>List all components in the current application.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="log">log</h3>
+<div class="paragraph">
+<p><code>log [component_name]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using log</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Get the logs for the nodejs component
+  odo log nodejs</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Retrieve the log for the given component</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="login">login</h3>
+<div class="paragraph">
+<p><code>login</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using login</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Log in interactively
+  odo login
+
+  # Log in to the given server with the given certificate authority file
+  odo login localhost:8443 --certificate-authority=/path/to/cert.crt
+
+  # Log in to the given server with the given credentials (basic auth)
+  odo login localhost:8443 --username=myuser --password=mypass
+
+  # Log in to the given server with the given credentials (token)
+  odo login localhost:8443 --token=xxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Login to cluster</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="logout">logout</h3>
+<div class="paragraph">
+<p><code>logout</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using logout</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Logout
+  odo logout</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Log out of the current OpenShift session</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="preference">preference</h3>
+<div class="paragraph">
+<p><code>preference</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using preference</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # For viewing the current local preference
+  odo preference view
+
+  # For viewing the current global preference
+  odo preference view
+
+  # Set a preference value in the global preference
+  odo preference set UpdateNotification false
+  odo preference set NamePrefix "app"
+  odo preference set Timeout 20
+
+  # Unset a preference value in the global preference
+  odo preference unset  UpdateNotification
+  odo preference unset  NamePrefix
+  odo preference unset  Timeout</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Modifies Odo specific configuration settings within the global
+preference file.</p>
+</div>
+<div class="paragraph">
+<p>Available Parameters: NamePrefix - Default prefix is the current
+directory name. Use this value to set a default name prefix Timeout -
+Timeout (in seconds) for OpenShift server connection check
+UpdateNotification - Controls if an update notification is shown or not
+(true or false)</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="project">project</h3>
+<div class="paragraph">
+<p><code>project [options]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using project</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Set the active project
+  odo project set
+
+  # Create a new project
+  odo project create myproject
+
+  # List all the projects
+  odo project list
+
+  # Delete a project
+  odo project delete myproject
+
+  # Get the active project
+  odo project get</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Perform project operations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="push">push</h3>
+<div class="paragraph">
+<p><code>push [component name]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using push</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Push source code to the current component
+  odo push
+
+  # Push data to the current component from the original source.
+  odo push
+
+  # Push source code in ~/mycode to component called my-component
+  odo push my-component --context ~/mycode</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Push source code to a component.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="service">service</h3>
+<div class="paragraph">
+<p><code>service</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using service</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Create new postgresql service from service catalog using dev plan and name my-postgresql-db.
+  odo service create dh-postgresql-apb my-postgresql-db --plan dev -p postgresql_user=luke -p postgresql_password=secret
+
+  # Delete the service named 'mysql-persistent'
+  odo service delete mysql-persistent
+
+  # List all services in the application
+  odo service list</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Perform service catalog operations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="storage">storage</h3>
+<div class="paragraph">
+<p><code>storage</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using storage</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Create storage of size 1Gb to a component
+  odo storage create mystorage --path=/opt/app-root/src/storage/ --size=1Gi
+  # Delete storage mystorage from the currently active component
+  odo storage delete mystorage
+
+  # Delete storage mystorage from component 'mongodb'
+  odo storage delete mystorage --component mongodb
+  # Unmount storage 'dbstorage' from current component
+  odo storage unmount dbstorage
+
+  # Unmount storage 'database' from component 'mongodb'
+  odo storage unmount database --component mongodb
+
+  # Unmount storage mounted to path '/data' from current component
+  odo storage unmount /data
+
+  # Unmount storage mounted to path '/data' from component 'mongodb'
+  odo storage unmount /data --component mongodb
+  # List all storage attached or mounted to the current component and
+  # all unattached or unmounted storage in the current application
+  odo storage list</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Perform storage operations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="unlink">unlink</h3>
+<div class="paragraph">
+<p><code>unlink &lt;service&gt; --component [component] OR unlink &lt;component&gt; --component [component]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using unlink</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Unlink the 'my-postgresql' service from the current component
+  odo unlink my-postgresql
+
+  # Unlink the 'my-postgresql' service  from the 'nodejs' component
+  odo unlink my-postgresql --component nodejs
+
+  # Unlink the 'backend' component from the current component (backend must have a single exposed port)
+  odo unlink backend
+
+  # Unlink the 'backend' service  from the 'nodejs' component
+  odo unlink backend --component nodejs
+
+  # Unlink the backend's 8080 port from the current component
+  odo unlink backend --port 8080</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unlink component or service from a component. For this command to be
+successful, the service or component needs to have been linked prior to
+the invocation using 'odo link'</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="update">update</h3>
+<div class="paragraph">
+<p><code>update</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using update</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Change the source code path of a currently active component to local (use the current directory as a source)
+  odo update --local
+
+  # Change the source code path of the frontend component to local with source in ./frontend directory
+  odo update frontend --local ./frontend
+
+  # Change the source code path of a currently active component to git
+  odo update --git https://github.com/openshift/nodejs-ex.git
+
+  # Change the source code path of the component named node-ex to git
+  odo update node-ex --git https://github.com/openshift/nodejs-ex.git
+
+  # Change the source code path of the component named wildfly to a binary named sample.war in ./downloads directory
+  odo update wildfly --binary ./downloads/sample.war</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Update the source code path of a component</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="url">url</h3>
+<div class="paragraph">
+<p><code>url</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using url</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Create a URL for the current component with a specific port
+  odo url create --port 8080
+
+  # Create a URL with a specific name and port
+  odo url create example --port 8080
+
+  # Create a URL with a specific name by automatic detection of port (only for components which expose only one service port)
+  odo url create example
+
+  # Create a URL with a specific name and port for component frontend
+  odo url create example --port 8080 --component frontend
+  # Delete a URL to a component
+  odo url delete myurl
+  # List the available URLs
+  odo url list</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Expose component to the outside world.</p>
+</div>
+<div class="paragraph">
+<p>The URLs that are generated using this command, can be used to access
+the deployed components from outside the cluster.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="utils">utils</h3>
+<div class="paragraph">
+<p><code>utils</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using utils</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Bash terminal PS1 support
+  source &lt;(odo utils terminal bash)
+
+  # Zsh terminal PS1 support
+  source &lt;(odo utils terminal zsh)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Utilities for terminal commands and modifying Odo configurations</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="version">version</h3>
+<div class="paragraph">
+<p><code>version</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using version</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Print the client version of Odo
+  odo version</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Print the client version information</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="watch">watch</h3>
+<div class="paragraph">
+<p><code>watch [component name]</code></p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Example using watch</p>
+</div>
+</blockquote>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">  # Watch for changes in directory for current component
+  odo watch
+
+  # Watch for changes in directory for component called frontend
+  odo watch frontend</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Watch for changes, update component on change.</p>
+</div>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>

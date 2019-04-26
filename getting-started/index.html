@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+  <!-- Viewing -->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="website" property="og:type">
+
+
+  <!-- Descriptions -->
+  <meta name="description" content="OpenShift Do
+">
+  <title>Getting Started</title>
+
+
+  <!-- Favicons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="manifest" href="/img/manifest.json">
+  <link rel="mask-icon" href="/img/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <meta name="msapplication-config" content="/img/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+
+
+  <!-- HLJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">
+  </script>
+  <script>
+    hljs.initHighlightingOnLoad();
+  </script>
+
+  <!-- ANALYTICS -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119021845-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-119021845-1');
+  </script>
+
+</head>
+
+
+  <!-- CSS -->
+  <link href="/css/default.css" rel="stylesheet" type="text/css">
+  <link href="/css/pilcrow.css" rel="stylesheet" type="text/css">
+
+<body>
+
+  <header>
+    <a class="logo" href="/">
+      <img class="parcel" src="/img/logo.png" height="30"alt="">
+    </a>
+    <div class="links">
+      <a href="/getting-started">Documentation</a> <a href="https://github.com/openshift/odo" target="_blank">GitHub</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <nav>
+      <h3>Documentation</h3>
+      <ul>
+        
+          
+            <li><a class="active" href="/getting-started/">Getting Started</a></li>
+          
+        
+          
+            <li><a href="/installation/">Installation</a></li>
+          
+        
+          
+            <li><a href="/examples/">Examples</a></li>
+          
+        
+      </ul>
+      <h3>Advanced</h3>
+      <ul>
+        
+          
+            <li><a href="/cli-reference/">CLI Reference</a></li>
+          
+        
+      </ul>
+      <h3>Development</h3>
+      <ul>
+        
+          
+            <li><a href="/development/">Development</a></li>
+          
+        
+          
+            <li><a href="/tdd-workflow/">TDD Workflow</a></li>
+          
+        
+          
+            <li><a href="/completion-architecture/">Completion Architecture</a></li>
+          
+        
+          
+            <li><a href="/logging/">Logging</a></li>
+          
+        
+      </ul>
+    </nav>
+
+
+    <main>
+
+    <h1>Getting Started</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This document walks you through the development and deployment of a Node.js application to an OpenShift cluster using <code>odo</code>. It guides you on how to push new changes to your application and on other useful features of <code>odo</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="developing-and-deploying-an-application-to-an-openshift-cluster">Developing and deploying an application to an OpenShift cluster</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To develop and deploy a Node.js application to an OpenShift cluster using <code>odo</code>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="/docs/installation.md">Install the <code>odo</code> binary</a>.</p>
+</li>
+<li>
+<p>Log into an OpenShift cluster:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If you lack a local development cluster, we recommend using <a href="https://docs.openshift.org/latest/minishift/getting-started/installing.html">Minishift</a> to deploy a development OpenShift cluster.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Run Minishift:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ minishift start</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Log into the OpenShift cluster:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo login -u developer -p developer</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>In order to make full use of <code>odo</code> functionality, it is recommended to enable the OpenShift <a href="https://docs.openshift.com/container-platform/3.11/architecture/service_catalog/index.html">service catalog</a>. See <a href="#using-service-catalog-with-odo">using service catalog</a> section for more details.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>If you do not use Minishift, <code>odo</code> automatically works with any OpenShift cluster you are currently logged into. To log into the OpenShift cluster run:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo login -u developer -p developer</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>An application is an umbrella that comprises of all the components (microservices) you build. Create a component as follows:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Download the sample application and change directory to the location of the application:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ git clone https://github.com/openshift/nodejs-ex
+$ cd nodejs-ex</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Add a component of the type nodejs to the application:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create nodejs</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+By default, the latest image is used. You can also explicitly supply an image version by using <code>odo create openshift/nodejs:8</code>.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Push the initial source code to the component:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo push</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Your component is now deployed to OpenShift.</p>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Create a URL and add an entry in the local configuration file as follows:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo url create --port 8080</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Push the changes. This creates a URL on the cluster.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo push</pre>
+</div>
+</div>
+</li>
+<li>
+<p>List the URLs to check the desired URL for the component.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo url list</pre>
+</div>
+</div>
+</li>
+<li>
+<p>View your deployed application using the generated URL.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ curl &lt;URL&gt;</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Edit your code and push the changes to the component:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Edit one of the layout files within the Node.js directory.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ vim views/index.html</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Push the changes:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo push</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Refresh your application in the browser to see the changes.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>After each change, you can update your component using: <code>odo push</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="other-key-odo-features">Other key <code>odo</code> features</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="adding-storage-to-the-component">Adding storage to the component</h3>
+<div class="paragraph">
+<p><code>odo</code> enables you to persist data between restarts by making it easy to add storage to your component as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo storage create nodestorage --path=/opt/app-root/src/storage/ --size=1Gi</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This adds storage to your component with an allocated size of 1 Gb.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-command-completion">Using command completion</h3>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Currently command completion is only supported for bash, zsh and fish shells.</p>
+</li>
+<li>
+<p>If you either rename the <code>odo</code> executable or move it, the
+completion system stops working and you will need to re-enable it
+accordingly.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><code>odo</code> provides smart completion of command parameters based on user input. For this to work, <code>odo</code> needs to integrate with the executing shell.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>To install command completion automatically, run <code>odo --complete</code> and press <code>y</code> when asked to install the completion hook.</p>
+</li>
+<li>
+<p>To install the completion hook manually add
+<code>complete -o nospace -C &lt;full path to your odo binary&gt; odo</code> to your shell configuration file (e.g. <code>.bashrc</code> for <code>bash</code>).</p>
+</li>
+<li>
+<p>To disable completion, run <code>odo --uncomplete</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>After any modification to your shell configuration file, you will need to <code>source</code> it or restart your shell.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-the-odoignore-and-gitignore-files">Using the <code>.odoignore</code> and <code>.gitignore</code> files</h3>
+<div class="paragraph">
+<p>The <code>.odoignore</code> file in the root directory of your application is used to ignore a list of files/patterns. This applies to both <code>odo push</code> and <code>odo watch</code>.</p>
+</div>
+<div class="paragraph">
+<p>If the <code>.odoignore</code> file does <em>not</em> exist, the <code>.gitignore</code> file is used instead for ignoring specific files and folders.</p>
+</div>
+<div class="paragraph">
+<p>For example, to ignore <code>.git</code> files, any files with the <code>.js</code> extension, and the folder <code>tests</code>, add the following to either the <code>.odoignore</code> or the <code>.gitignore</code> file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">.git
+*.js
+/tests</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>.odoignore</code> file allows any <a href="https://en.wikipedia.org/wiki/Glob_(programming)">glob expressions</a> to be used, for example you can use the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">/openshift/**/*.json</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-service-catalog-with-odo">Using Service Catalog with <code>odo</code></h3>
+<div class="paragraph">
+<p>If you use Minishift, you require version 1.22 or above.</p>
+</div>
+<div class="paragraph">
+<p>In order to use the Service Catalog it must be enabled within your OpenShift cluster.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start an OpenShift cluster, version 3.10 and above.</p>
+</li>
+<li>
+<p>Enable the Service Catalog:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ MINISHIFT_ENABLE_EXPERIMENTAL=y minishift start --extra-clusterup-flags "--enable=*,service-catalog,automation-service-broker"</pre>
+</div>
+</div>
+</li>
+<li>
+<p>After you enable or start <code>minishift</code>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>To list the services, use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo catalog list services</pre>
+</div>
+</div>
+</li>
+<li>
+<p>To list service catalog related operations, use:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo service &lt;verb&gt; &lt;servicename&gt;</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="adding-a-custom-builder">Adding a custom builder</h3>
+<div class="paragraph">
+<p>OpenShift enables you to add a <a href="https://docs.openshift.com/container-platform/3.7/creating_images/custom.html">custom image</a> to bridge the gap between the creation of custom images. A custom builder image usually includes the base image of <a href="https://hub.docker.com/r/openshift/origin-custom-docker-builder/">openshift/origin-custom-docker-builder</a>.</p>
+</div>
+<div class="paragraph">
+<p>The following example demonstrates the successful import and use of the <a href="registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift">redhat-openjdk-18</a> image:</p>
+</div>
+<div class="paragraph">
+<div class="title">Prerequisites:</div>
+<p><code>oc</code> binary is <a href="https://docs.openshift.org/latest/cli_reference/get_started_cli.html#installing-the-cli">installed</a> and present on the <code>$PATH</code>.</p>
+</div>
+<div class="olist arabic">
+<div class="title">Procedure:</div>
+<ol class="arabic">
+<li>
+<p>Import the image into OpenShift:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ oc import-image openjdk18 --from=registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift --confirm</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Tag the image to make it accessible to <code>odo</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ oc annotate istag/openjdk18:latest tags=builder</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Deploy it with <code>odo</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ odo create openjdk18 --git https://github.com/openshift-evangelists/Wild-West-Backend</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+
+    </main>
+  </div>
+</body>
+
+</html>
