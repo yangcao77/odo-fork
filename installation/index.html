@@ -126,18 +126,82 @@
 <p>The latest <code>odo</code> binaries are available on <a href="https://dl.bintray.com/odo/odo/latest/">Bintray</a>.</p>
 </li>
 <li>
-<p>The latest <code>odo</code> releases are available on
-<a href="https://github.com/openshift/odo/releases/latest">Github</a>.</p>
+<p>The latest <code>odo</code> releases are available on <a href="https://github.com/openshift/odo/releases/latest">Github</a>.</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="installing-odo">Installing <code>odo</code></h2>
+<h2 id="prerequisites">Prerequisites</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>OpenShift 3.10.0 or above is required.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="installation">Installation methods for various operating systems</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#macos">macOS</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#homebrew">Using Homebrew Tap</a></p>
+</li>
+<li>
+<p><a href="#mac-binary">Binary installation</a></p>
+</li>
+<li>
+<p><a href="#mac-tarball">Tarball installation</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="#ubuntu-debian">Ubuntu or Debian</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#apt">Using apt</a></p>
+</li>
+<li>
+<p><a href="#ubuntu-debian-binary">Binary installation</a></p>
+</li>
+<li>
+<p><a href="#ubuntu-debian-tarball">Tarball installation</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="#fedora-centos-rhel">Fedora, CentOS, or RHEL</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#yum-dnf">Using yum or dnf</a></p>
+</li>
+<li>
+<p><a href="#fcr-binary">Binary installation</a></p>
+</li>
+<li>
+<p><a href="#fcr-tarball">Tarball installation</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="#windows">Windows</a></p>
+</li>
+</ol>
+</div>
 <div class="sect2">
 <h3 id="macos">macOS</h3>
+<div class="sect3">
+<h4 id="homebrew">Using Homebrew Tap</h4>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -174,8 +238,27 @@
 </ol>
 </div>
 </div>
+<div class="sect3">
+<h4 id="mac-binary">Binary installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># curl -L https://github.com/openshift/odo/releases/latest/download/odo-darwin-amd64 -o /usr/local/bin/odo &amp;&amp; chmod +x /usr/local/bin/odo</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="mac-tarball">Tarball installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># sh -c 'curl -L https://github.com/openshift/odo/releases/latest/download/odo-darwin-amd64.gz | gzip -d &gt; /usr/local/bin/odo; chmod +x /usr/local/bin/odo'</pre>
+</div>
+</div>
+</div>
+</div>
 <div class="sect2">
-<h3 id="ubuntu-or-debian">Ubuntu or Debian</h3>
+<h3 id="ubuntu-debian">Ubuntu or Debian</h3>
+<div class="sect3">
+<h4 id="apt">Using apt</h4>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -221,8 +304,27 @@
 </ol>
 </div>
 </div>
+<div class="sect3">
+<h4 id="ubuntu-debian-binary">Binary installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># curl -L https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64 -o /usr/local/bin/odo &amp;&amp; chmod +x /usr/local/bin/odo</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="ubuntu-debian-tarball">Tarball installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># sh -c 'curl -L https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64.gz | gzip -d &gt; /usr/local/bin/odo; chmod +x /usr/local/bin/odo'</pre>
+</div>
+</div>
+</div>
+</div>
 <div class="sect2">
-<h3 id="fedora-centos-or-rhel">Fedora, CentOS, or RHEL</h3>
+<h3 id="fedora-centos-rhel">Fedora, CentOS, or RHEL</h3>
+<div class="sect3">
+<h4 id="yum-dnf">Using yum or dnf</h4>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -316,6 +418,23 @@ enabled=1</pre>
 </ol>
 </div>
 </div>
+<div class="sect3">
+<h4 id="fcr-binary">Binary installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># curl -L https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64 -o /usr/local/bin/odo &amp;&amp; chmod +x /usr/local/bin/odo</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="fcr-tarball">Tarball installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre># sh -c 'curl -L https://github.com/openshift/odo/releases/latest/download/odo-linux-amd64.gz | gzip -d &gt; /usr/local/bin/odo; chmod +x /usr/local/bin/odo'</pre>
+</div>
+</div>
+</div>
+</div>
 <div class="sect2">
 <h3 id="windows">Windows</h3>
 <div class="olist arabic">
@@ -330,7 +449,7 @@ or from the latest release page on <a href="https://github.com/openshift/odo/rel
 </ol>
 </div>
 <div class="sect3">
-<h4 id="setting-a-path-variable-for-windows-78">Setting a PATH variable for Windows 7/8</h4>
+<h4 id="setting-the-path-variable-for-windows-78">Setting the <code>PATH</code> variable for Windows 7/8</h4>
 <div class="paragraph">
 <p>The following example demonstrates how to set up a path variable. Your binaries can be located in any location but for the purpose of this example we will use <code>C:\go-bin</code> as the location.</p>
 </div>
@@ -358,7 +477,7 @@ or from the latest release page on <a href="https://github.com/openshift/odo/rel
 </div>
 </div>
 <div class="sect3">
-<h4 id="setting-a-path-variable-for-windows-10">Setting a PATH variable for Windows 10</h4>
+<h4 id="setting-the-path-variable-for-windows-10">Setting the <code>PATH</code> variable for Windows 10</h4>
 <div class="paragraph">
 <p>You can edit <code>Environment Variables</code> faster using search as follows:</p>
 </div>

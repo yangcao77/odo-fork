@@ -136,10 +136,7 @@
 </div>
 </div>
 <div class="paragraph">
-<p>Odo (OpenShift Do) is a CLI tool for running OpenShift applications in a
-fast and automated matter. Odo reduces the complexity of deployment by
-adding iterative development without the worry of deploying your source
-code.</p>
+<p>(OpenShift Do) odo is a CLI tool for running OpenShift applications in a fast and automated matter. Reducing the complexity of deployment, odo adds iterative development without the worry of deploying your source code.</p>
 </div>
 <div class="paragraph">
 <p>Find more information at <a href="https://github.com/openshift/odo" class="bare">https://github.com/openshift/odo</a></p>
@@ -149,17 +146,16 @@ code.</p>
 <div class="sect1">
 <h2 id="syntax">Syntax</h2>
 <div class="sectionbody">
-<div class="sect4">
-<h5 id="list-of-commands">List of Commands</h5>
 <table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. List of Commands</caption>
 <colgroup>
 <col style="width: 21%;">
 <col style="width: 79%;">
 </colgroup>
 <thead>
 <tr>
-<th class="tableblock halign-left valign-top">NAME</th>
-<th class="tableblock halign-left valign-top">DESCRIPTION</th>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
@@ -169,18 +165,15 @@ code.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#catalog">catalog</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Catalog related operations (describe, list,
-search)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Catalog related operations (describe, list, search)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#component">component</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Components of an application (create,
-delete, describe, get, link, list, log, push, unlink, update, watch)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Components of an application (create, delete, describe, link, list, log, push, unlink, update, watch)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#config">config</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies configuration settings (set, unset,
-view)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies configuration settings (set, unset, view)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#create">create</a></p></td>
@@ -216,13 +209,11 @@ view)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#preference">preference</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies preference settings (set, unset,
-view)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Modifies preference settings (set, unset, view)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#project">project</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Perform project operations (create, delete,
-get, list, set)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform project operations (create, delete, get, list, set)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#push">push</a></p></td>
@@ -230,13 +221,11 @@ get, list, set)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#service">service</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Perform service catalog operations (create,
-delete, list)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform service catalog operations (create, delete, list)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#storage">storage</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Perform storage operations (create, delete,
-list, mount, unmount)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Perform storage operations (create, delete, list)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#unlink">unlink</a></p></td>
@@ -248,13 +237,11 @@ list, mount, unmount)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#url">url</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Expose component to the outside world (create, delete,
-list)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expose component to the outside world (create, delete, list)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#utils">utils</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Utilities for terminal commands and modifying Odo
-configurations (terminal)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Utilities for terminal commands and modifying Odo configurations (terminal)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#version">version</a></p></td>
@@ -266,7 +253,6 @@ configurations (terminal)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
 <div class="sect4">
 <h5 id="cli-structure">CLI Structure</h5>
 <div class="listingblock">
@@ -285,9 +271,9 @@ configurations (terminal)</p></td>
         search : Search available component &amp; service types. (component, service)
             component : Search component type in catalog
             service : Search service type in catalog
-    component --app --context --project --short : Components of an application (create, delete, describe, get, link, list, log, push, unlink, update, watch)
+    component --app --context --project --short : Components of an application (create, delete, describe, link, list, log, push, unlink, update, watch)
         create --app --binary --context --cpu --env --git --max-cpu --max-memory --memory --min-cpu --min-memory --port --project --ref : Create a new component
-        delete --app --context --force --project : Delete an existing component
+        delete --all --app --context --force --project : Delete an existing component
         describe --app --context --output --project : Describe the given component
         get --app --context --project --short : Get currently active component
         link --app --component --context --port --project --wait --wait-for-target : Link component to a service or component
@@ -296,13 +282,13 @@ configurations (terminal)</p></td>
         push --config --context --ignore --show-log --source : Push source code to a component
         unlink --app --component --context --port --project --wait : Unlink component to a service or component
         update --app --context --git --local --project --ref : Update the source code path of a component
-        watch --app --context --delay --ignore --project : Watch for changes, update component on change
+        watch --app --context --delay --ignore --project --show-log : Watch for changes, update component on change
     config : Modifies configuration settings (set, unset, view)
         set --context --env --force : Set a value in odo config file
         unset --context --env --force : Unset a value in odo config file
         view --context : View current configuration values
     create --app --binary --context --cpu --env --git --max-cpu --max-memory --memory --min-cpu --min-memory --port --project --ref : Create a new component
-    delete --app --context --force --project : Delete an existing component
+    delete --all --app --context --force --project : Delete an existing component
     describe --app --context --output --project : Describe the given component
     link --app --component --context --port --project --wait --wait-for-target : Link component to a service or component
     list --app --context --output --project : List all components in the current application
@@ -324,12 +310,10 @@ configurations (terminal)</p></td>
         create --app --parameters --plan --project --wait : Create a new service from service catalog using the plan defined and deploy it on OpenShift.
         delete --app --force --project : Delete an existing service
         list --app --project : List all services in the current application
-    storage : Perform storage operations (create, delete, list, mount, unmount)
-        create --app --component --output --path --project --size : Create storage and mount to a component
-        delete --app --component --force --project : Delete storage from component
-        list --all --app --component --output --project : List storage attached to a component
-        mount --app --component --path --project : mount storage to a component
-        unmount --app --component --project : Unmount storage from the given path or identified by its name, from the current component
+    storage : Perform storage operations (create, delete, list)
+        create --app --component --context --output --path --project --size : Create storage and mount to a component
+        delete --app --component --context --force --project : Delete storage from component
+        list --app --component --context --output --project : List storage attached to a component
     unlink --app --component --context --port --project --wait : Unlink component to a service or component
     update --app --context --git --local --project --ref : Update the source code path of a component
     url : Expose component to the outside world (create, delete, list)
@@ -339,14 +323,16 @@ configurations (terminal)</p></td>
     utils : Utilities for terminal commands and modifying Odo configurations (terminal)
         terminal : Add Odo terminal support to your development environment
     version --client : Print the client version information
-    watch --app --context --delay --ignore --project : Watch for changes, update component on change</code></pre>
+    watch --app --context --delay --ignore --project --show-log : Watch for changes, update component on change</code></pre>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="app">app</h3>
-<div class="paragraph">
-<p><code>app</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">app</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -374,8 +360,10 @@ configurations (terminal)</p></td>
 </div>
 <div class="sect2">
 <h3 id="catalog">catalog</h3>
-<div class="paragraph">
-<p><code>catalog [options]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">catalog [options]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -408,8 +396,10 @@ configurations (terminal)</p></td>
 </div>
 <div class="sect2">
 <h3 id="component">component</h3>
-<div class="paragraph">
-<p><code>component</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">component</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -429,8 +419,10 @@ create
 </div>
 <div class="sect2">
 <h3 id="config">config</h3>
-<div class="paragraph">
-<p><code>config</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">config</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -474,29 +466,35 @@ create
 </div>
 </div>
 <div class="paragraph">
-<p>Modifies Odo specific configuration settings within the config file.</p>
+<p>Modifies odo specific configuration settings within the config file.</p>
 </div>
 <div class="paragraph">
-<p>Available Local Parameters: Application - Application is the name of
-application the component needs to be part of CPU - The minimum and
-maximum CPU a component can consume Ignore - Consider the .odoignore
-file for push and watch MaxCPU - The maximum cpu a component can consume
-MaxMemory - The maximum memory a component can consume Memory - The
-minimum and maximum Memory a component can consume MinCPU - The minimum
-cpu a component can consume MinMemory - The minimum memory a component
-is provided Name - The name of the component Ports - Ports to be opened
-in the component Project - Project is the name of the project the
-component is part of Ref - Git ref to use for creating component from
-git source SourceLocation - The path indicates the location of binary
-file or git source SourceType - Type of component source -
-git/binary/local Type - The type of component Url - Url to access the
-compoent</p>
+<p>Available Local Parameters:
+Application - Application is the name of application the component needs to be part of
+CPU - The minimum and maximum CPU a component can consume
+Ignore - Consider the .odoignore file for push and watch
+MaxCPU - The maximum CPU a component can consume
+MaxMemory - The maximum memory a component can consume
+Memory - The minimum and maximum memory a component can consume
+MinCPU - The minimum CPU a component can consume
+MinMemory - The minimum memory a component is provided
+Name - The name of the component
+Ports - Ports to be opened in the component
+Project - Project is the name of the project the component is part of
+Ref - Git ref to use for creating component from git source
+SourceLocation - The path indicates the location of binary file or git source
+SourceType - Type of component source - git/binary/local
+Storage - Storage of the component
+Type - The type of component
+Url - URL to access the component</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="create">create</h3>
-<div class="paragraph">
-<p><code>create &lt;component_type&gt; [component_name] [flags]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">create &lt;component_type&gt; [component_name] [flags]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -520,7 +518,7 @@ compoent</p>
   odo create openshift/nodejs:6 --context /nodejs-ex
 
   # Create new Wildfly component with binary named sample.war in './downloads' directory
-  odo create wildfly wildly --binary ./downloads/sample.war
+  odo create wildfly wildfly --binary ./downloads/sample.war
 
   # Create new Node.js component with source from remote git repository
   odo create nodejs --git https://github.com/openshift/nodejs-ex.git
@@ -550,27 +548,24 @@ compoent</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Create a configuration describing a component to be deployed on
-OpenShift.</p>
+<p>Create a configuration describing a component to be deployed on OpenShift.</p>
 </div>
 <div class="paragraph">
 <p>If a component name is not provided, it&#8217;ll be auto-generated.</p>
 </div>
 <div class="paragraph">
-<p>By default, builder images will be used from the current namespace. You
-can explicitly supply a namespace by using: odo create
-namespace/name:version If version is not specified by default, latest
-will be chosen as the version.</p>
+<p>By default, builder images will be used from the current namespace. You can explicitly supply a namespace by using: odo create namespace/name:version If version is not specified by default, latest will be chosen as the version.</p>
 </div>
 <div class="paragraph">
-<p>A full list of component types that can be deployed is available using:
-'odo catalog list'</p>
+<p>A full list of component types that can be deployed is available using: 'odo catalog list'</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="delete">delete</h3>
-<div class="paragraph">
-<p><code>delete &lt;component_name&gt;</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">delete &lt;component_name&gt;</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -582,7 +577,8 @@ will be chosen as the version.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-sh" data-lang="sh">  # Delete component named 'frontend'.
-  odo delete frontend</code></pre>
+  odo delete frontend
+  odo delete frontend --all</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -591,8 +587,10 @@ will be chosen as the version.</p>
 </div>
 <div class="sect2">
 <h3 id="describe">describe</h3>
-<div class="paragraph">
-<p><code>describe [component_name]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">describe [component_name]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -613,8 +611,10 @@ will be chosen as the version.</p>
 </div>
 <div class="sect2">
 <h3 id="link">link</h3>
-<div class="paragraph">
-<p><code>link &lt;service&gt; --component [component] OR link &lt;component&gt; --component [component]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">link &lt;service&gt; --component [component] OR link &lt;component&gt; --component [component]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -645,45 +645,47 @@ will be chosen as the version.</p>
 <p>Link component to a service or component</p>
 </div>
 <div class="paragraph">
-<p>If the source component is not provided, the current active component is
-assumed. In both use cases, link adds the appropriate secret to the
-environment of the source component. The source component can then
-consume the entries of the secret as environment variables.</p>
+<p>If the source component is not provided, the current active component is assumed.
+In both use cases, link adds the appropriate secret to the environment of the source component.
+The source component can then consume the entries of the secret as environment variables.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
 </div>
 <div class="paragraph">
-<p>We have created a frontend application called 'frontend' using: odo
-create nodejs frontend</p>
+<p>We have created a frontend application called 'frontend' using:
+odo create nodejs frontend</p>
 </div>
 <div class="paragraph">
-<p>We&#8217;ve also created a backend application called 'backend' with port 8080
-exposed: odo create nodejs backend --port 8080</p>
+<p>We&#8217;ve also created a backend application called 'backend' with port 8080 exposed:
+odo create nodejs backend --port 8080</p>
 </div>
 <div class="paragraph">
-<p>We can now link the two applications: odo link backend --component
-frontend</p>
+<p>We can now link the two applications:
+odo link backend --component frontend</p>
 </div>
 <div class="paragraph">
 <p>Now the frontend has 2 ENV variables it can use:
-COMPONENT_BACKEND_HOST=backend-app COMPONENT_BACKEND_PORT=8080</p>
+COMPONENT_BACKEND_HOST=backend-app
+COMPONENT_BACKEND_PORT=8080</p>
 </div>
 <div class="paragraph">
-<p>If you wish to use a database, we can use the Service Catalog and link
-it to our backend: odo service create dh-postgresql-apb --plan dev -p
-postgresql_user=luke -p postgresql_password=secret odo link
-dh-postgresql-apb</p>
+<p>If you wish to use a database, we can use the Service Catalog and link it to our backend:
+odo service create dh-postgresql-apb --plan dev -p postgresql_user=luke -p postgresql_password=secret
+odo link dh-postgresql-apb</p>
 </div>
 <div class="paragraph">
-<p>Now backend has 2 ENV variables it can use: DB_USER=luke
+<p>Now backend has 2 ENV variables it can use:
+DB_USER=luke
 DB_PASSWORD=secret</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="list">list</h3>
-<div class="paragraph">
-<p><code>list</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">list</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -704,8 +706,10 @@ DB_PASSWORD=secret</p>
 </div>
 <div class="sect2">
 <h3 id="log">log</h3>
-<div class="paragraph">
-<p><code>log [component_name]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">log [component_name]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -726,8 +730,10 @@ DB_PASSWORD=secret</p>
 </div>
 <div class="sect2">
 <h3 id="login">login</h3>
-<div class="paragraph">
-<p><code>login</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">login</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -757,8 +763,10 @@ DB_PASSWORD=secret</p>
 </div>
 <div class="sect2">
 <h3 id="logout">logout</h3>
-<div class="paragraph">
-<p><code>logout</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">logout</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -779,8 +787,10 @@ DB_PASSWORD=secret</p>
 </div>
 <div class="sect2">
 <h3 id="preference">preference</h3>
-<div class="paragraph">
-<p><code>preference</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">preference</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -809,21 +819,21 @@ DB_PASSWORD=secret</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Modifies Odo specific configuration settings within the global
-preference file.</p>
+<p>Modifies Odo specific configuration settings within the global preference file.</p>
 </div>
 <div class="paragraph">
-<p>Available Parameters: NamePrefix - Default prefix is the current
-directory name. Use this value to set a default name prefix Timeout -
-Timeout (in seconds) for OpenShift server connection check
-UpdateNotification - Controls if an update notification is shown or not
-(true or false)</p>
+<p>Available Parameters:
+NamePrefix - Default prefix is the current directory name. Use this value to set a default name prefix
+Timeout - Timeout (in seconds) for OpenShift server connection check
+UpdateNotification - Controls if an update notification is shown or not (true or false)</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="project">project</h3>
-<div class="paragraph">
-<p><code>project [options]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">project [options]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -856,8 +866,10 @@ UpdateNotification - Controls if an update notification is shown or not
 </div>
 <div class="sect2">
 <h3 id="push">push</h3>
-<div class="paragraph">
-<p><code>push [component name]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">push [component name]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -884,8 +896,10 @@ UpdateNotification - Controls if an update notification is shown or not
 </div>
 <div class="sect2">
 <h3 id="service">service</h3>
-<div class="paragraph">
-<p><code>service</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">service</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -912,8 +926,10 @@ UpdateNotification - Controls if an update notification is shown or not
 </div>
 <div class="sect2">
 <h3 id="storage">storage</h3>
-<div class="paragraph">
-<p><code>storage</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">storage</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -931,17 +947,6 @@ UpdateNotification - Controls if an update notification is shown or not
 
   # Delete storage mystorage from component 'mongodb'
   odo storage delete mystorage --component mongodb
-  # Unmount storage 'dbstorage' from current component
-  odo storage unmount dbstorage
-
-  # Unmount storage 'database' from component 'mongodb'
-  odo storage unmount database --component mongodb
-
-  # Unmount storage mounted to path '/data' from current component
-  odo storage unmount /data
-
-  # Unmount storage mounted to path '/data' from component 'mongodb'
-  odo storage unmount /data --component mongodb
   # List all storage attached or mounted to the current component and
   # all unattached or unmounted storage in the current application
   odo storage list</code></pre>
@@ -953,8 +958,10 @@ UpdateNotification - Controls if an update notification is shown or not
 </div>
 <div class="sect2">
 <h3 id="unlink">unlink</h3>
-<div class="paragraph">
-<p><code>unlink &lt;service&gt; --component [component] OR unlink &lt;component&gt; --component [component]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">unlink &lt;service&gt; --component [component] OR unlink &lt;component&gt; --component [component]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -982,15 +989,16 @@ UpdateNotification - Controls if an update notification is shown or not
 </div>
 </div>
 <div class="paragraph">
-<p>Unlink component or service from a component. For this command to be
-successful, the service or component needs to have been linked prior to
-the invocation using 'odo link'</p>
+<p>Unlink component or service from a component.
+For this command to be successful, the service or component needs to have been linked prior to the invocation using 'odo link'</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="update">update</h3>
-<div class="paragraph">
-<p><code>update</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">update</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -1023,8 +1031,10 @@ the invocation using 'odo link'</p>
 </div>
 <div class="sect2">
 <h3 id="url">url</h3>
-<div class="paragraph">
-<p><code>url</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">url</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -1056,14 +1066,15 @@ the invocation using 'odo link'</p>
 <p>Expose component to the outside world.</p>
 </div>
 <div class="paragraph">
-<p>The URLs that are generated using this command, can be used to access
-the deployed components from outside the cluster.</p>
+<p>The URLs that are generated using this command, can be used to access the deployed components from outside the cluster.</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="utils">utils</h3>
-<div class="paragraph">
-<p><code>utils</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">utils</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -1087,8 +1098,10 @@ the deployed components from outside the cluster.</p>
 </div>
 <div class="sect2">
 <h3 id="version">version</h3>
-<div class="paragraph">
-<p><code>version</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">version</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>
@@ -1109,8 +1122,10 @@ the deployed components from outside the cluster.</p>
 </div>
 <div class="sect2">
 <h3 id="watch">watch</h3>
-<div class="paragraph">
-<p><code>watch [component name]</code></p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-sh" data-lang="sh">watch [component name]</code></pre>
+</div>
 </div>
 <div class="quoteblock">
 <blockquote>

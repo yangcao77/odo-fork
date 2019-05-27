@@ -394,7 +394,7 @@ You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom
 <div class="sect2">
 <h3 id="integration-tests">Integration tests</h3>
 <div class="paragraph">
-<p>Integration tests, otherwise known as end-2-end (e2e) tests are used within <code>odo</code>. All tests can be found in the <code>tests/e2e</code> directory and can be called using functions within <code>makefile</code>.</p>
+<p>Integration tests are used within <code>odo</code>. All tests can be found in the <code>tests/</code> directory and can be called using functions within <code>makefile</code>. Also test directory comprises <code>e2e</code> scenario and a clean <code>test template</code> for reference.</p>
 </div>
 <div class="ulist">
 <div class="title">Prerequisites:</div>
@@ -414,12 +414,12 @@ You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom
 </div>
 <div class="paragraph">
 <div class="title">Procedure:</div>
-<p>To deploy an e2e test:</p>
+<p>To deploy an integration test:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>For the entire suite use:</p>
+<p>For the entire integration suite use:</p>
 </li>
 </ul>
 </div>
@@ -431,13 +431,13 @@ You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom
 <div class="ulist">
 <ul>
 <li>
-<p>For the main tests use:</p>
+<p>For the generic tests use:</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ make test-main-e2e</pre>
+<pre>$ make test-generic</pre>
 </div>
 </div>
 <div class="ulist">
@@ -462,6 +462,18 @@ You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom
 <div class="listingblock">
 <div class="content">
 <pre>$ make test-service-e2e</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the e2e scenario test use:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ make test-e2e-scenarios</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -575,15 +587,12 @@ You can use environment variable <code>CUSTOM_HOMEDIR</code> to specify a custom
 <div class="ulist">
 <ul>
 <li>
-<p><a href="/cmd/version.go"><code>cmd/version.go</code></a></p>
+<p><a href="/pkg/odo/cli/version/version.go"><code>cmd/version.go</code></a></p>
 </li>
 <li>
 <p><a href="/scripts/install.sh"><code>scripts/install.sh</code></a></p>
-</li>
-<li>
-<p><a href="/README.md"><code>README.md</code></a></p>
 <div class="paragraph">
-<p>There is a helper script <a href="/scripts/bump-version.sh">scripts/bump-version.sh</a> that changes version number in all the files listed above (expect <code>odo.rb</code>).</p>
+<p>There is a helper script <a href="/scripts/bump-version.sh">scripts/bump-version.sh</a> that changes version number in all the files listed above (except <code>odo.rb</code>).</p>
 </div>
 </li>
 </ul>
@@ -638,17 +647,10 @@ Do not upload any binaries for the release. When the new tag is created, Travis-
 <div class="olist loweralpha">
 <ol class="loweralpha" type="a">
 <li>
-<p>Download the current release <code>.tar.gz</code> file and retrieve the <code>sha256</code> value.</p>
-<div class="listingblock">
-<div class="content">
-<pre>$ RELEASE=X.X.X
-wget https://github.com/openshift/odo/archive/v$RELEASE.tar.gz
-sha256sum v$RELEASE.tar.gz</pre>
-</div>
-</div>
+<p>Check commit id for the released tag <code>git show-ref v0.0.1</code></p>
 </li>
 <li>
-<p>Create a PR to update the <a href="https://github.com/kadel/homebrew-odo/blob/master/Formula/odo.rb"><code>odo.rb</code></a> file
+<p>Create a PR to update <code>:tag</code> and <code>:revision</code> in the <a href="https://github.com/kadel/homebrew-odo/blob/master/Formula/odo.rb"><code>odo.rb</code></a> file
 in <a href="https://github.com/kadel/homebrew-odo"><code>kadel/homebrew-odo</code></a>.</p>
 </li>
 </ol>
@@ -681,7 +683,7 @@ personal access token.</p>
 <h2 id="licenses">Licenses</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><code>odo</code> uses <a href="https://github.com/frapposelli/wwhrd">wwhrd</a> to  check license compatibility of vendor packages. The configuration for <code>wwhrd</code> is stored in <a href="https://github.com/openshift/odo/blob/master/wwhrd.yml"><code>.wwhrd.yml</code></a>.</p>
+<p><code>odo</code> uses <a href="https://github.com/frapposelli/wwhrd">wwhrd</a> to  check license compatibility of vendor packages. The configuration for <code>wwhrd</code> is stored in <a href="https://github.com/openshift/odo/blob/master/.wwhrd.yml"><code>.wwhrd.yml</code></a>.</p>
 </div>
 <div class="paragraph">
 <p>The <code>whitelist</code> section is for licenses that are always allowed. The <code>blacklist</code> section is for licenses that are never allowed and will always fail a build. Any licenses that are not explicitly mentioned come under the <code>exceptions</code> secion and need to be explicitly allowed by adding the import path to the exceptions.</p>
