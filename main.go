@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/openshift/odo/common"
+	"github.com/redhat-developer/odo-fork/common"
 	"github.com/spf13/cobra"
 )
 
