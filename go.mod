@@ -4,11 +4,12 @@ go 1.12
 
 require (
 	github.com/fatih/color v1.7.0
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/kubernetes-incubator/service-catalog v0.2.1 // indirect
+	github.com/kubernetes-incubator/service-catalog v0.2.1
 	github.com/mattn/go-colorable v0.1.2
-	github.com/openshift/api v3.9.0+incompatible // indirect
+	github.com/openshift/api v3.9.0+incompatible
 	github.com/openshift/client-go v3.9.0+incompatible // indirect
 	github.com/openshift/odo v0.0.20
 	github.com/pkg/errors v0.8.1
@@ -24,3 +25,5 @@ require (
 	k8s.io/client-go v0.0.0-20190717023132-0c47f9da0001
 	k8s.io/kubectl v0.0.0-20190720024926-08c6807d9aef
 )
+
+replace github.com/redhat-developer/odo-fork => ./

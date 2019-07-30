@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/redhat-developer/odo-fork/pkg/common"
+	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/component"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/config"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/version"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
@@ -98,6 +99,7 @@ func NewCmdKdo(name, fullName string) *cobra.Command {
 
 	rootCmd.AddCommand(
 		common.CmdPrintKdo,
+		component.NewCmdCreate(component.CreateRecommendedCommandName, kdoutil.GetFullName(fullName, component.CreateRecommendedCommandName)),
 		version.NewCmdVersion(version.RecommendedCommandName, kdoutil.GetFullName(fullName, version.RecommendedCommandName)),
 		config.NewCmdConfiguration(config.RecommendedCommandName, kdoutil.GetFullName(fullName, config.RecommendedCommandName)),
 	)
