@@ -8,9 +8,8 @@ import (
 
 	// "github.com/redhat-developer/odo-fork/pkg/catalog"
 
-	// "github.com/openshift/odo/pkg/catalog"
 	"github.com/golang/glog"
-	// "github.com/openshift/odo/pkg/catalog"
+	// "github.com/redhat-developer/odo-fork/pkg/catalog"
 	"github.com/pkg/errors"
 
 	// applabels "github.com/redhat-developer/odo-fork/pkg/application/labels"

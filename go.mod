@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-colorable v0.1.2
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/openshift/client-go v3.9.0+incompatible // indirect
-	github.com/openshift/odo v0.0.20
+	github.com/openshift/odo v0.0.20 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/posener/complete v1.2.1
 	github.com/redhat-developer/odo v0.0.20 // indirect

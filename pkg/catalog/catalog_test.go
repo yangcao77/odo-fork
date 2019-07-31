@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/openshift/odo/pkg/occlient"
-	"github.com/openshift/odo/pkg/testingutil"
+	"github.com/redhat-developer/odo-fork/pkg/occlient"
+	"github.com/redhat-developer/odo-fork/pkg/testingutil"
 	"k8s.io/apimachinery/pkg/runtime"
 	ktesting "k8s.io/client-go/testing"
 )
