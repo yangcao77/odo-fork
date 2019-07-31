@@ -9,7 +9,6 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/hinshun/vt10x v0.0.0-20180616224451-1954e6464174
-	github.com/kubernetes-incubator/service-catalog v0.2.1
 	github.com/mattn/go-colorable v0.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/posener/complete v1.2.1
