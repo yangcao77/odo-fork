@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	// "github.com/redhat-developer/odo-fork/pkg/catalog"
-
 	"github.com/golang/glog"
 	// "github.com/redhat-developer/odo-fork/pkg/catalog"
 	"github.com/pkg/errors"

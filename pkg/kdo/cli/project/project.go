@@ -9,6 +9,7 @@ import (
 	// "github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
 	odoutil "github.com/redhat-developer/odo-fork/pkg/kdo/util"
+
 	// "github.com/redhat-developer/odo-fork/pkg/kdo/util/completion"
 
 	// "github.com/redhat-developer/odo-fork/pkg/service"
@@ -61,8 +62,8 @@ func NewCmdProject(name, fullName string) *cobra.Command {
 	projectCmd.Annotations = map[string]string{"command": "main"}
 	projectCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
 
-	completion.RegisterCommandHandler(projectSetCmd, completion.ProjectNameCompletionHandler)
-	completion.RegisterCommandHandler(projectDeleteCmd, completion.ProjectNameCompletionHandler)
+	// completion.RegisterCommandHandler(projectSetCmd, completion.ProjectNameCompletionHandler)
+	// completion.RegisterCommandHandler(projectDeleteCmd, completion.ProjectNameCompletionHandler)
 
 	return projectCmd
 }
@@ -71,7 +72,7 @@ func NewCmdProject(name, fullName string) *cobra.Command {
 // Also adds a completion handler to the flag
 func AddProjectFlag(cmd *cobra.Command) {
 	cmd.Flags().String(genericclioptions.ProjectFlagName, "", "Project, defaults to active project")
-	completion.RegisterCommandFlagHandler(cmd, "project", completion.ProjectNameCompletionHandler)
+	// completion.RegisterCommandFlagHandler(cmd, "project", completion.ProjectNameCompletionHandler)
 }
 
 // printDeleteProjectInfo prints objects affected by project deletion

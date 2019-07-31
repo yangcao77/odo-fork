@@ -10,13 +10,14 @@ import (
 	"github.com/spf13/cobra"
 
 	// "github.com/redhat-developer/odo-fork/pkg/catalog"
+
 	"github.com/redhat-developer/odo-fork/pkg/component"
 	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/log"
 
 	// appCmd "github.com/redhat-developer/odo-fork/pkg/kdo/cli/application"
 	// catalogutil "github.com/redhat-developer/odo-fork/pkg/kdo/cli/catalog/util"
-	// "github.com/redhat-developer/odo-fork/pkg/kdo/cli/component/ui"
+
 	// projectCmd "github.com/redhat-developer/odo-fork/pkg/kdo/cli/project"
 
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
@@ -141,7 +142,12 @@ func (co *CreateOptions) setComponentSourceAttributes() (err error) {
 		if err != nil {
 			return err
 		}
-		co.componentSettings.SourceLocation = &cPath
+		// we need to store the SourceLocation relative to the componentContext
+		relativePathToSource, err := filepath.Rel(co.componentContext, cPath)
+		if err != nil {
+			return err
+		}
+		co.componentSettings.SourceLocation = &relativePathToSource
 
 	// --git
 	case config.GIT:
@@ -220,8 +226,26 @@ func getSourceLocation(componentContext string, currentDirectory string) (string
 
 func createDefaultComponentName(context *genericclioptions.Context, componentType string, sourceType config.SrcType, sourcePath string) (string, error) {
 	// Retrieve the componentName, if the componentName isn't specified, we will use the default image name
+	var err error
+	finalSourcePath := sourcePath
+	// we only get absolute path for local source type
+	if sourceType == config.LOCAL {
+		if sourcePath == "" {
+			wd, err := os.Getwd()
+			if err != nil {
+				return "", err
+			}
+			finalSourcePath = wd
+		} else {
+			finalSourcePath, err = filepath.Abs(sourcePath)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
 	componentName, err := component.GetDefaultComponentName(
-		sourcePath,
+		finalSourcePath,
 		sourceType,
 		componentType,
 		component.ComponentList{},

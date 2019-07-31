@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	// imagev1 "github.com/openshift/api/image/v1"
 	"github.com/pkg/errors"
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 )
