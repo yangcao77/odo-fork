@@ -50,7 +50,7 @@ func TestNamespaceOpenShiftObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Log("Running test: ", tt.testName)
 		t.Run(tt.testName, func(t *testing.T) {
-			name, err := NamespaceOpenShiftObject(tt.componentName, tt.applicationName)
+			name, err := NamespaceKubernetesObject(tt.componentName, tt.applicationName)
 
 			if tt.wantErr && err == nil {
 				t.Errorf("Expected an error, got success")
