@@ -2,7 +2,7 @@ package ui
 
 import (
 	"github.com/golang/glog"
-	"github.com/openshift/odo/pkg/odo/util/validation"
+	"github.com/redhat-developer/odo-fork/pkg/kdo/util/validation"
 	"gopkg.in/AlecAivazis/survey.v1"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"
 	"os"
