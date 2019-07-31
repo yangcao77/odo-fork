@@ -20,3 +20,7 @@ install:
 .PHONY: clean
 clean:
 	@rm -rf $(FILES)
+
+.PHONY: test
+test:
+	go test -race $(PKGS)

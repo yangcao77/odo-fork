@@ -41,8 +41,8 @@ import (
 )
 
 var (
-	DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR string = "deploymentconfigs.apps.openshift.io \"%s\" not found"
-	DEPLOYMENT_CONFIG_NOT_FOUND           error  = fmt.Errorf("Requested deployment config does not exist")
+	DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR string = "deployment \"%s\" not found"
+	DEPLOYMENT_CONFIG_NOT_FOUND           error  = fmt.Errorf("Requested deployment does not exist")
 )
 
 const (
@@ -64,10 +64,10 @@ Consult your Kubernetes distribution's documentation for more details
 `
 
 type Client struct {
-	KubeClient           kubernetes.Interface
-	CoreV1Client         v1.CoreV1Interface
-	KubeConfig           clientcmd.ClientConfig
-	Namespace            string
+	KubeClient   kubernetes.Interface
+	CoreV1Client v1.CoreV1Interface
+	KubeConfig   clientcmd.ClientConfig
+	Namespace    string
 }
 
 // New creates a new client
@@ -615,7 +615,7 @@ type dcPatchProvider func(dc *appsv1.Deployment) (string, error)
 // dc while it's being simultaneously updated from another source (for example Kubernetes itself)
 // this will result in the triggering of a redeployment
 func (c *Client) patchDepOfComponent(componentName, applicationName string, dcPatchProvider dcPatchProvider) error {
-	depName, err := util.NamespaceOpenShiftObject(componentName, applicationName)
+	depName, err := util.NamespaceKubernetesObject(componentName, applicationName)
 	if err != nil {
 		return err
 	}
@@ -1283,31 +1283,4 @@ func (c *Client) GetEnvVarsFromDep(dcName string) ([]corev1.EnvVar, error) {
 	}
 
 	return dc.Spec.Template.Spec.Containers[0].Env, nil
-}
-
-// PropagateDeletes deletes the watch detected deleted files from remote component pod from each of the paths in passed s2iPaths
-// Parameters:
-//	targetPodName: Name of component pod
-//	delSrcRelPaths: Paths to be deleted on the remote pod relative to component source base path ex: Compoent src: /abc/src, file deleted: abc/src/foo.lang => relative path: foo.lang
-//	s2iPaths: Slice of all s2i paths -- deployment dir, destination dir, working dir, etc..
-func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string, s2iPaths []string) error {
-	reader, writer := io.Pipe()
-	var rmPaths []string
-	if len(s2iPaths) == 0 || len(delSrcRelPaths) == 0 {
-		return fmt.Errorf("Failed to propagate deletions: s2iPaths: %+v and delSrcRelPaths: %+v", s2iPaths, delSrcRelPaths)
-	}
-	for _, s2iPath := range s2iPaths {
-		for _, delRelPath := range delSrcRelPaths {
-			rmPaths = append(rmPaths, filepath.Join(s2iPath, delRelPath))
-		}
-	}
-	glog.V(4).Infof("s2ipaths marked  for deletion are %+v", rmPaths)
-	cmdArr := []string{"rm", "-rf"}
-	cmdArr = append(cmdArr, rmPaths...)
-
-	err := c.ExecCMDInContainer(targetPodName, cmdArr, writer, writer, reader, false)
-	if err != nil {
-		return err
-	}
-	return err
 }

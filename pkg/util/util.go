@@ -88,7 +88,7 @@ func In(arr []string, value string) bool {
 }
 
 // Hyphenate applicationName and componentName
-func NamespaceOpenShiftObject(componentName string, applicationName string) (string, error) {
+func NamespaceKubernetesObject(componentName string, applicationName string) (string, error) {
 
 	// Error if it's blank
 	if componentName == "" {
