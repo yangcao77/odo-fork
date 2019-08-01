@@ -3,8 +3,8 @@ package project
 import (
 	"fmt"
 
-	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
+	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
@@ -51,7 +51,7 @@ func (pgo *ProjectGetOptions) Validate() (err error) {
 
 // Run runs the project get command
 func (pgo *ProjectGetOptions) Run() (err error) {
-	project := pgo.Context.Project
+	project := pgo.Context.Namespace
 
 	if pgo.projectShortFlag {
 		fmt.Print(project)

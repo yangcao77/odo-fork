@@ -203,7 +203,7 @@ func resolveProject(command *cobra.Command, client *kclient.Client, lci *config.
 			checkProjectCreateOrDeleteOnlyOnInvalidNamespace(command, errFormat)
 		}
 	}
-	client.SetNamespace(ns)
+	client.Namespace = ns
 	return ns
 }
 
@@ -275,7 +275,7 @@ func newContext(command *cobra.Command, createAppIfNeeded bool) *Context {
 	// create the internal context representation based on calculated values
 	internalCxt := internalCxt{
 		Client:      client,
-		Project:     ns,
+		Namespace:   ns,
 		Application: app,
 		OutputFlag:  outputFlag,
 		command:     command,
@@ -312,7 +312,7 @@ type Context struct {
 type internalCxt struct {
 	Client      *kclient.Client
 	command     *cobra.Command
-	Project     string
+	Namespace   string
 	Application string
 	cmp         string
 	OutputFlag  string

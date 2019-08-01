@@ -1214,16 +1214,16 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 // 	return nil
 // }
 
-// // Exists checks whether a component with the given name exists in the current application or not
-// // componentName is the component name to perform check for
-// // The first returned parameter is a bool indicating if a component with the given name already exists or not
-// // The second returned parameter is the error that might occurs while execution
+// Exists checks whether a component with the given name exists in the current application or not
+// componentName is the component name to perform check for
+// The first returned parameter is a bool indicating if a component with the given name already exists or not
+// The second returned parameter is the error that might occurs while execution
 func Exists(client *kclient.Client, componentName, applicationName string) (bool, error) {
-	deploymentName, err := util.NamespaceOpenShiftObject(componentName, applicationName)
+	deploymentName, err := util.NamespaceKubernetesObject(componentName, applicationName)
 	if err != nil {
 		return false, errors.Wrapf(err, "unable to create namespaced name")
 	}
-	deployment, _ := client.GetDeploymentConfigFromName(deploymentName)
+	deployment, _ := client.GetDeploymentsFromName(deploymentName)
 	if deployment != nil {
 		return true, nil
 	}

@@ -121,7 +121,7 @@ func (cpo *CommonPushOptions) ResolveProject(prjName string) (err error) {
 		}
 		log.Successf("Successfully created project %s", prjName)
 	}
-	cpo.Context.Client.SetNamespace(prjName)
+	cpo.Context.Client.Namespace = prjName
 	return
 }
 

@@ -2,23 +2,20 @@ package project
 
 import (
 	"github.com/pkg/errors"
-	// "github.com/redhat-developer/odo-fork/pkg/application"
-
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/log"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetCurrent return current project
 func GetCurrent(client *kclient.Client) string {
-	project := client.GetCurrentProjectName()
+	project := client.GetCurrentNamespace()
 	return project
 }
 
 // SetCurrent sets the projectName as current project
 func SetCurrent(client *kclient.Client, projectName string) error {
-	err := client.SetCurrentProject(projectName)
+	err := client.SetCurrentNamespace(projectName)
 	if err != nil {
 		return errors.Wrap(err, "unable to set current project to"+projectName)
 	}
@@ -26,7 +23,7 @@ func SetCurrent(client *kclient.Client, projectName string) error {
 }
 
 func Create(client *kclient.Client, projectName string, wait bool) error {
-	err := client.CreateNewProject(projectName, wait)
+	err := client.CreateNewNamespace(projectName, wait)
 	if err != nil {
 		return errors.Wrap(err, "unable to create new project")
 	}
@@ -40,7 +37,7 @@ func Delete(client *kclient.Client, projectName string) error {
 	defer s.End(false)
 
 	// Delete the requested project
-	err := client.DeleteProject(projectName)
+	err := client.DeleteNamespace(projectName)
 	if err != nil {
 		return errors.Wrap(err, "unable to delete project")
 	}
@@ -50,8 +47,8 @@ func Delete(client *kclient.Client, projectName string) error {
 }
 
 func DescribeProjects(client *kclient.Client) (ProjectList, error) {
-	currentProject := client.GetCurrentProjectName()
-	allProjects, err := client.GetProjectNames()
+	currentProject := client.GetCurrentNamespace()
+	allProjects, err := client.GetNamespaceNames()
 	if err != nil {
 		return ProjectList{}, errors.Wrap(err, "cannot get all the projects")
 	}
@@ -76,7 +73,7 @@ func DescribeProjects(client *kclient.Client) (ProjectList, error) {
 // The first returned parameter is a bool indicating if a project with the given name already exists or not
 // The second returned parameter is the error that might occurs while execution
 func Exists(client *kclient.Client, projectName string) (bool, error) {
-	project, err := client.GetProject(projectName)
+	project, err := client.GetNamespace(projectName)
 	if err != nil || project == nil {
 		return false, err
 	}

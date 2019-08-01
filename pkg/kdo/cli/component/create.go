@@ -421,7 +421,7 @@ func (co *CreateOptions) Complete(name string, cmd *cobra.Command, args []string
 		}
 	}
 
-	co.componentSettings.Project = &(co.Context.Project)
+	co.componentSettings.Project = &(co.Context.Namespace)
 	envs, err := config.NewEnvVarListFromSlice(co.componentEnvVars)
 	if err != nil {
 		return
@@ -430,7 +430,7 @@ func (co *CreateOptions) Complete(name string, cmd *cobra.Command, args []string
 	co.ignores = []string{}
 	if co.now {
 		co.ResolveSrcAndConfigFlags()
-		err = co.ResolveProject(co.Context.Project)
+		err = co.ResolveProject(co.Context.Namespace)
 		if err != nil {
 			return err
 		}

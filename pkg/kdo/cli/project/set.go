@@ -3,8 +3,8 @@ package project
 import (
 	"fmt"
 
-	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
+	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/project"
 	"github.com/spf13/cobra"
 
@@ -64,7 +64,7 @@ func (pso *ProjectSetOptions) Validate() (err error) {
 
 // Run runs the project set command
 func (pso *ProjectSetOptions) Run() (err error) {
-	current := pso.Project
+	current := pso.Namespace
 	err = project.SetCurrent(pso.Client, pso.projectName)
 	if err != nil {
 		return err
