@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/redhat-developer/odo-fork/pkg/occlient"
+	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/testingutil"
 	"github.com/pkg/errors"
 )
@@ -78,7 +78,7 @@ var ExtChan = make(chan bool)
 var StartChan = make(chan bool)
 
 // Mock PushLocal to collect changed files and compare against expected changed files
-func mockPushLocal(client *occlient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isPushForce bool, globExps []string, show bool) error {
+func mockPushLocal(client *kclient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isPushForce bool, globExps []string, show bool) error {
 	for _, gotChangedFile := range files {
 		found := false
 		// Verify every file in expected file changes to be actually observed to be changed
@@ -224,7 +224,7 @@ func TestWatchAndPush(t *testing.T) {
 				t.Errorf("failed to setup test environment. Error %v", err)
 			}
 
-			fkclient, _ := occlient.FakeNew()
+			fkclient, _ := kclient.FakeNew()
 
 			// Clear all the created temporary files
 			defer os.RemoveAll(basePath)
