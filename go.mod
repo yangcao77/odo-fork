@@ -24,5 +24,3 @@ require (
 	k8s.io/client-go v0.0.0-20190717023132-0c47f9da0001
 	k8s.io/kubectl v0.0.0-20190720024926-08c6807d9aef
 )
-
-replace github.com/redhat-developer/odo-fork => ./

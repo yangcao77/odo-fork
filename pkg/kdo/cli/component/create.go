@@ -570,6 +570,8 @@ func NewCmdCreate(name, fullName string) *cobra.Command {
 	componentCreateCmd.Annotations = map[string]string{"command": "component"}
 	componentCreateCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
 
+	// TODO implement for KDO
+
 	// Adding `--now` flag
 	genericclioptions.AddNowFlag(componentCreateCmd, &co.now)
 	//Adding `--project` flag
