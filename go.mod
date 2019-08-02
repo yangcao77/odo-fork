@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8
 	github.com/fatih/color v1.7.0
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
