@@ -16,6 +16,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
+	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/preference"
 	"github.com/redhat-developer/odo-fork/pkg/util"
@@ -35,7 +36,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	corev1Client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -44,6 +45,24 @@ var (
 	DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR string = "deployment \"%s\" not found"
 	DEPLOYMENT_CONFIG_NOT_FOUND           error  = fmt.Errorf("Requested deployment does not exist")
 )
+
+// CreateArgs is a container of attributes of component create action
+type CreateArgs struct {
+	Name            string
+	SourcePath      string
+	SourceRef       string
+	SourceType      config.SrcType
+	ImageName       string
+	EnvVars         []string
+	Ports           []string
+	Resources       *corev1.ResourceRequirements
+	ApplicationName string
+	Wait            bool
+	// StorageToBeMounted describes the storage to be created
+	// storagePath is the key of the map, the generatedPVC is the value of the map
+	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
+	StdOut             io.Writer
+}
 
 const (
 	KubectlUpdateTimeout = 5 * time.Minute
@@ -54,6 +73,9 @@ const (
 
 	// waitForPodTimeOut controls how long we should wait for a pod before giving up
 	waitForPodTimeOut = 240 * time.Second
+
+	// ComponentPortAnnotationName annotation is used on the secrets that are created for each exposed port of the component
+	ComponentPortAnnotationName = "component-port"
 )
 
 // errorMsg is the message for user when invalid configuration error occurs
@@ -65,7 +87,7 @@ Consult your Kubernetes distribution's documentation for more details
 
 type Client struct {
 	KubeClient   kubernetes.Interface
-	CoreV1Client v1.CoreV1Interface
+	CoreV1Client corev1Client.CoreV1Interface
 	KubeConfig   clientcmd.ClientConfig
 	Namespace    string
 }
@@ -292,6 +314,42 @@ func (c *Client) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return secret, nil
 }
 
+// Create a secret for each port, containing the host and port of the component
+// This is done so other components can later inject the secret into the environment
+// and have the "coordinates" to communicate with this component
+func (c *Client) createSecrets(componentName string, commonObjectMeta metav1.ObjectMeta, svc *corev1.Service) error {
+	originalName := commonObjectMeta.Name
+	for _, svcPort := range svc.Spec.Ports {
+		portAsString := fmt.Sprintf("%v", svcPort.Port)
+
+		// we need to create multiple secrets, so each one has to contain the port in it's name
+		// so we change the name of each secret by adding the port number
+		commonObjectMeta.Name = fmt.Sprintf("%v-%v", originalName, portAsString)
+
+		// we also add the port as an annotation to the secret
+		// this comes in handy when we need to "query" for the appropriate secret
+		// of a component based on the port
+		commonObjectMeta.Annotations[ComponentPortAnnotationName] = portAsString
+
+		err := c.CreateSecret(
+			commonObjectMeta,
+			map[string]string{
+				secretKeyName(componentName, "host"): svc.Name,
+				secretKeyName(componentName, "port"): portAsString,
+			})
+
+		if err != nil {
+			return errors.Wrapf(err, "unable to create Secret for %s", commonObjectMeta.Name)
+		}
+	}
+
+	// restore the original values of the fields we changed
+	commonObjectMeta.Name = originalName
+	delete(commonObjectMeta.Annotations, ComponentPortAnnotationName)
+
+	return nil
+}
+
 func secretKeyName(componentName, baseKeyName string) string {
 	return fmt.Sprintf("COMPONENT_%v_%v", strings.Replace(strings.ToUpper(componentName), "-", "_", -1), strings.ToUpper(baseKeyName))
 }
@@ -347,6 +405,171 @@ func deleteEnvVars(existingEnvs []corev1.EnvVar, envTobeDeleted string) []corev1
 	return retVal
 }
 
+func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta metav1.ObjectMeta) error {
+	imageNS, imageName, imageTag, _, err := ParseImageName(params.ImageName)
+
+	if err != nil {
+		return errors.Wrap(err, "unable to create component resoures")
+	}
+	// imageStream, err := c.GetImageStream(imageNS, imageName, imageTag)
+	// if err != nil {
+	// 	return errors.Wrap(err, "Failed to bootstrap supervisored")
+	// }
+	// /*
+	//  Set imageNS to the commonObjectMeta.Namespace of above fetched imagestream because, the commonObjectMeta.Namespace passed here can potentially be emptystring
+	//  in which case, GetImageStream function resolves to correct commonObjectMeta.Namespace in accordance with priorities in GetImageStream
+	// */
+	// imageNS = imageStream.ObjectMeta.Namespace
+
+	// imageStreamImage, err := c.GetImageStreamImage(imageStream, imageTag)
+	// if err != nil {
+	// 	return errors.Wrap(err, "unable to bootstrap supervisord")
+	// }
+	// var containerPorts []corev1.ContainerPort
+	// if len(params.Ports) == 0 {
+	// 	containerPorts, err = c.GetExposedPorts(imageStreamImage)
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, "unable to get exposed ports for %s:%s", imageName, imageTag)
+	// 	}
+	// } else {
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, "unable to bootstrap s2i supervisored for %s", commonObjectMeta.Name)
+	// 	}
+	// 	containerPorts, err = util.GetContainerPortsFromStrings(params.Ports)
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, "unable to get container ports from %v", params.Ports)
+	// 	}
+	// }
+
+	inputEnvs, err := GetInputEnvVarsFromStrings(params.EnvVars)
+	if err != nil {
+		return errors.Wrapf(err, "error adding environment variables to the container")
+	}
+
+	// // generate and create ImageStream
+	// is := imagev1.ImageStream{
+	// 	ObjectMeta: commonObjectMeta,
+	// }
+	// _, err = c.imageClient.ImageStreams(c.Namespace).Create(&is)
+	// if err != nil {
+	// 	return errors.Wrapf(err, "unable to create ImageStream for %s", commonObjectMeta.Name)
+	// }
+
+	// TODO-KDO: Get port information from component settings
+	containerPorts := []corev1.ContainerPort{
+		{
+			ContainerPort: int32(9090),
+			Name:          imageName + "-http",
+		},
+	}
+
+	commonImageMeta := CommonImageMeta{
+		Name:      imageName,
+		Tag:       imageTag,
+		Namespace: imageNS,
+		Ports:     containerPorts,
+	}
+
+	// // Extract s2i scripts path and path type from imagestream image
+	// //s2iScriptsProtocol, s2iScriptsURL, s2iSrcOrBinPath, s2iDestinationDir
+	// s2iPaths, err := GetS2IMetaInfoFromBuilderImg(imageStreamImage)
+	// if err != nil {
+	// 	return errors.Wrap(err, "unable to bootstrap supervisord")
+	// }
+
+	// // Append s2i related parameters extracted above to env
+	// inputEnvs = uniqueAppendOrOverwriteEnvVars(
+	// 	inputEnvs,
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IScriptsURL,
+	// 		Value: s2iPaths.ScriptsPath,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IScriptsProtocol,
+	// 		Value: s2iPaths.ScriptsPathProtocol,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2ISrcOrBinPath,
+	// 		Value: s2iPaths.SrcOrBinPath,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IDeploymentDir,
+	// 		Value: s2iPaths.DeploymentDir,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IWorkingDir,
+	// 		Value: s2iPaths.WorkingDir,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IBuilderImageName,
+	// 		Value: s2iPaths.BuilderImgName,
+	// 	},
+	// 	corev1.EnvVar{
+	// 		Name:  EnvS2IDeploymentBackupDir,
+	// 		Value: DefaultS2IDeploymentBackupDir,
+	// 	},
+	// )
+
+	// if params.SourceType == config.LOCAL {
+	// 	inputEnvs = uniqueAppendOrOverwriteEnvVars(
+	// 		inputEnvs,
+	// 		corev1.EnvVar{
+	// 			Name:  EnvS2ISrcBackupDir,
+	// 			Value: s2iPaths.SrcBackupPath,
+	// 		},
+	// 	)
+	// }
+
+	// Generate the DeploymentConfig that will be used.
+	dc := generateDeployment(
+		commonObjectMeta,
+		commonImageMeta,
+		inputEnvs,
+		[]corev1.EnvFromSource{},
+		params.Resources,
+	)
+
+	// // Add the appropriate bootstrap volumes for SupervisorD
+	// addBootstrapVolumeCopyInitContainer(&dc, commonObjectMeta.Name)
+	// addBootstrapSupervisordInitContainer(&dc, commonObjectMeta.Name)
+	// addBootstrapVolume(&dc, commonObjectMeta.Name)
+	// addBootstrapVolumeMount(&dc, commonObjectMeta.Name)
+	// err = addOrRemoveVolumeAndVolumeMount(c, &dc, params.StorageToBeMounted, nil)
+	// if err != nil {
+	// 	return errors.Wrapf(err, "failed to mount and unmount pvc to dc")
+	// }
+
+	if len(inputEnvs) != 0 {
+		err = updateEnvVar(&dc, inputEnvs)
+		if err != nil {
+			return errors.Wrapf(err, "unable to add env vars to the container")
+		}
+	}
+
+	_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Create(&dc)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create DeploymentConfig for %s", commonObjectMeta.Name)
+	}
+
+	svc, err := c.CreateService(commonObjectMeta, dc.Spec.Template.Spec.Containers[0].Ports)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create Service for %s", commonObjectMeta.Name)
+	}
+
+	err = c.createSecrets(params.Name, commonObjectMeta, svc)
+	if err != nil {
+		return err
+	}
+
+	// Setup PVC.
+	// _, err = c.CreatePVC(getAppRootVolumeName(commonObjectMeta.Name), "1Gi", commonObjectMeta.Labels)
+	// if err != nil {
+	// 	return errors.Wrapf(err, "unable to create PVC for %s", commonObjectMeta.Name)
+	// }
+
+	return nil
+}
+
 // CreateService generates and creates the service
 // commonObjectMeta is the ObjectMeta for the service
 // dc is the deploymentConfig to get the container ports
@@ -355,7 +578,6 @@ func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPort
 	var svcPorts []corev1.ServicePort
 	for _, containerPort := range containerPorts {
 		svcPort := corev1.ServicePort{
-
 			Name:       containerPort.Name,
 			Port:       containerPort.ContainerPort,
 			Protocol:   containerPort.Protocol,
@@ -368,7 +590,7 @@ func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPort
 		Spec: corev1.ServiceSpec{
 			Ports: svcPorts,
 			Selector: map[string]string{
-				"deploymentconfig": commonObjectMeta.Name,
+				"deployment": commonObjectMeta.Name,
 			},
 		},
 	}
@@ -392,6 +614,19 @@ func (c *Client) CreateSecret(objectMeta metav1.ObjectMeta, data map[string]stri
 	if err != nil {
 		return errors.Wrapf(err, "unable to create secret for %s", objectMeta.Name)
 	}
+	return nil
+}
+
+// updateEnvVar updates the environmental variables to the container in the DC
+// dc is the deployment config to be updated
+// envVars is the array containing the corev1.EnvVar values
+func updateEnvVar(deployment *appsv1.Deployment, envVars []corev1.EnvVar) error {
+	numContainers := len(deployment.Spec.Template.Spec.Containers)
+	if numContainers != 1 {
+		return fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
+	}
+
+	deployment.Spec.Template.Spec.Containers[0].Env = envVars
 	return nil
 }
 
@@ -1283,4 +1518,31 @@ func (c *Client) GetEnvVarsFromDep(dcName string) ([]corev1.EnvVar, error) {
 	}
 
 	return dc.Spec.Template.Spec.Containers[0].Env, nil
+}
+
+// PropagateDeletes deletes the watch detected deleted files from remote component pod from each of the paths in passed targetPaths
+// Parameters:
+//	targetPodName: Name of component pod
+//	delSrcRelPaths: Paths to be deleted on the remote pod relative to component source base path ex: Compoent src: /abc/src, file deleted: abc/src/foo.lang => relative path: foo.lang
+//	targetPaths: Slice of all target paths -- deployment dir, destination dir, working dir, etc..
+func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string, targetPaths []string) error {
+	reader, writer := io.Pipe()
+	var rmPaths []string
+	if len(targetPaths) == 0 || len(delSrcRelPaths) == 0 {
+		return fmt.Errorf("Failed to propagate deletions: targetPaths: %+v and delSrcRelPaths: %+v", targetPaths, delSrcRelPaths)
+	}
+	for _, targetPath := range targetPaths {
+		for _, delRelPath := range delSrcRelPaths {
+			rmPaths = append(rmPaths, filepath.Join(targetPath, delRelPath))
+		}
+	}
+	glog.V(4).Infof("targetPaths marked  for deletion are %+v", rmPaths)
+	cmdArr := []string{"rm", "-rf"}
+	cmdArr = append(cmdArr, rmPaths...)
+
+	err := c.ExecCMDInContainer(targetPodName, cmdArr, writer, writer, reader, false)
+	if err != nil {
+		return err
+	}
+	return err
 }

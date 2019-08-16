@@ -103,6 +103,7 @@ func NewCmdKdo(name, fullName string) *cobra.Command {
 		catalog.NewCmdCatalog(catalog.RecommendedCommandName, kdoutil.GetFullName(fullName, catalog.RecommendedCommandName)),
 		common.CmdPrintKdo,
 		component.NewCmdCreate(component.CreateRecommendedCommandName, kdoutil.GetFullName(fullName, component.CreateRecommendedCommandName)),
+		component.NewCmdPush(component.PushRecommendedCommandName, kdoutil.GetFullName(fullName, component.PushRecommendedCommandName)),
 		version.NewCmdVersion(version.RecommendedCommandName, kdoutil.GetFullName(fullName, version.RecommendedCommandName)),
 		config.NewCmdConfiguration(config.RecommendedCommandName, kdoutil.GetFullName(fullName, config.RecommendedCommandName)),
 	)

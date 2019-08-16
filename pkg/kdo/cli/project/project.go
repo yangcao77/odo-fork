@@ -62,7 +62,7 @@ func NewCmdProject(name, fullName string) *cobra.Command {
 	projectCmd.Annotations = map[string]string{"command": "main"}
 	projectCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
 
-	// TODO implement for KDO
+	// TODO-KDO:
 
 	// completion.RegisterCommandHandler(projectSetCmd, completion.ProjectNameCompletionHandler)
 	// completion.RegisterCommandHandler(projectDeleteCmd, completion.ProjectNameCompletionHandler)
@@ -74,7 +74,7 @@ func NewCmdProject(name, fullName string) *cobra.Command {
 // Also adds a completion handler to the flag
 func AddProjectFlag(cmd *cobra.Command) {
 	cmd.Flags().String(genericclioptions.ProjectFlagName, "", "Project, defaults to active project")
-	// TODO implement for KDO
+	// TODO-KDO:
 
 	// completion.RegisterCommandFlagHandler(cmd, "project", completion.ProjectNameCompletionHandler)
 }

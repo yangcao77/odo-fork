@@ -59,7 +59,7 @@ func DescribeProjects(client *kclient.Client) (ProjectList, error) {
 		if project == currentProject {
 			isActive = true
 		}
-		// TODO: implement for KDO
+		// TODO-KDO:
 		// apps, _ := application.ListInProject(client)
 		apps := []string{"app"}
 		projects = append(projects, GetMachineReadableFormat(project, isActive, apps))

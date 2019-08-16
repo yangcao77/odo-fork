@@ -467,7 +467,7 @@ func (co *CreateOptions) Run() (err error) {
 		if err != nil {
 			return errors.Wrap(err, "unable to set source information")
 		}
-		// TODO implement for KDO
+		// TODO-KDO:
 		return errors.Wrapf(err, "TODO implement for KDO")
 		// err = co.Push()
 		// if err != nil {
@@ -570,7 +570,7 @@ func NewCmdCreate(name, fullName string) *cobra.Command {
 	componentCreateCmd.Annotations = map[string]string{"command": "component"}
 	componentCreateCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
 
-	// TODO implement for KDO
+	// TODO-KDO:
 
 	// Adding `--now` flag
 	genericclioptions.AddNowFlag(componentCreateCmd, &co.now)
