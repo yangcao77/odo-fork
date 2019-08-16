@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/redhat-developer/odo-fork/pkg/common"
+	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/catalog"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/component"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/config"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/version"
@@ -73,6 +74,7 @@ func NewCmdKdo(name, fullName string) *cobra.Command {
 		Long:    kdoLong,
 		Example: fmt.Sprintf(kdoExample, fullName),
 	}
+
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -98,6 +100,7 @@ func NewCmdKdo(name, fullName string) *cobra.Command {
 	cobra.AddTemplateFunc("CapitalizeFlagDescriptions", kdoutil.CapitalizeFlagDescriptions)
 
 	rootCmd.AddCommand(
+		catalog.NewCmdCatalog(catalog.RecommendedCommandName, kdoutil.GetFullName(fullName, catalog.RecommendedCommandName)),
 		common.CmdPrintKdo,
 		component.NewCmdCreate(component.CreateRecommendedCommandName, kdoutil.GetFullName(fullName, component.CreateRecommendedCommandName)),
 		version.NewCmdVersion(version.RecommendedCommandName, kdoutil.GetFullName(fullName, version.RecommendedCommandName)),

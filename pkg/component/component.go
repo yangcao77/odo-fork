@@ -479,7 +479,7 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 	_, componentType, _, componentVersion := util.ParseComponentImageName(*componentSettings.Type)
 
 	// Check to see if the catalog type actually exists
-	exists, err := catalog.Exists(client, componentType)
+	exists, err := catalog.Exists(componentType)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create component of type %s", componentType)
 	}
