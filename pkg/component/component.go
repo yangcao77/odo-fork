@@ -39,10 +39,10 @@ const componentNameMaxRetries = 3
 const componentNameMaxLen = -1
 
 // Target defines a target image environment which can be based on an IDP or s2i image
-type Target struct {
+type ContainerAttributes struct {
 	// Path is the location to copy the source
-	SrcPath string
-	Paths   []string
+	SrcPath      string
+	WorkingPaths []string
 }
 
 // GetComponentDir returns source repo name
@@ -359,10 +359,9 @@ func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
 func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigInfo, context string, stdout io.Writer) (err error) {
 
 	cmpName := componentConfig.GetName()
-	cmpType := componentConfig.GetType()
+	// cmpType := componentConfig.GetType()
 	cmpSrcType := componentConfig.GetSourceType()
 	cmpPorts := componentConfig.GetPorts()
-	// cmpSrcRef := componentConfig.GetRef()
 	appName := componentConfig.GetApplication()
 	envVarsList := componentConfig.GetEnvVars()
 
@@ -374,11 +373,12 @@ func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigI
 	// }
 	// TODO-KDO: remove following line and implement storage handling properly for KDO
 	storageToBeMounted := make(map[string]*corev1.PersistentVolumeClaim)
-
+	imgName := "jeevandroid/node-express-template:latest"
 	log.Successf("Initializing component")
 	createArgs := kclient.CreateArgs{
-		Name:               cmpName,
-		ImageName:          cmpType,
+		Name: cmpName,
+		// ImageName:          cmpType,
+		ImageName:          imgName,
 		ApplicationName:    appName,
 		EnvVars:            envVarsList.ToStringSlice(),
 		StorageToBeMounted: storageToBeMounted,
@@ -658,7 +658,7 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 //	show determines whether or not to show the log (passed in by po.show argument within /cmd)
 // Returns
 //	Error if any
-func PushLocal(client *kclient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isForcePush bool, globExps []string, show bool, target Target) error {
+func PushLocal(client *kclient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isForcePush bool, globExps []string, show bool, containerAttr ContainerAttributes) error {
 	glog.V(4).Infof("PushLocal: componentName: %s, applicationName: %s, path: %s, files: %s, delFiles: %s, isForcePush: %+v", componentName, applicationName, path, files, delFiles, isForcePush)
 
 	// Edge case: check to see that the path is NOT empty.
@@ -706,7 +706,7 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 								   So, during the subsequent watch pushing new diff to component pod, the source as a whole doesn't exist at destination dir and hence needs
 								   to be backed up.
 		*/
-		err := client.PropagateDeletes(pod.Name, delFiles, target.Paths)
+		err := client.PropagateDeletes(pod.Name, delFiles, containerAttr.WorkingPaths)
 		if err != nil {
 			return errors.Wrapf(err, "unable to propagate file deletions %+v", delFiles)
 		}
@@ -724,7 +724,7 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 
 	if isForcePush || len(files) > 0 {
 		glog.V(4).Infof("Copying files %s to pod", strings.Join(files, " "))
-		err = client.CopyFile(path, pod.Name, target.SrcPath, files, globExps)
+		err = client.CopyFile(path, pod.Name, containerAttr.SrcPath, files, globExps)
 		if err != nil {
 			s.End(false)
 			return errors.Wrap(err, "unable push files to pod")

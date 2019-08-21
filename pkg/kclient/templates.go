@@ -99,6 +99,11 @@ func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta Comm
 		"codewindApp": commonObjectMeta.Name,
 	}
 
+	imageRef := commonImageMeta.Name + ":" + commonImageMeta.Tag
+	if len(commonImageMeta.Namespace) > 0 {
+		imageRef = commonImageMeta.Namespace + "/" + imageRef
+	}
+
 	replicas := int32(1)
 	// Generates and deploys a DeploymentConfig with an InitContainer to copy over the SupervisorD binary.
 	deployment := appsv1.Deployment{
@@ -120,7 +125,7 @@ func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta Comm
 					Containers: []corev1.Container{
 						{
 							Name:  commonObjectMeta.Name,
-							Image: commonImageMeta.Name + ":" + commonImageMeta.Tag,
+							Image: imageRef,
 							Env:   envVar,
 							Ports: commonImageMeta.Ports,
 						},

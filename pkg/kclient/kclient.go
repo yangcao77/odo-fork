@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apimachinery/pkg/watch"
@@ -65,9 +64,6 @@ type CreateArgs struct {
 }
 
 const (
-	KubectlUpdateTimeout = 5 * time.Minute
-	KubernetesNamespace  = "default"
-
 	// The length of the string to be generated for names of resources
 	nameLength = 5
 
@@ -85,6 +81,7 @@ Please ensure you have an active kubernetes context to your cluster.
 Consult your Kubernetes distribution's documentation for more details
 `
 
+// Client is a collection of fields used for client configuration and interaction
 type Client struct {
 	KubeClient   kubernetes.Interface
 	CoreV1Client corev1Client.CoreV1Interface
@@ -192,6 +189,7 @@ func isServerUp(server string) bool {
 	return true
 }
 
+// GetCurrentNamespace returns the current namespace
 func (c *Client) GetCurrentNamespace() string {
 	return c.Namespace
 }
@@ -405,61 +403,24 @@ func deleteEnvVars(existingEnvs []corev1.EnvVar, envTobeDeleted string) []corev1
 	return retVal
 }
 
+// CreateComponentResources creates deployment, service and other kubernetes resources for the component
 func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta metav1.ObjectMeta) error {
 	imageNS, imageName, imageTag, _, err := ParseImageName(params.ImageName)
 
 	if err != nil {
 		return errors.Wrap(err, "unable to create component resoures")
 	}
-	// imageStream, err := c.GetImageStream(imageNS, imageName, imageTag)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Failed to bootstrap supervisored")
-	// }
-	// /*
-	//  Set imageNS to the commonObjectMeta.Namespace of above fetched imagestream because, the commonObjectMeta.Namespace passed here can potentially be emptystring
-	//  in which case, GetImageStream function resolves to correct commonObjectMeta.Namespace in accordance with priorities in GetImageStream
-	// */
-	// imageNS = imageStream.ObjectMeta.Namespace
-
-	// imageStreamImage, err := c.GetImageStreamImage(imageStream, imageTag)
-	// if err != nil {
-	// 	return errors.Wrap(err, "unable to bootstrap supervisord")
-	// }
-	// var containerPorts []corev1.ContainerPort
-	// if len(params.Ports) == 0 {
-	// 	containerPorts, err = c.GetExposedPorts(imageStreamImage)
-	// 	if err != nil {
-	// 		return errors.Wrapf(err, "unable to get exposed ports for %s:%s", imageName, imageTag)
-	// 	}
-	// } else {
-	// 	if err != nil {
-	// 		return errors.Wrapf(err, "unable to bootstrap s2i supervisored for %s", commonObjectMeta.Name)
-	// 	}
-	// 	containerPorts, err = util.GetContainerPortsFromStrings(params.Ports)
-	// 	if err != nil {
-	// 		return errors.Wrapf(err, "unable to get container ports from %v", params.Ports)
-	// 	}
-	// }
 
 	inputEnvs, err := GetInputEnvVarsFromStrings(params.EnvVars)
 	if err != nil {
 		return errors.Wrapf(err, "error adding environment variables to the container")
 	}
 
-	// // generate and create ImageStream
-	// is := imagev1.ImageStream{
-	// 	ObjectMeta: commonObjectMeta,
-	// }
-	// _, err = c.imageClient.ImageStreams(c.Namespace).Create(&is)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "unable to create ImageStream for %s", commonObjectMeta.Name)
-	// }
-
 	// TODO-KDO: Get port information from component settings
 	containerPorts := []corev1.ContainerPort{
 		{
 			ContainerPort: int32(9090),
-			Name:          imageName + "-http",
+			Name:          "http",
 		},
 	}
 
@@ -470,56 +431,6 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		Ports:     containerPorts,
 	}
 
-	// // Extract s2i scripts path and path type from imagestream image
-	// //s2iScriptsProtocol, s2iScriptsURL, s2iSrcOrBinPath, s2iDestinationDir
-	// s2iPaths, err := GetS2IMetaInfoFromBuilderImg(imageStreamImage)
-	// if err != nil {
-	// 	return errors.Wrap(err, "unable to bootstrap supervisord")
-	// }
-
-	// // Append s2i related parameters extracted above to env
-	// inputEnvs = uniqueAppendOrOverwriteEnvVars(
-	// 	inputEnvs,
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IScriptsURL,
-	// 		Value: s2iPaths.ScriptsPath,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IScriptsProtocol,
-	// 		Value: s2iPaths.ScriptsPathProtocol,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2ISrcOrBinPath,
-	// 		Value: s2iPaths.SrcOrBinPath,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IDeploymentDir,
-	// 		Value: s2iPaths.DeploymentDir,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IWorkingDir,
-	// 		Value: s2iPaths.WorkingDir,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IBuilderImageName,
-	// 		Value: s2iPaths.BuilderImgName,
-	// 	},
-	// 	corev1.EnvVar{
-	// 		Name:  EnvS2IDeploymentBackupDir,
-	// 		Value: DefaultS2IDeploymentBackupDir,
-	// 	},
-	// )
-
-	// if params.SourceType == config.LOCAL {
-	// 	inputEnvs = uniqueAppendOrOverwriteEnvVars(
-	// 		inputEnvs,
-	// 		corev1.EnvVar{
-	// 			Name:  EnvS2ISrcBackupDir,
-	// 			Value: s2iPaths.SrcBackupPath,
-	// 		},
-	// 	)
-	// }
-
 	// Generate the DeploymentConfig that will be used.
 	dc := generateDeployment(
 		commonObjectMeta,
@@ -528,16 +439,6 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		[]corev1.EnvFromSource{},
 		params.Resources,
 	)
-
-	// // Add the appropriate bootstrap volumes for SupervisorD
-	// addBootstrapVolumeCopyInitContainer(&dc, commonObjectMeta.Name)
-	// addBootstrapSupervisordInitContainer(&dc, commonObjectMeta.Name)
-	// addBootstrapVolume(&dc, commonObjectMeta.Name)
-	// addBootstrapVolumeMount(&dc, commonObjectMeta.Name)
-	// err = addOrRemoveVolumeAndVolumeMount(c, &dc, params.StorageToBeMounted, nil)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "failed to mount and unmount pvc to dc")
-	// }
 
 	if len(inputEnvs) != 0 {
 		err = updateEnvVar(&dc, inputEnvs)
@@ -560,12 +461,6 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 	if err != nil {
 		return err
 	}
-
-	// Setup PVC.
-	// _, err = c.CreatePVC(getAppRootVolumeName(commonObjectMeta.Name), "1Gi", commonObjectMeta.Labels)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "unable to create PVC for %s", commonObjectMeta.Name)
-	// }
 
 	return nil
 }
@@ -799,83 +694,6 @@ func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]stri
 	sort.Strings(values)
 
 	return values, nil
-}
-
-// Define a function that is meant to create patch based on the contents of the DC
-type depPatchProvider func(dc *appsv1.Deployment) (string, error)
-
-// LinkSecret links a secret to the Deployment of a component
-func (c *Client) LinkSecret(secretName, componentName, applicationName string) error {
-
-	var dcPatchProvider = func(dc *appsv1.Deployment) (string, error) {
-		if len(dc.Spec.Template.Spec.Containers[0].EnvFrom) > 0 {
-			// we always add the link as the first value in the envFrom array. That way we don't need to know the existing value
-			return fmt.Sprintf(`[{ "op": "add", "path": "/spec/template/spec/containers/0/envFrom/0", "value": {"secretRef": {"name": "%s"}} }]`, secretName), nil
-		}
-
-		//in this case we need to add the full envFrom value
-		return fmt.Sprintf(`[{ "op": "add", "path": "/spec/template/spec/containers/0/envFrom", "value": [{"secretRef": {"name": "%s"}}] }]`, secretName), nil
-	}
-
-	return c.patchDepOfComponent(componentName, applicationName, dcPatchProvider)
-}
-
-// UnlinkSecret unlinks a secret to the Deployment of a component
-func (c *Client) UnlinkSecret(secretName, componentName, applicationName string) error {
-	// Remove the Secret from the container
-	var dcPatchProvider = func(dc *appsv1.Deployment) (string, error) {
-		indexForRemoval := -1
-		for i, env := range dc.Spec.Template.Spec.Containers[0].EnvFrom {
-			if env.SecretRef.Name == secretName {
-				indexForRemoval = i
-				break
-			}
-		}
-
-		if indexForRemoval == -1 {
-			return "", fmt.Errorf("Deployment does not contain a link to %s", secretName)
-		}
-
-		return fmt.Sprintf(`[{"op": "remove", "path": "/spec/template/spec/containers/0/envFrom/%d"}]`, indexForRemoval), nil
-	}
-
-	return c.patchDepOfComponent(componentName, applicationName, dcPatchProvider)
-}
-
-// Define a function that is meant to create patch based on the contents of the DC
-type dcPatchProvider func(dc *appsv1.Deployment) (string, error)
-
-// this function will look up the appropriate Deployment, and execute the specified patch
-// the whole point of using patch is to avoid race conditions where we try to update
-// dc while it's being simultaneously updated from another source (for example Kubernetes itself)
-// this will result in the triggering of a redeployment
-func (c *Client) patchDepOfComponent(componentName, applicationName string, dcPatchProvider dcPatchProvider) error {
-	depName, err := util.NamespaceKubernetesObject(componentName, applicationName)
-	if err != nil {
-		return err
-	}
-
-	dc, err := c.KubeClient.AppsV1().Deployments(c.Namespace).Get(depName, metav1.GetOptions{})
-	if err != nil {
-		return errors.Wrapf(err, "Unable to locate Deployment for component %s of application %s", componentName, applicationName)
-	}
-
-	if dcPatchProvider != nil {
-		patch, err := dcPatchProvider(dc)
-		if err != nil {
-			return errors.Wrap(err, "Unable to create a patch for the Deployments")
-		}
-
-		// patch the DeploymentConfig with the secret
-		_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Patch(depName, types.JSONPatchType, []byte(patch))
-		if err != nil {
-			return errors.Wrapf(err, "Deployment not patched %s", dc.Name)
-		}
-	} else {
-		return errors.Wrapf(err, "dcPatch was not properly set")
-	}
-
-	return nil
 }
 
 // Service struct holds the service name and its corresponding list of plans
@@ -1524,14 +1342,14 @@ func (c *Client) GetEnvVarsFromDep(dcName string) ([]corev1.EnvVar, error) {
 // Parameters:
 //	targetPodName: Name of component pod
 //	delSrcRelPaths: Paths to be deleted on the remote pod relative to component source base path ex: Compoent src: /abc/src, file deleted: abc/src/foo.lang => relative path: foo.lang
-//	targetPaths: Slice of all target paths -- deployment dir, destination dir, working dir, etc..
-func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string, targetPaths []string) error {
+//	targetPaths: Slice of all container paths that contain the component source -- deployment dir, destination dir, working dir, etc..
+func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string, containerPaths []string) error {
 	reader, writer := io.Pipe()
 	var rmPaths []string
-	if len(targetPaths) == 0 || len(delSrcRelPaths) == 0 {
-		return fmt.Errorf("Failed to propagate deletions: targetPaths: %+v and delSrcRelPaths: %+v", targetPaths, delSrcRelPaths)
+	if len(containerPaths) == 0 || len(delSrcRelPaths) == 0 {
+		return fmt.Errorf("Failed to propagate deletions: targetPaths: %+v and delSrcRelPaths: %+v", containerPaths, delSrcRelPaths)
 	}
-	for _, targetPath := range targetPaths {
+	for _, targetPath := range containerPaths {
 		for _, delRelPath := range delSrcRelPaths {
 			rmPaths = append(rmPaths, filepath.Join(targetPath, delRelPath))
 		}

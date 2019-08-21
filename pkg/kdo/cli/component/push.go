@@ -234,9 +234,9 @@ func (po *PushOptions) Run() (err error) {
 			true,
 			util.GetAbsGlobExps(po.sourcePath, po.ignores),
 			po.show,
-			component.Target{
-				SrcPath: "",
-				Paths:   []string{""},
+			component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
+				SrcPath:      "",
+				WorkingPaths: []string{""},
 			},
 		)
 
@@ -261,9 +261,9 @@ func (po *PushOptions) Run() (err error) {
 			true,
 			util.GetAbsGlobExps(po.sourcePath, po.ignores),
 			po.show,
-			component.Target{
-				SrcPath: "",
-				Paths:   []string{""},
+			component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
+				SrcPath:      "",
+				WorkingPaths: []string{""},
 			},
 		)
 
