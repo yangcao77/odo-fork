@@ -270,7 +270,7 @@ func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
 			return err
 		}
 
-		podSelector := fmt.Sprintf("deploymentconfig=%s", selectorLabels)
+		podSelector := fmt.Sprintf("deployment=%s", selectorLabels)
 		_, err = client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")
 		if err != nil {
 			return err

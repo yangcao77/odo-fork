@@ -95,8 +95,8 @@ func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta Comm
 	envVar []corev1.EnvVar, envFrom []corev1.EnvFromSource, resourceRequirements *corev1.ResourceRequirements) appsv1.Deployment {
 
 	labels := map[string]string{
-		"app":         commonObjectMeta.Name,
-		"codewindApp": commonObjectMeta.Name,
+		"app":        commonObjectMeta.Name,
+		"deployment": commonObjectMeta.Name,
 	}
 
 	imageRef := commonImageMeta.Name + ":" + commonImageMeta.Tag
