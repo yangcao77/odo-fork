@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/golang/glog"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/project"
-	"github.com/redhat-developer/odo-fork/pkg/util"
 
 	odoutil "github.com/redhat-developer/odo-fork/pkg/kdo/util"
 
@@ -198,9 +196,6 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 func (po *PushOptions) Run() (err error) {
 	stdout := color.Output
 
-	cmpName := po.localConfig.GetName()
-	appName := po.localConfig.GetApplication()
-
 	err = po.createCmpIfNotExistsAndApplyCmpConfig(stdout)
 	if err != nil {
 		return
@@ -211,70 +206,47 @@ func (po *PushOptions) Run() (err error) {
 		return nil
 	}
 
-	log.Infof("\nPushing to component %s of type %s", cmpName, po.sourceType)
+	// TODO-KDO: Implement push once the persistent volume setup is complete
+	// log.Infof("\nPushing to component %s of type %s", cmpName, po.sourceType)
 
-	// Get SourceLocation here...
-	po.sourcePath, err = po.localConfig.GetOSSourcePath()
-	if err != nil {
-		return errors.Wrap(err, "unable to retrieve OS source path to source location")
-	}
+	// // Get SourceLocation here...
+	// po.sourcePath, err = po.localConfig.GetOSSourcePath()
+	// if err != nil {
+	// 	return errors.Wrap(err, "unable to retrieve OS source path to source location")
+	// }
 
-	switch po.sourceType {
-	case config.LOCAL:
-		glog.V(4).Infof("Copying directory %s to pod", po.sourcePath)
-		err = component.PushLocal(
-			po.Context.Client,
-			cmpName,
-			appName,
-			po.sourcePath,
-			os.Stdout,
-			[]string{},
-			[]string{},
-			true,
-			util.GetAbsGlobExps(po.sourcePath, po.ignores),
-			po.show,
-			component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
-				SrcPath:      "",
-				WorkingPaths: []string{""},
-			},
-		)
+	// cmpName := po.localConfig.GetName()
+	// appName := po.localConfig.GetApplication()
 
-		if err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("Failed to push component: %v", cmpName))
-		}
+	// switch po.sourceType {
+	// case config.LOCAL:
+	// 	glog.V(4).Infof("Copying directory %s to pod", po.sourcePath)
+	// 	err = component.PushLocal(
+	// 		po.Context.Client,
+	// 		cmpName,
+	// 		appName,
+	// 		po.sourcePath,
+	// 		os.Stdout,
+	// 		[]string{},
+	// 		[]string{},
+	// 		true,
+	// 		util.GetAbsGlobExps(po.sourcePath, po.ignores),
+	// 		po.show,
+	// 		component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
+	// 			SrcPath:      "",
+	// 			WorkingPaths: []string{""},
+	// 		},
+	// 	)
 
-	case config.BINARY:
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, fmt.Sprintf("Failed to push component: %v", cmpName))
+	// 	}
 
-		// We will pass in the directory, NOT filepath since this is a binary..
-		binaryDirectory := filepath.Dir(po.sourcePath)
-
-		glog.V(4).Infof("Copying binary file %s to pod", po.sourcePath)
-		err = component.PushLocal(
-			po.Context.Client,
-			cmpName,
-			appName,
-			binaryDirectory,
-			os.Stdout,
-			[]string{po.sourcePath},
-			[]string{},
-			true,
-			util.GetAbsGlobExps(po.sourcePath, po.ignores),
-			po.show,
-			component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
-				SrcPath:      "",
-				WorkingPaths: []string{""},
-			},
-		)
-
-		if err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("Failed to push component: %v", cmpName))
-		}
-
-		// we don't need a case for building git components
-		// the build happens before deployment
-
-		return errors.Wrapf(err, fmt.Sprintf("failed to push component: %v", cmpName))
-	}
+	// default:
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, fmt.Sprintf("Failed to push component %v because the source type is not recognized", cmpName))
+	// 	}
+	// }
 
 	log.Success("Changes successfully pushed to component")
 	return
