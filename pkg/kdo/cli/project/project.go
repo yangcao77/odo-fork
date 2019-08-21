@@ -62,11 +62,6 @@ func NewCmdProject(name, fullName string) *cobra.Command {
 	projectCmd.Annotations = map[string]string{"command": "main"}
 	projectCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
 
-	// TODO-KDO:
-
-	// completion.RegisterCommandHandler(projectSetCmd, completion.ProjectNameCompletionHandler)
-	// completion.RegisterCommandHandler(projectDeleteCmd, completion.ProjectNameCompletionHandler)
-
 	return projectCmd
 }
 

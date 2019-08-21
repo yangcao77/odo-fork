@@ -83,14 +83,14 @@ func parseResourceQuantity(resQuantity string) (resource.Quantity, error) {
 	return resource.ParseQuantity(resQuantity)
 }
 
-// generateSupervisordDeploymentConfig generates dc for local and binary components
+// generateDeployment generates a deployment for local and binary components
 // Parameters:
 //	commonObjectMeta: Contains annotations and labels for dc
 //	commonImageMeta: Contains details like image NS, name, tag and ports to be exposed
 //	envVar: env vars to be exposed
 //	resourceRequirements: Container cpu and memory resource requirements
 // Returns:
-//	deployment config generated using above parameters
+//	deployment generated using above parameters
 func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta CommonImageMeta,
 	envVar []corev1.EnvVar, envFrom []corev1.EnvFromSource, resourceRequirements *corev1.ResourceRequirements) appsv1.Deployment {
 

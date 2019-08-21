@@ -685,18 +685,12 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 		return errors.Wrapf(err, "error while waiting for pod  %s", podSelector)
 	}
 
-	// Get S2I Source/Binary Path from Pod Env variables created at the time of component create
-	// s2iSrcPath := getEnvFromPodEnvs(kclient.EnvS2ISrcOrBinPath, pod.Spec.Containers[0].Env)
-	// if s2iSrcPath == "" {
-	// 	s2iSrcPath = kclient.DefaultS2ISrcOrBinPath
-	// }
-	// targetPath := fmt.Sprintf("%s/src", s2iSrcPath)
-
 	// If there are files identified as deleted, propagate them to the component pod
 	if len(delFiles) > 0 {
 		glog.V(4).Infof("propogating deletion of files %s to pod", strings.Join(delFiles, " "))
 		/*
-			Delete files observed by watch to have been deleted from each of s2i directories like:
+			Delete files observed by watch from each of the directories in the specified pod. The directories are an array because the source can
+			be copied to more than one directory depending on the build controller. Eg. For s2i the following directories can contain the source:
 				deployment dir: In interpreted runtimes like python, source is copied over to deployment dir so delete needs to happen here as well
 				destination dir: This is the directory where s2i expects source to be copied for it be built and deployed
 				working dir: Directory where, sources are copied over from deployment dir from where the s2i builds and deploys source.

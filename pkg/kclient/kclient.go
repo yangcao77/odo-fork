@@ -47,18 +47,16 @@ var (
 
 // CreateArgs is a container of attributes of component create action
 type CreateArgs struct {
-	Name            string
-	SourcePath      string
-	SourceRef       string
-	SourceType      config.SrcType
-	ImageName       string
-	EnvVars         []string
-	Ports           []string
-	Resources       *corev1.ResourceRequirements
-	ApplicationName string
-	Wait            bool
-	// StorageToBeMounted describes the storage to be created
-	// storagePath is the key of the map, the generatedPVC is the value of the map
+	Name               string
+	SourcePath         string
+	SourceRef          string
+	SourceType         config.SrcType
+	ImageName          string
+	EnvVars            []string
+	Ports              []string
+	Resources          *corev1.ResourceRequirements
+	ApplicationName    string
+	Wait               bool
 	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
 	StdOut             io.Writer
 }
@@ -432,7 +430,7 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 	}
 
 	// Generate the DeploymentConfig that will be used.
-	dc := generateDeployment(
+	deployment := generateDeployment(
 		commonObjectMeta,
 		commonImageMeta,
 		inputEnvs,
@@ -441,18 +439,18 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 	)
 
 	if len(inputEnvs) != 0 {
-		err = updateEnvVar(&dc, inputEnvs)
+		err = updateEnvVar(&deployment, inputEnvs)
 		if err != nil {
 			return errors.Wrapf(err, "unable to add env vars to the container")
 		}
 	}
 
-	_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Create(&dc)
+	_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Create(&deployment)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create DeploymentConfig for %s", commonObjectMeta.Name)
 	}
 
-	svc, err := c.CreateService(commonObjectMeta, dc.Spec.Template.Spec.Containers[0].Ports)
+	svc, err := c.CreateService(commonObjectMeta, deployment.Spec.Template.Spec.Containers[0].Ports)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create Service for %s", commonObjectMeta.Name)
 	}
@@ -467,7 +465,7 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 
 // CreateService generates and creates the service
 // commonObjectMeta is the ObjectMeta for the service
-// dc is the deploymentConfig to get the container ports
+// containerPorts is an array of container ports
 func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPorts []corev1.ContainerPort) (*corev1.Service, error) {
 	// generate and create Service
 	var svcPorts []corev1.ServicePort
@@ -512,13 +510,13 @@ func (c *Client) CreateSecret(objectMeta metav1.ObjectMeta, data map[string]stri
 	return nil
 }
 
-// updateEnvVar updates the environmental variables to the container in the DC
-// dc is the deployment config to be updated
+// updateEnvVar updates the environmental variables to the container in the Deployment
+// deployment is the deployment to be updated
 // envVars is the array containing the corev1.EnvVar values
 func updateEnvVar(deployment *appsv1.Deployment, envVars []corev1.EnvVar) error {
 	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
+		return fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
 	}
 
 	deployment.Spec.Template.Spec.Containers[0].Env = envVars
@@ -675,14 +673,14 @@ func (c *Client) DeleteNamespace(name string) error {
 func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
 
 	// List DeploymentConfig according to selectors
-	dcList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
+	deploymentList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list Deployments")
 	}
 
 	// Grab all the matched strings
 	var values []string
-	for _, elem := range dcList.Items {
+	for _, elem := range deploymentList.Items {
 		for key, val := range elem.Labels {
 			if key == label {
 				values = append(values, val)
@@ -1241,8 +1239,8 @@ func (c *Client) ExecCMDInContainer(podName string, cmd []string, stdout io.Writ
 	return nil
 }
 
-// GetVolumeMountsFromDC returns a list of all volume mounts in the given Deployment
-func (c *Client) GetVolumeMountsFromDC(dep *appsv1.Deployment) []corev1.VolumeMount {
+// GetVolumeMountsFromDeployment returns a list of all volume mounts in the given Deployment
+func (c *Client) GetVolumeMountsFromDeployment(dep *appsv1.Deployment) []corev1.VolumeMount {
 	var volumeMounts []corev1.VolumeMount
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		volumeMounts = append(volumeMounts, container.VolumeMounts...)
@@ -1264,8 +1262,8 @@ func (c *Client) IsVolumeAnEmptyDir(volumeMountName string, dep *appsv1.Deployme
 
 // GetPVCNameFromVolumeMountName returns the PVC associated with the given volume
 // An empty string is returned if the volume is not found
-func (c *Client) GetPVCNameFromVolumeMountName(volumeMountName string, dc *appsv1.Deployment) string {
-	for _, volume := range dc.Spec.Template.Spec.Volumes {
+func (c *Client) GetPVCNameFromVolumeMountName(volumeMountName string, deployment *appsv1.Deployment) string {
+	for _, volume := range deployment.Spec.Template.Spec.Volumes {
 		if volume.Name == volumeMountName {
 			if volume.PersistentVolumeClaim != nil {
 				return volume.PersistentVolumeClaim.ClaimName
@@ -1321,21 +1319,21 @@ func GetInputEnvVarsFromStrings(envVars []string) ([]corev1.EnvVar, error) {
 	return inputEnvVars, nil
 }
 
-// GetEnvVarsFromDep retrieves the env vars from the DC
-// dcName is the name of the dc from which the env vars are retrieved
+// GetEnvVarsFromDep retrieves the env vars from the Deployment
+// deploymentName is the name of the deployment from which the env vars are retrieved
 // projectName is the name of the project
-func (c *Client) GetEnvVarsFromDep(dcName string) ([]corev1.EnvVar, error) {
-	dc, err := c.GetDeploymentsFromName(dcName)
+func (c *Client) GetEnvVarsFromDep(deploymentName string) ([]corev1.EnvVar, error) {
+	deployment, err := c.GetDeploymentsFromName(deploymentName)
 	if err != nil {
-		return nil, errors.Wrap(err, "error occurred while retrieving the dc")
+		return nil, errors.Wrap(err, "error occurred while retrieving the deployment")
 	}
 
-	numContainers := len(dc.Spec.Template.Spec.Containers)
+	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", dc.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
 	}
 
-	return dc.Spec.Template.Spec.Containers[0].Env, nil
+	return deployment.Spec.Template.Spec.Containers[0].Env, nil
 }
 
 // PropagateDeletes deletes the watch detected deleted files from remote component pod from each of the paths in passed targetPaths

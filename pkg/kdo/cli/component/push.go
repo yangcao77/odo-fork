@@ -16,7 +16,6 @@ import (
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
 
-	// "github.com/redhat-developer/odo-fork/pkg/kdo/util/completion"
 	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/project"
 	"github.com/redhat-developer/odo-fork/pkg/util"
@@ -312,9 +311,6 @@ func NewCmdPush(name, fullName string) *cobra.Command {
 	// Add a defined annotation in order to appear in the help menu
 	pushCmd.Annotations = map[string]string{"command": "component"}
 	pushCmd.SetUsageTemplate(odoutil.CmdUsageTemplate)
-	// TODO-KDO: Add when implementing completion
-	// completion.RegisterCommandHandler(pushCmd, completion.ComponentNameCompletionHandler)
-	// completion.RegisterCommandFlagHandler(pushCmd, "context", completion.FileCompletionHandler)
 
 	return pushCmd
 }
