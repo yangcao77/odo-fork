@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -36,7 +37,7 @@ func List() ([]CatalogEntry, error) {
 	if _, err := os.Stat(indexJSONFile); os.IsNotExist(err) {
 		jsonBytes, err = downloadIDPs()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to download index.json from %s", DefaultIDPRepo)
 		}
 	} else {
 		file, err := os.Open(indexJSONFile)
@@ -89,7 +90,7 @@ func Exists(idpType string) (bool, error) {
 }
 
 // VersionExists checks if a IDP of the specified name and version exists
-func VersionExists(client *kclient.Client, idpType string, idpVersion string) (bool, error) {
+func VersionExists(client *kclient.Client, idpName string, idpVersion string) (bool, error) {
 
 	// Loading status
 	glog.V(4).Info("Checking Iterative-Dev pack version")
@@ -102,7 +103,7 @@ func VersionExists(client *kclient.Client, idpType string, idpVersion string) (b
 
 	// Find the IDP and then return true if the version has been found
 	for _, supported := range catalogList {
-		if idpType == supported.Name {
+		if idpName == supported.Name {
 			// Now check to see if that version matches that IDP's version
 			// here we use the AllTags, because if the user somehow got hold of a version that was hidden
 			// then it's safe to assume that this user went to a lot of trouble to actually use that version,
