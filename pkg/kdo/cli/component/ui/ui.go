@@ -17,7 +17,7 @@ import (
 )
 
 // SelectComponentType lets the user to select the builder image (name only) in the prompt
-func SelectComponentType(options []catalog.CatalogImage) string {
+func SelectComponentType(options []catalog.CatalogEntry) string {
 	var componentType string
 	prompt := &survey.Select{
 		Message: "Which component type do you wish to create",
@@ -28,36 +28,13 @@ func SelectComponentType(options []catalog.CatalogImage) string {
 	return componentType
 }
 
-func getComponentTypeNameCandidates(options []catalog.CatalogImage) []string {
+func getComponentTypeNameCandidates(options []catalog.CatalogEntry) []string {
 	result := make([]string, len(options))
 	for i, option := range options {
 		result[i] = option.Name
 	}
 	sort.Strings(result)
 	return result
-}
-
-// SelectImageTag lets the user to select a specific tag for the previously selected builder image in a prompt
-func SelectImageTag(options []catalog.CatalogImage, selectedComponentType string) string {
-	var tag string
-	prompt := &survey.Select{
-		Message: fmt.Sprintf("Which version of '%s' component type do you wish to create", selectedComponentType),
-		Options: getTagCandidates(options, selectedComponentType),
-	}
-	err := survey.AskOne(prompt, &tag, survey.Required)
-	ui.HandleError(err)
-	return tag
-}
-
-func getTagCandidates(options []catalog.CatalogImage, selectedComponentType string) []string {
-	for _, option := range options {
-		if option.Name == selectedComponentType {
-			sort.Strings(option.NonHiddenTags)
-			return option.NonHiddenTags
-		}
-	}
-	glog.V(4).Infof("Selected component type %s was not part of the catalog images", selectedComponentType)
-	return []string{}
 }
 
 // SelectSourceType lets the user select a specific config.SrcType in a prompty
