@@ -74,7 +74,7 @@ func Search(name string) ([]string, error) {
 }
 
 // Exists returns true if the given iterative-dev pack type is valid, false if not
-func Exists(idpType string) (bool, error) {
+func Exists(idpName string) (bool, error) {
 
 	catalogList, err := List()
 	if err != nil {
@@ -82,7 +82,7 @@ func Exists(idpType string) (bool, error) {
 	}
 
 	for _, supported := range catalogList {
-		if idpType == supported.Name {
+		if idpName == supported.Name {
 			return true, nil
 		}
 	}
