@@ -244,14 +244,14 @@ func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
 	annotations[ComponentSourceTypeAnnotation] = string(params.SourceType)
 
 	// Namespace the component
-	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(params.Name, params.ApplicationName)
+	namespacedKubernetesObject, err := util.NamespaceKubernetesObject(params.Name, params.ApplicationName)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create namespaced name")
 	}
 
 	// Create CommonObjectMeta to be passed in
 	commonObjectMeta := metav1.ObjectMeta{
-		Name:        namespacedOpenShiftObject,
+		Name:        namespacedKubernetesObject,
 		Labels:      labels,
 		Annotations: annotations,
 	}
