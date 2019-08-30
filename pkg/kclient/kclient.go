@@ -16,6 +16,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
+	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/preference"
 	"github.com/redhat-developer/odo-fork/pkg/util"
@@ -28,14 +29,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apimachinery/pkg/watch"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	corev1Client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -45,15 +45,31 @@ var (
 	DEPLOYMENT_CONFIG_NOT_FOUND           error  = fmt.Errorf("Requested deployment does not exist")
 )
 
-const (
-	KubectlUpdateTimeout = 5 * time.Minute
-	KubernetesNamespace  = "default"
+// CreateArgs is a container of attributes of component create action
+type CreateArgs struct {
+	Name               string
+	SourcePath         string
+	SourceRef          string
+	SourceType         config.SrcType
+	ImageName          string
+	EnvVars            []string
+	Ports              []string
+	Resources          *corev1.ResourceRequirements
+	ApplicationName    string
+	Wait               bool
+	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
+	StdOut             io.Writer
+}
 
+const (
 	// The length of the string to be generated for names of resources
 	nameLength = 5
 
 	// waitForPodTimeOut controls how long we should wait for a pod before giving up
 	waitForPodTimeOut = 240 * time.Second
+
+	// ComponentPortAnnotationName annotation is used on the secrets that are created for each exposed port of the component
+	ComponentPortAnnotationName = "component-port"
 )
 
 // errorMsg is the message for user when invalid configuration error occurs
@@ -63,9 +79,10 @@ Please ensure you have an active kubernetes context to your cluster.
 Consult your Kubernetes distribution's documentation for more details
 `
 
+// Client is a collection of fields used for client configuration and interaction
 type Client struct {
 	KubeClient   kubernetes.Interface
-	CoreV1Client v1.CoreV1Interface
+	CoreV1Client corev1Client.CoreV1Interface
 	KubeConfig   clientcmd.ClientConfig
 	Namespace    string
 }
@@ -170,6 +187,7 @@ func isServerUp(server string) bool {
 	return true
 }
 
+// GetCurrentNamespace returns the current namespace
 func (c *Client) GetCurrentNamespace() string {
 	return c.Namespace
 }
@@ -292,6 +310,42 @@ func (c *Client) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return secret, nil
 }
 
+// Create a secret for each port, containing the host and port of the component
+// This is done so other components can later inject the secret into the environment
+// and have the "coordinates" to communicate with this component
+func (c *Client) createSecrets(componentName string, commonObjectMeta metav1.ObjectMeta, svc *corev1.Service) error {
+	originalName := commonObjectMeta.Name
+	for _, svcPort := range svc.Spec.Ports {
+		portAsString := fmt.Sprintf("%v", svcPort.Port)
+
+		// we need to create multiple secrets, so each one has to contain the port in it's name
+		// so we change the name of each secret by adding the port number
+		commonObjectMeta.Name = fmt.Sprintf("%v-%v", originalName, portAsString)
+
+		// we also add the port as an annotation to the secret
+		// this comes in handy when we need to "query" for the appropriate secret
+		// of a component based on the port
+		commonObjectMeta.Annotations[ComponentPortAnnotationName] = portAsString
+
+		err := c.CreateSecret(
+			commonObjectMeta,
+			map[string]string{
+				secretKeyName(componentName, "host"): svc.Name,
+				secretKeyName(componentName, "port"): portAsString,
+			})
+
+		if err != nil {
+			return errors.Wrapf(err, "unable to create Secret for %s", commonObjectMeta.Name)
+		}
+	}
+
+	// restore the original values of the fields we changed
+	commonObjectMeta.Name = originalName
+	delete(commonObjectMeta.Annotations, ComponentPortAnnotationName)
+
+	return nil
+}
+
 func secretKeyName(componentName, baseKeyName string) string {
 	return fmt.Sprintf("COMPONENT_%v_%v", strings.Replace(strings.ToUpper(componentName), "-", "_", -1), strings.ToUpper(baseKeyName))
 }
@@ -347,15 +401,76 @@ func deleteEnvVars(existingEnvs []corev1.EnvVar, envTobeDeleted string) []corev1
 	return retVal
 }
 
+// CreateComponentResources creates deployment, service and other kubernetes resources for the component
+func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta metav1.ObjectMeta) error {
+	imageNS, imageName, imageTag, _, err := ParseImageName(params.ImageName)
+
+	if err != nil {
+		return errors.Wrap(err, "unable to create component resoures")
+	}
+
+	inputEnvs, err := GetInputEnvVarsFromStrings(params.EnvVars)
+	if err != nil {
+		return errors.Wrapf(err, "error adding environment variables to the container")
+	}
+
+	// TODO-KDO: Get port information from component settings
+	containerPorts := []corev1.ContainerPort{
+		{
+			ContainerPort: int32(9090),
+			Name:          "http",
+		},
+	}
+
+	commonImageMeta := CommonImageMeta{
+		Name:      imageName,
+		Tag:       imageTag,
+		Namespace: imageNS,
+		Ports:     containerPorts,
+	}
+
+	// Generate the DeploymentConfig that will be used.
+	deployment := generateDeployment(
+		commonObjectMeta,
+		commonImageMeta,
+		inputEnvs,
+		[]corev1.EnvFromSource{},
+		params.Resources,
+	)
+
+	if len(inputEnvs) != 0 {
+		err = updateEnvVar(&deployment, inputEnvs)
+		if err != nil {
+			return errors.Wrapf(err, "unable to add env vars to the container")
+		}
+	}
+
+	_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Create(&deployment)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create DeploymentConfig for %s", commonObjectMeta.Name)
+	}
+
+	svc, err := c.CreateService(commonObjectMeta, deployment.Spec.Template.Spec.Containers[0].Ports)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create Service for %s", commonObjectMeta.Name)
+	}
+
+	err = c.createSecrets(params.Name, commonObjectMeta, svc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateService generates and creates the service
 // commonObjectMeta is the ObjectMeta for the service
-// dc is the deploymentConfig to get the container ports
+// containerPorts is an array of container ports
 func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPorts []corev1.ContainerPort) (*corev1.Service, error) {
 	// generate and create Service
 	var svcPorts []corev1.ServicePort
 	for _, containerPort := range containerPorts {
 		svcPort := corev1.ServicePort{
-
 			Name:       containerPort.Name,
 			Port:       containerPort.ContainerPort,
 			Protocol:   containerPort.Protocol,
@@ -368,7 +483,7 @@ func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPort
 		Spec: corev1.ServiceSpec{
 			Ports: svcPorts,
 			Selector: map[string]string{
-				"deploymentconfig": commonObjectMeta.Name,
+				"deployment": commonObjectMeta.Name,
 			},
 		},
 	}
@@ -392,6 +507,19 @@ func (c *Client) CreateSecret(objectMeta metav1.ObjectMeta, data map[string]stri
 	if err != nil {
 		return errors.Wrapf(err, "unable to create secret for %s", objectMeta.Name)
 	}
+	return nil
+}
+
+// updateEnvVar updates the environmental variables to the container in the Deployment
+// deployment is the deployment to be updated
+// envVars is the array containing the corev1.EnvVar values
+func updateEnvVar(deployment *appsv1.Deployment, envVars []corev1.EnvVar) error {
+	numContainers := len(deployment.Spec.Template.Spec.Containers)
+	if numContainers != 1 {
+		return fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
+	}
+
+	deployment.Spec.Template.Spec.Containers[0].Env = envVars
 	return nil
 }
 
@@ -545,14 +673,14 @@ func (c *Client) DeleteNamespace(name string) error {
 func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
 
 	// List DeploymentConfig according to selectors
-	dcList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
+	deploymentList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list Deployments")
 	}
 
 	// Grab all the matched strings
 	var values []string
-	for _, elem := range dcList.Items {
+	for _, elem := range deploymentList.Items {
 		for key, val := range elem.Labels {
 			if key == label {
 				values = append(values, val)
@@ -564,83 +692,6 @@ func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]stri
 	sort.Strings(values)
 
 	return values, nil
-}
-
-// Define a function that is meant to create patch based on the contents of the DC
-type depPatchProvider func(dc *appsv1.Deployment) (string, error)
-
-// LinkSecret links a secret to the Deployment of a component
-func (c *Client) LinkSecret(secretName, componentName, applicationName string) error {
-
-	var dcPatchProvider = func(dc *appsv1.Deployment) (string, error) {
-		if len(dc.Spec.Template.Spec.Containers[0].EnvFrom) > 0 {
-			// we always add the link as the first value in the envFrom array. That way we don't need to know the existing value
-			return fmt.Sprintf(`[{ "op": "add", "path": "/spec/template/spec/containers/0/envFrom/0", "value": {"secretRef": {"name": "%s"}} }]`, secretName), nil
-		}
-
-		//in this case we need to add the full envFrom value
-		return fmt.Sprintf(`[{ "op": "add", "path": "/spec/template/spec/containers/0/envFrom", "value": [{"secretRef": {"name": "%s"}}] }]`, secretName), nil
-	}
-
-	return c.patchDepOfComponent(componentName, applicationName, dcPatchProvider)
-}
-
-// UnlinkSecret unlinks a secret to the Deployment of a component
-func (c *Client) UnlinkSecret(secretName, componentName, applicationName string) error {
-	// Remove the Secret from the container
-	var dcPatchProvider = func(dc *appsv1.Deployment) (string, error) {
-		indexForRemoval := -1
-		for i, env := range dc.Spec.Template.Spec.Containers[0].EnvFrom {
-			if env.SecretRef.Name == secretName {
-				indexForRemoval = i
-				break
-			}
-		}
-
-		if indexForRemoval == -1 {
-			return "", fmt.Errorf("Deployment does not contain a link to %s", secretName)
-		}
-
-		return fmt.Sprintf(`[{"op": "remove", "path": "/spec/template/spec/containers/0/envFrom/%d"}]`, indexForRemoval), nil
-	}
-
-	return c.patchDepOfComponent(componentName, applicationName, dcPatchProvider)
-}
-
-// Define a function that is meant to create patch based on the contents of the DC
-type dcPatchProvider func(dc *appsv1.Deployment) (string, error)
-
-// this function will look up the appropriate Deployment, and execute the specified patch
-// the whole point of using patch is to avoid race conditions where we try to update
-// dc while it's being simultaneously updated from another source (for example Kubernetes itself)
-// this will result in the triggering of a redeployment
-func (c *Client) patchDepOfComponent(componentName, applicationName string, dcPatchProvider dcPatchProvider) error {
-	depName, err := util.NamespaceKubernetesObject(componentName, applicationName)
-	if err != nil {
-		return err
-	}
-
-	dc, err := c.KubeClient.AppsV1().Deployments(c.Namespace).Get(depName, metav1.GetOptions{})
-	if err != nil {
-		return errors.Wrapf(err, "Unable to locate Deployment for component %s of application %s", componentName, applicationName)
-	}
-
-	if dcPatchProvider != nil {
-		patch, err := dcPatchProvider(dc)
-		if err != nil {
-			return errors.Wrap(err, "Unable to create a patch for the Deployments")
-		}
-
-		// patch the DeploymentConfig with the secret
-		_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Patch(depName, types.JSONPatchType, []byte(patch))
-		if err != nil {
-			return errors.Wrapf(err, "Deployment not patched %s", dc.Name)
-		}
-	} else {
-		return errors.Wrapf(err, "dcPatch was not properly set")
-	}
-
-	return nil
 }
 
 // Service struct holds the service name and its corresponding list of plans
@@ -1188,8 +1239,8 @@ func (c *Client) ExecCMDInContainer(podName string, cmd []string, stdout io.Writ
 	return nil
 }
 
-// GetVolumeMountsFromDC returns a list of all volume mounts in the given Deployment
-func (c *Client) GetVolumeMountsFromDC(dep *appsv1.Deployment) []corev1.VolumeMount {
+// GetVolumeMountsFromDeployment returns a list of all volume mounts in the given Deployment
+func (c *Client) GetVolumeMountsFromDeployment(dep *appsv1.Deployment) []corev1.VolumeMount {
 	var volumeMounts []corev1.VolumeMount
 	for _, container := range dep.Spec.Template.Spec.Containers {
 		volumeMounts = append(volumeMounts, container.VolumeMounts...)
@@ -1211,8 +1262,8 @@ func (c *Client) IsVolumeAnEmptyDir(volumeMountName string, dep *appsv1.Deployme
 
 // GetPVCNameFromVolumeMountName returns the PVC associated with the given volume
 // An empty string is returned if the volume is not found
-func (c *Client) GetPVCNameFromVolumeMountName(volumeMountName string, dc *appsv1.Deployment) string {
-	for _, volume := range dc.Spec.Template.Spec.Volumes {
+func (c *Client) GetPVCNameFromVolumeMountName(volumeMountName string, deployment *appsv1.Deployment) string {
+	for _, volume := range deployment.Spec.Template.Spec.Volumes {
 		if volume.Name == volumeMountName {
 			if volume.PersistentVolumeClaim != nil {
 				return volume.PersistentVolumeClaim.ClaimName
@@ -1268,19 +1319,46 @@ func GetInputEnvVarsFromStrings(envVars []string) ([]corev1.EnvVar, error) {
 	return inputEnvVars, nil
 }
 
-// GetEnvVarsFromDep retrieves the env vars from the DC
-// dcName is the name of the dc from which the env vars are retrieved
+// GetEnvVarsFromDep retrieves the env vars from the Deployment
+// deploymentName is the name of the deployment from which the env vars are retrieved
 // projectName is the name of the project
-func (c *Client) GetEnvVarsFromDep(dcName string) ([]corev1.EnvVar, error) {
-	dc, err := c.GetDeploymentsFromName(dcName)
+func (c *Client) GetEnvVarsFromDep(deploymentName string) ([]corev1.EnvVar, error) {
+	deployment, err := c.GetDeploymentsFromName(deploymentName)
 	if err != nil {
-		return nil, errors.Wrap(err, "error occurred while retrieving the dc")
+		return nil, errors.Wrap(err, "error occurred while retrieving the deployment")
 	}
 
-	numContainers := len(dc.Spec.Template.Spec.Containers)
+	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", dc.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
 	}
 
-	return dc.Spec.Template.Spec.Containers[0].Env, nil
+	return deployment.Spec.Template.Spec.Containers[0].Env, nil
+}
+
+// PropagateDeletes deletes the watch detected deleted files from remote component pod from each of the paths in passed targetPaths
+// Parameters:
+//	targetPodName: Name of component pod
+//	delSrcRelPaths: Paths to be deleted on the remote pod relative to component source base path ex: Compoent src: /abc/src, file deleted: abc/src/foo.lang => relative path: foo.lang
+//	targetPaths: Slice of all container paths that contain the component source -- deployment dir, destination dir, working dir, etc..
+func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string, containerPaths []string) error {
+	reader, writer := io.Pipe()
+	var rmPaths []string
+	if len(containerPaths) == 0 || len(delSrcRelPaths) == 0 {
+		return fmt.Errorf("Failed to propagate deletions: targetPaths: %+v and delSrcRelPaths: %+v", containerPaths, delSrcRelPaths)
+	}
+	for _, targetPath := range containerPaths {
+		for _, delRelPath := range delSrcRelPaths {
+			rmPaths = append(rmPaths, filepath.Join(targetPath, delRelPath))
+		}
+	}
+	glog.V(4).Infof("targetPaths marked  for deletion are %+v", rmPaths)
+	cmdArr := []string{"rm", "-rf"}
+	cmdArr = append(cmdArr, rmPaths...)
+
+	err := c.ExecCMDInContainer(targetPodName, cmdArr, writer, writer, reader, false)
+	if err != nil {
+		return err
+	}
+	return err
 }

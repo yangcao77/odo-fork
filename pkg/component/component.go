@@ -1,7 +1,9 @@
 package component
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +14,7 @@ import (
 
 	// applabels "github.com/redhat-developer/odo-fork/pkg/application/labels"
 	"github.com/redhat-developer/odo-fork/pkg/catalog"
+	componentlabels "github.com/redhat-developer/odo-fork/pkg/component/labels"
 
 	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
@@ -22,6 +25,9 @@ import (
 	// "github.com/redhat-developer/odo-fork/pkg/storage"
 	// urlpkg "github.com/redhat-developer/odo-fork/pkg/url"
 	"github.com/redhat-developer/odo-fork/pkg/util"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // componentSourceURLAnnotation is an source url from which component was build
@@ -31,6 +37,13 @@ const ComponentSourceTypeAnnotation = "app.kubernetes.io/component-source-type"
 const componentRandomNamePartsMaxLen = 12
 const componentNameMaxRetries = 3
 const componentNameMaxLen = -1
+
+// Target defines a target image environment which can be based on an IDP or s2i image
+type ContainerAttributes struct {
+	// Path is the location to copy the source
+	SrcPath      string
+	WorkingPaths []string
+}
 
 // GetComponentDir returns source repo name
 // Parameters:
@@ -209,64 +222,64 @@ func validateSourceType(sourceType string) bool {
 // 	return secretNames, nil
 // }
 
-// // CreateFromPath create new component with source or binary from the given local path
-// // sourceType indicates the source type of the component and can be either local or binary
-// // envVars is the array containing the environment variables
-// func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
-// 	labels := componentlabels.GetLabels(params.Name, params.ApplicationName, true)
+// CreateFromPath create new component with source or binary from the given local path
+// sourceType indicates the source type of the component and can be either local or binary
+// envVars is the array containing the environment variables
+func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
+	labels := componentlabels.GetLabels(params.Name, params.ApplicationName, true)
 
-// 	// Parse componentImageType before adding to labels
-// 	_, imageName, imageTag, _, err := kclient.ParseImageName(params.ImageName)
-// 	if err != nil {
-// 		return errors.Wrap(err, "unable to parse image name")
-// 	}
+	// Parse componentImageType before adding to labels
+	_, imageName, imageTag, _, err := kclient.ParseImageName(params.ImageName)
+	if err != nil {
+		return errors.Wrap(err, "unable to parse image name")
+	}
 
-// 	// save component type as label
-// 	labels[componentlabels.ComponentTypeLabel] = imageName
-// 	labels[componentlabels.ComponentTypeVersion] = imageTag
+	// save component type as label
+	labels[componentlabels.ComponentTypeLabel] = imageName
+	labels[componentlabels.ComponentTypeVersion] = imageTag
 
-// 	// save source path as annotation
-// 	sourceURL := util.GenFileURL(params.SourcePath)
-// 	annotations := map[string]string{componentSourceURLAnnotation: sourceURL}
-// 	annotations[ComponentSourceTypeAnnotation] = string(params.SourceType)
+	// save source path as annotation
+	sourceURL := util.GenFileURL(params.SourcePath)
+	annotations := map[string]string{componentSourceURLAnnotation: sourceURL}
+	annotations[ComponentSourceTypeAnnotation] = string(params.SourceType)
 
-// 	// Namespace the component
-// 	namespacedOpenShiftObject, err := util.NamespaceOpenShiftObject(params.Name, params.ApplicationName)
-// 	if err != nil {
-// 		return errors.Wrapf(err, "unable to create namespaced name")
-// 	}
+	// Namespace the component
+	namespacedKubernetesObject, err := util.NamespaceKubernetesObject(params.Name, params.ApplicationName)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create namespaced name")
+	}
 
-// 	// Create CommonObjectMeta to be passed in
-// 	commonObjectMeta := metav1.ObjectMeta{
-// 		Name:        namespacedOpenShiftObject,
-// 		Labels:      labels,
-// 		Annotations: annotations,
-// 	}
+	// Create CommonObjectMeta to be passed in
+	commonObjectMeta := metav1.ObjectMeta{
+		Name:        namespacedKubernetesObject,
+		Labels:      labels,
+		Annotations: annotations,
+	}
 
-// 	// Bootstrap the deployment with SupervisorD
-// 	err = client.BootstrapSupervisoredS2I(params, commonObjectMeta)
-// 	if err != nil {
-// 		return err
-// 	}
+	// Create component resources
+	err = client.CreateComponentResources(params, commonObjectMeta)
+	if err != nil {
+		return err
+	}
 
-// 	if params.Wait {
-// 		// if wait flag is present then extract the podselector
-// 		// use the podselector for calling WaitAndGetPod
-// 		selectorLabels, err := util.NamespaceOpenShiftObject(labels[componentlabels.ComponentLabel], labels["app"])
-// 		if err != nil {
-// 			return err
-// 		}
+	if params.Wait {
+		// if wait flag is present then extract the podselector
+		// use the podselector for calling WaitAndGetPod
+		selectorLabels, err := util.NamespaceKubernetesObject(labels[componentlabels.ComponentLabel], labels["app"])
+		if err != nil {
+			return err
+		}
 
-// 		podSelector := fmt.Sprintf("deploymentconfig=%s", selectorLabels)
-// 		_, err = client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return nil
-// 	}
+		podSelector := fmt.Sprintf("deployment=%s", selectorLabels)
+		_, err = client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // // Delete whole component
 // func Delete(client *kclient.Client, componentName string, applicationName string) error {
@@ -335,97 +348,100 @@ func validateSourceType(sourceType string) bool {
 // 	return retVal
 // }
 
-// // CreateComponent creates component as per the passed component settings
-// //	Parameters:
-// //		client: kclient instance
-// //		componentConfig: the component configuration that holds all details of component
-// //		context: the component context indicating the location of component config and hence its source as well
-// //		stdout: io.Writer instance to write output to
-// //	Returns:
-// //		err: errors if any
-// func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigInfo, context string, stdout io.Writer) (err error) {
+// CreateComponent creates component as per the passed component settings
+//	Parameters:
+//		client: kclient instance
+//		componentConfig: the component configuration that holds all details of component
+//		context: the component context indicating the location of component config and hence its source as well
+//		stdout: io.Writer instance to write output to
+//	Returns:
+//		err: errors if any
+func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigInfo, context string, stdout io.Writer) (err error) {
 
-// 	cmpName := componentConfig.GetName()
-// 	cmpType := componentConfig.GetType()
-// 	cmpSrcType := componentConfig.GetSourceType()
-// 	cmpPorts := componentConfig.GetPorts()
-// 	cmpSrcRef := componentConfig.GetRef()
-// 	appName := componentConfig.GetApplication()
-// 	envVarsList := componentConfig.GetEnvVars()
+	cmpName := componentConfig.GetName()
+	// cmpType := componentConfig.GetType()
+	cmpSrcType := componentConfig.GetSourceType()
+	cmpPorts := componentConfig.GetPorts()
+	appName := componentConfig.GetApplication()
+	envVarsList := componentConfig.GetEnvVars()
 
-// 	// create and get the storage to be created/mounted during the component creation
-// 	storageList := getStorageFromConfig(&componentConfig)
-// 	storageToBeMounted, _, err := storage.Push(client, storageList, componentConfig.GetName(), componentConfig.GetApplication(), false)
-// 	if err != nil {
-// 		return err
-// 	}
+	// // create and get the storage to be created/mounted during the component creation
+	// storageList := getStorageFromConfig(&componentConfig)
+	// storageToBeMounted, _, err := storage.Push(client, storageList, componentConfig.GetName(), componentConfig.GetApplication(), false)
+	// if err != nil {
+	// 	return err
+	// }
+	// TODO-KDO: remove following line and implement storage handling properly for KDO
+	storageToBeMounted := make(map[string]*corev1.PersistentVolumeClaim)
+	imgName := "jeevandroid/node-express-template:latest"
+	log.Successf("Initializing component")
+	createArgs := kclient.CreateArgs{
+		Name: cmpName,
+		// ImageName:          cmpType,
+		ImageName:          imgName,
+		ApplicationName:    appName,
+		EnvVars:            envVarsList.ToStringSlice(),
+		StorageToBeMounted: storageToBeMounted,
+	}
+	createArgs.SourceType = cmpSrcType
+	createArgs.SourcePath = componentConfig.GetSourceLocation()
 
-// 	log.Successf("Initializing component")
-// 	createArgs := kclient.CreateArgs{
-// 		Name:               cmpName,
-// 		ImageName:          cmpType,
-// 		ApplicationName:    appName,
-// 		EnvVars:            envVarsList.ToStringSlice(),
-// 		StorageToBeMounted: storageToBeMounted,
-// 	}
-// 	createArgs.SourceType = cmpSrcType
-// 	createArgs.SourcePath = componentConfig.GetSourceLocation()
+	if len(cmpPorts) > 0 {
+		createArgs.Ports = cmpPorts
+	}
 
-// 	if len(cmpPorts) > 0 {
-// 		createArgs.Ports = cmpPorts
-// 	}
+	createArgs.Resources, err = kclient.GetResourceRequirementsFromCmpSettings(componentConfig)
+	if err != nil {
+		return errors.Wrap(err, "failed to create component")
+	}
 
-// 	createArgs.Resources, err = kclient.GetResourceRequirementsFromCmpSettings(componentConfig)
-// 	if err != nil {
-// 		return errors.Wrap(err, "failed to create component")
-// 	}
+	switch cmpSrcType {
+	// TODO-KDO: Decide whether to implement create component from git, possibly use tekton pipeline for this scenario
+	// case config.GIT:
+	// 	// Use Git
+	// 	if cmpSrcRef != "" {
+	// 		createArgs.SourceRef = cmpSrcRef
+	// 	}
 
-// 	switch cmpSrcType {
-// 	case config.GIT:
-// 		// Use Git
-// 		if cmpSrcRef != "" {
-// 			createArgs.SourceRef = cmpSrcRef
-// 		}
+	// 	createArgs.Wait = true
+	// 	createArgs.StdOut = stdout
 
-// 		createArgs.Wait = true
-// 		createArgs.StdOut = stdout
-
-// 		if err = CreateFromGit(
-// 			client,
-// 			createArgs,
-// 		); err != nil {
-// 			return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
-// 		}
-// 	case config.LOCAL:
-// 		fileInfo, err := os.Stat(createArgs.SourcePath)
-// 		if err != nil {
-// 			return errors.Wrapf(err, "failed to get info of path %+v of component %+v", createArgs.SourcePath, createArgs)
-// 		}
-// 		if !fileInfo.IsDir() {
-// 			return fmt.Errorf("component creation with args %+v as path needs to be a directory", createArgs)
-// 		}
-// 		// Create
-// 		if err = CreateFromPath(client, createArgs); err != nil {
-// 			return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
-// 		}
-// 	case config.BINARY:
-// 		if err = CreateFromPath(client, createArgs); err != nil {
-// 			return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
-// 		}
-// 	default:
-// 		// If the user does not provide anything (local, git or binary), use the current absolute path and deploy it
-// 		createArgs.SourceType = config.LOCAL
-// 		dir, err := os.Getwd()
-// 		if err != nil {
-// 			return errors.Wrap(err, "failed to create component with current directory as source for the component")
-// 		}
-// 		createArgs.SourcePath = dir
-// 		if err = CreateFromPath(client, createArgs); err != nil {
-// 			return errors.Wrapf(err, "")
-// 		}
-// 	}
-// 	return
-// }
+	// 	if err = CreateFromGit(
+	// 		client,
+	// 		createArgs,
+	// 	); err != nil {
+	// 		return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
+	// 	}
+	case config.LOCAL:
+		fileInfo, err := os.Stat(createArgs.SourcePath)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get info of path %+v of component %+v", createArgs.SourcePath, createArgs)
+		}
+		if !fileInfo.IsDir() {
+			return fmt.Errorf("component creation with args %+v as path needs to be a directory", createArgs)
+		}
+		// Create
+		if err = CreateFromPath(client, createArgs); err != nil {
+			return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
+		}
+	case config.BINARY:
+		if err = CreateFromPath(client, createArgs); err != nil {
+			return errors.Wrapf(err, "failed to create component with args %+v", createArgs)
+		}
+	default:
+		// If the user does not provide anything (local, git or binary), use the current absolute path and deploy it
+		createArgs.SourceType = config.LOCAL
+		dir, err := os.Getwd()
+		if err != nil {
+			return errors.Wrap(err, "failed to create component with current directory as source for the component")
+		}
+		createArgs.SourcePath = dir
+		if err = CreateFromPath(client, createArgs); err != nil {
+			return errors.Wrapf(err, "")
+		}
+	}
+	return
+}
 
 // CheckComponentMandatoryParams checks mandatory parammeters for component
 func CheckComponentMandatoryParams(componentSettings config.ComponentSettings) error {
@@ -627,139 +643,133 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 // 	return nil
 // }
 
-// // PushLocal push local code to the cluster and trigger build there.
-// // During copying binary components, path represent base directory path to binary and files contains path of binary
-// // During copying local source components, path represent base directory path whereas files is empty
-// // During `odo watch`, path represent base directory path whereas files contains list of changed Files
-// // Parameters:
-// //	componentName is name of the component to update sources to
-// //	applicationName is the name of the application of which the component is a part
-// //	path is base path of the component source/binary
-// // 	files is list of changed files captured during `odo watch` as well as binary file path
-// // 	delFiles is the list of files identified as deleted
-// // 	isForcePush indicates if the sources to be updated are due to a push in which case its a full source directory push or only push of identified sources
-// // 	globExps are the glob expressions which are to be ignored during the push
-// //	show determines whether or not to show the log (passed in by po.show argument within /cmd)
-// // Returns
-// //	Error if any
-// func PushLocal(client *kclient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isForcePush bool, globExps []string, show bool) error {
-// 	glog.V(4).Infof("PushLocal: componentName: %s, applicationName: %s, path: %s, files: %s, delFiles: %s, isForcePush: %+v", componentName, applicationName, path, files, delFiles, isForcePush)
+// PushLocal push local code to the cluster and trigger build there.
+// During copying binary components, path represent base directory path to binary and files contains path of binary
+// During copying local source components, path represent base directory path whereas files is empty
+// During `odo watch`, path represent base directory path whereas files contains list of changed Files
+// Parameters:
+//	componentName is name of the component to update sources to
+//	applicationName is the name of the application of which the component is a part
+//	path is base path of the component source/binary
+// 	files is list of changed files captured during `odo watch` as well as binary file path
+// 	delFiles is the list of files identified as deleted
+// 	isForcePush indicates if the sources to be updated are due to a push in which case its a full source directory push or only push of identified sources
+// 	globExps are the glob expressions which are to be ignored during the push
+//	show determines whether or not to show the log (passed in by po.show argument within /cmd)
+// Returns
+//	Error if any
+func PushLocal(client *kclient.Client, componentName string, applicationName string, path string, out io.Writer, files []string, delFiles []string, isForcePush bool, globExps []string, show bool, containerAttr ContainerAttributes) error {
+	glog.V(4).Infof("PushLocal: componentName: %s, applicationName: %s, path: %s, files: %s, delFiles: %s, isForcePush: %+v", componentName, applicationName, path, files, delFiles, isForcePush)
 
-// 	// Edge case: check to see that the path is NOT empty.
-// 	emptyDir, err := isEmpty(path)
-// 	if err != nil {
-// 		return errors.Wrapf(err, "Unable to check directory: %s", path)
-// 	} else if emptyDir {
-// 		return errors.New(fmt.Sprintf("Directory / file %s is empty", path))
-// 	}
+	// Edge case: check to see that the path is NOT empty.
+	emptyDir, err := isEmpty(path)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to check directory: %s", path)
+	} else if emptyDir {
+		return errors.New(fmt.Sprintf("Directory / file %s is empty", path))
+	}
 
-// 	// Find DeploymentConfig for component
-// 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
-// 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
-// 	dc, err := client.GetOneDeploymentConfigFromSelector(componentSelector)
-// 	if err != nil {
-// 		return errors.Wrap(err, "unable to get deployment for component")
-// 	}
-// 	// Find Pod for component
-// 	podSelector := fmt.Sprintf("deploymentconfig=%s", dc.Name)
+	// Find Deployment for component
+	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
+	componentSelector := util.ConvertLabelsToSelector(componentLabels)
+	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
+	if err != nil {
+		return errors.Wrap(err, "unable to get deployment for component")
+	}
+	// Find Pod for component
+	podSelector := fmt.Sprintf("deployment=%s", dc.Name)
 
-// 	// Wait for Pod to be in running state otherwise we can't sync data to it.
-// 	pod, err := client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")
-// 	if err != nil {
-// 		return errors.Wrapf(err, "error while waiting for pod  %s", podSelector)
-// 	}
+	// Wait for Pod to be in running state otherwise we can't sync data to it.
+	pod, err := client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")
+	if err != nil {
+		return errors.Wrapf(err, "error while waiting for pod  %s", podSelector)
+	}
 
-// 	// Get S2I Source/Binary Path from Pod Env variables created at the time of component create
-// 	s2iSrcPath := getEnvFromPodEnvs(kclient.EnvS2ISrcOrBinPath, pod.Spec.Containers[0].Env)
-// 	if s2iSrcPath == "" {
-// 		s2iSrcPath = kclient.DefaultS2ISrcOrBinPath
-// 	}
-// 	targetPath := fmt.Sprintf("%s/src", s2iSrcPath)
+	// If there are files identified as deleted, propagate them to the component pod
+	if len(delFiles) > 0 {
+		glog.V(4).Infof("propogating deletion of files %s to pod", strings.Join(delFiles, " "))
+		/*
+			Delete files observed by watch from each of the directories in the specified pod. The directories are an array because the source can
+			be copied to more than one directory depending on the build controller. Eg. For s2i the following directories can contain the source:
+				deployment dir: In interpreted runtimes like python, source is copied over to deployment dir so delete needs to happen here as well
+				destination dir: This is the directory where s2i expects source to be copied for it be built and deployed
+				working dir: Directory where, sources are copied over from deployment dir from where the s2i builds and deploys source.
+							 Deletes need to happen here as well otherwise, even if the latest source is copied over, the stale source files remain
+				source backup dir: Directory used for backing up source across multiple iterations of push and watch in component container
+								   In case of python, s2i image moves sources from destination dir to workingdir which means sources are deleted from destination dir
+								   So, during the subsequent watch pushing new diff to component pod, the source as a whole doesn't exist at destination dir and hence needs
+								   to be backed up.
+		*/
+		err := client.PropagateDeletes(pod.Name, delFiles, containerAttr.WorkingPaths)
+		if err != nil {
+			return errors.Wrapf(err, "unable to propagate file deletions %+v", delFiles)
+		}
+	}
 
-// 	// If there are files identified as deleted, propagate them to the component pod
-// 	if len(delFiles) > 0 {
-// 		glog.V(4).Infof("propogating deletion of files %s to pod", strings.Join(delFiles, " "))
-// 		/*
-// 			Delete files observed by watch to have been deleted from each of s2i directories like:
-// 				deployment dir: In interpreted runtimes like python, source is copied over to deployment dir so delete needs to happen here as well
-// 				destination dir: This is the directory where s2i expects source to be copied for it be built and deployed
-// 				working dir: Directory where, sources are copied over from deployment dir from where the s2i builds and deploys source.
-// 							 Deletes need to happen here as well otherwise, even if the latest source is copied over, the stale source files remain
-// 				source backup dir: Directory used for backing up source across multiple iterations of push and watch in component container
-// 								   In case of python, s2i image moves sources from destination dir to workingdir which means sources are deleted from destination dir
-// 								   So, during the subsequent watch pushing new diff to component pod, the source as a whole doesn't exist at destination dir and hence needs
-// 								   to be backed up.
-// 		*/
-// 		err := client.PropagateDeletes(pod.Name, delFiles, getS2IPaths(pod.Spec.Containers[0].Env))
-// 		if err != nil {
-// 			return errors.Wrapf(err, "unable to propagate file deletions %+v", delFiles)
-// 		}
-// 	}
+	// Copy the files to the pod
+	s := log.Spinner("Copying files to component")
+	defer s.End(false)
 
-// 	// Copy the files to the pod
-// 	s := log.Spinner("Copying files to component")
-// 	defer s.End(false)
+	if !isForcePush {
+		if len(files) == 0 && len(delFiles) == 0 {
+			return fmt.Errorf("pass files modifications/deletions to sync to component pod or force push")
+		}
+	}
 
-// 	if !isForcePush {
-// 		if len(files) == 0 && len(delFiles) == 0 {
-// 			return fmt.Errorf("pass files modifications/deletions to sync to component pod or force push")
-// 		}
-// 	}
+	if isForcePush || len(files) > 0 {
+		glog.V(4).Infof("Copying files %s to pod", strings.Join(files, " "))
+		err = client.CopyFile(path, pod.Name, containerAttr.SrcPath, files, globExps)
+		if err != nil {
+			s.End(false)
+			return errors.Wrap(err, "unable push files to pod")
+		}
+	}
+	s.End(true)
 
-// 	if isForcePush || len(files) > 0 {
-// 		glog.V(4).Infof("Copying files %s to pod", strings.Join(files, " "))
-// 		err = client.CopyFile(path, pod.Name, targetPath, files, globExps)
-// 		if err != nil {
-// 			s.End(false)
-// 			return errors.Wrap(err, "unable push files to pod")
-// 		}
-// 	}
-// 	s.End(true)
+	if show {
+		s = log.SpinnerNoSpin("Building component")
+	} else {
+		s = log.Spinner("Building component")
+	}
 
-// 	if show {
-// 		s = log.SpinnerNoSpin("Building component")
-// 	} else {
-// 		s = log.Spinner("Building component")
-// 	}
+	// use pipes to write output from ExecCMDInContainer in yellow  to 'out' io.Writer
+	pipeReader, pipeWriter := io.Pipe()
+	var cmdOutput string
 
-// 	// use pipes to write output from ExecCMDInContainer in yellow  to 'out' io.Writer
-// 	pipeReader, pipeWriter := io.Pipe()
-// 	var cmdOutput string
+	// This Go routine will automatically pipe the output from ExecCMDInContainer to
+	// our logger.
+	go func() {
+		scanner := bufio.NewScanner(pipeReader)
+		for scanner.Scan() {
+			line := scanner.Text()
 
-// 	// This Go routine will automatically pipe the output from ExecCMDInContainer to
-// 	// our logger.
-// 	go func() {
-// 		scanner := bufio.NewScanner(pipeReader)
-// 		for scanner.Scan() {
-// 			line := scanner.Text()
+			if log.IsDebug() || show {
+				_, err := fmt.Fprintln(out, line)
+				if err != nil {
+					log.Errorf("Unable to print to stdout: %v", err)
+				}
+			}
 
-// 			if log.IsDebug() || show {
-// 				_, err := fmt.Fprintln(out, line)
-// 				if err != nil {
-// 					log.Errorf("Unable to print to stdout: %v", err)
-// 				}
-// 			}
+			cmdOutput += fmt.Sprintln(line)
+		}
+	}()
 
-// 			cmdOutput += fmt.Sprintln(line)
-// 		}
-// 	}()
+	err = client.ExecCMDInContainer(pod.Name,
+		// We will use the assemble-and-restart script located within the supervisord container we've created
+		[]string{"/var/lib/supervisord/bin/assemble-and-restart"},
+		pipeWriter, pipeWriter, nil, false)
 
-// 	err = client.ExecCMDInContainer(pod.Name,
-// 		// We will use the assemble-and-restart script located within the supervisord container we've created
-// 		[]string{"/var/lib/supervisord/bin/assemble-and-restart"},
-// 		pipeWriter, pipeWriter, nil, false)
+	if err != nil {
+		// If we fail, log the output
+		log.Errorf("Unable to build files\n%v", cmdOutput)
+		s.End(false)
+		return errors.Wrap(err, "unable to execute assemble script")
+	}
 
-// 	if err != nil {
-// 		// If we fail, log the output
-// 		log.Errorf("Unable to build files\n%v", cmdOutput)
-// 		s.End(false)
-// 		return errors.Wrap(err, "unable to execute assemble script")
-// 	}
+	s.End(true)
 
-// 	s.End(true)
-
-// 	return nil
-// }
+	return nil
+}
 
 // // Build component from BuildConfig.
 // // If 'wait' is true than it waits for build to successfully complete.
@@ -1367,22 +1377,22 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 
 // }
 
-// // isEmpty checks to see if a directory is empty
-// // shamelessly taken from: https://stackoverflow.com/questions/30697324/how-to-check-if-directory-on-path-is-empty
-// // this helps detect any edge cases where an empty directory is copied over
-// func isEmpty(name string) (bool, error) {
-// 	f, err := os.Open(name)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	defer f.Close()
+// isEmpty checks to see if a directory is empty
+// shamelessly taken from: https://stackoverflow.com/questions/30697324/how-to-check-if-directory-on-path-is-empty
+// this helps detect any edge cases where an empty directory is copied over
+func isEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
 
-// 	_, err = f.Readdirnames(1) // Or f.Readdir(1)
-// 	if err == io.EOF {
-// 		return true, nil
-// 	}
-// 	return false, err // Either not empty or error, suits both cases
-// }
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err // Either not empty or error, suits both cases
+}
 
 // // getStorageFromConfig gets all the storage from the config
 // // returns a list of storage in storage struct format

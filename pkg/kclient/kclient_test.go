@@ -548,8 +548,8 @@ func TestCreateService(t *testing.T) {
 				if !reflect.DeepEqual(tt.commonObjectMeta, createdSvc.ObjectMeta) {
 					t.Errorf("ObjectMeta does not match the expected name, expected: %v, got: %v", tt.commonObjectMeta, createdSvc.ObjectMeta)
 				}
-				if !reflect.DeepEqual(tt.commonObjectMeta.Name, createdSvc.Spec.Selector["deploymentconfig"]) {
-					t.Errorf("selector value does not match the expected name, expected: %s, got: %s", tt.commonObjectMeta.Name, createdSvc.Spec.Selector["deploymentconfig"])
+				if !reflect.DeepEqual(tt.commonObjectMeta.Name, createdSvc.Spec.Selector["deployment"]) {
+					t.Errorf("selector value does not match the expected name, expected: %s, got: %s", tt.commonObjectMeta.Name, createdSvc.Spec.Selector["deployment"])
 				}
 				for _, port := range tt.containerPorts {
 					found := false
