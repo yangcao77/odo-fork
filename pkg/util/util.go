@@ -28,7 +28,7 @@ import (
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 
-// 63 is the max length of a DeploymentConfig in Openshift and we also have to take into account
+// 63 is the max length of a Deployment in Openshift and we also have to take into account
 // that each component also gets a volume that uses the component name suffixed with -idpdata
 const maxAllowedNamespacedStringLength = 63 - len("-idpdata") - 1
 

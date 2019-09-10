@@ -1,11 +1,12 @@
 package storage
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/testingutil"
 	"github.com/redhat-developer/odo-fork/pkg/util"
-	"reflect"
-	"testing"
 
 	appLabels "github.com/redhat-developer/odo-fork/pkg/application/labels"
 	componentLabels "github.com/redhat-developer/odo-fork/pkg/component/labels"
@@ -442,7 +443,7 @@ func TestList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeClient, fakeClientSet := kclient.FakeNew()
 
-			dcTesting := testingutil.OneFakeDeploymentConfigWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.mountedMap)
+			dcTesting := testingutil.OneFakeDeploymentWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.mountedMap)
 
 			fakeClientSet.Kubernetes.PrependReactor("list", "deployments", func(action ktesting.Action) (bool, runtime.Object, error) {
 				return true, &appsv1.DeploymentList{
@@ -544,7 +545,7 @@ func TestListMounted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeClient, fakeClientSet := kclient.FakeNew()
 
-			dcTesting := testingutil.OneFakeDeploymentConfigWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.mountedMap)
+			dcTesting := testingutil.OneFakeDeploymentWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.mountedMap)
 
 			fakeClientSet.Kubernetes.PrependReactor("list", "deployments", func(action ktesting.Action) (bool, runtime.Object, error) {
 				return true, &appsv1.DeploymentList{
@@ -757,7 +758,7 @@ func TestPush(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeClient, fakeClientSet := kclient.FakeNew()
 
-			dcTesting := testingutil.OneFakeDeploymentConfigWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.dcMountedMap)
+			dcTesting := testingutil.OneFakeDeploymentWithMounts(tt.args.componentName, tt.componentType, tt.args.applicationName, tt.dcMountedMap)
 
 			fakeClientSet.Kubernetes.PrependReactor("list", "deployments", func(action ktesting.Action) (bool, runtime.Object, error) {
 				return true, &appsv1.DeploymentList{

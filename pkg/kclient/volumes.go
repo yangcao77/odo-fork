@@ -60,7 +60,7 @@ func (c *Client) AddPVCToDeployment(dep *appsv1.Deployment, pvc string, path str
 
 	// Validating dc.Spec.Template.Spec.Containers[] is present before dereferencing
 	if len(dep.Spec.Template.Spec.Containers) == 0 {
-		return fmt.Errorf("DeploymentConfig %s doesn't have any Containers defined", dep.Name)
+		return fmt.Errorf("Deployment %s doesn't have any Containers defined", dep.Name)
 	}
 	dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
 		Name:      volumeName,

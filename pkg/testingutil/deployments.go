@@ -70,7 +70,7 @@ func getDeployment(namespace string, componentName string, componentType string,
 	}
 }
 
-func FakeDeploymentConfigs() *v1.DeploymentList {
+func FakeDeployments() *v1.DeploymentList {
 
 	var componentName string
 	var applicationName string
@@ -163,7 +163,7 @@ func FakeDeploymentConfigs() *v1.DeploymentList {
 
 // mountedStorage is the map of the storage to be mounted
 // key is the path for the mount, value is the pvc
-func OneFakeDeploymentConfigWithMounts(componentName, componentType, applicationName string, mountedStorage map[string]*corev1.PersistentVolumeClaim) *v1.Deployment {
+func OneFakeDeploymentWithMounts(componentName, componentType, applicationName string, mountedStorage map[string]*corev1.PersistentVolumeClaim) *v1.Deployment {
 	c := getContainer(componentName, applicationName, []corev1.ContainerPort{
 		{
 			Name:          fmt.Sprintf("%v-%v-p1", componentName, applicationName),

@@ -56,7 +56,7 @@ func Create(client *kclient.Client, name string, size string, componentName stri
 // is not required in delete call but required in unmount call
 // this is introduced as causing unnecessary delays
 func Unmount(client *kclient.Client, storageName string, componentName string, applicationName string, updateLabels bool) error {
-	// Get DeploymentConfig for the given component
+	// Get Deployment for the given component
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
@@ -70,7 +70,7 @@ func Unmount(client *kclient.Client, storageName string, componentName string, a
 	}
 
 	// Remove PVC from Deployment Config
-	if err := client.RemoveVolumeFromDeploymentConfig(pvcName, dc.Name); err != nil {
+	if err := client.RemoveVolumeFromDeployment(pvcName, dc.Name); err != nil {
 		return errors.Wrapf(err, "unable to remove volume: %v from Deployment Config: %v", pvcName, dc.Name)
 	}
 
@@ -329,7 +329,7 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 		return errors.Wrap(err, "unable to get the pvc from the storage name")
 	}
 
-	// Get DeploymentConfig for the given component
+	// Get Deployment for the given component
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
@@ -338,9 +338,9 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 	}
 	glog.V(4).Infof("Deployment Config: %v is associated with the component: %v", dc.Name, componentName)
 
-	// Add PVC to DeploymentConfig
+	// Add PVC to Deployment
 	if err := client.AddPVCToDeployment(dc, pvc.Name, path); err != nil {
-		return errors.Wrap(err, "unable to add PVC to DeploymentConfig")
+		return errors.Wrap(err, "unable to add PVC to Deployment")
 	}
 	err = client.UpdatePVCLabels(pvc, storagelabels.GetLabels(storageName, componentName, applicationName, true))
 	if err != nil {

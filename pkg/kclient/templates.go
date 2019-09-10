@@ -105,7 +105,7 @@ func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta Comm
 	}
 
 	replicas := int32(1)
-	// Generates and deploys a DeploymentConfig with an InitContainer to copy over the SupervisorD binary.
+	// Generates and deploys a Deployment with an InitContainer to copy over the SupervisorD binary.
 	deployment := appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",

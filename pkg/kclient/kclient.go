@@ -678,7 +678,7 @@ func (c *Client) DeleteNamespace(name string) error {
 // returns slice of unique label values
 func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
 
-	// List DeploymentConfig according to selectors
+	// List Deployment according to selectors
 	deploymentList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list Deployments")
@@ -1369,10 +1369,10 @@ func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string,
 	return err
 }
 
-// RemoveVolumeFromDeploymentConfig removes the volume associated with the
+// RemoveVolumeFromDeployment removes the volume associated with the
 // given PVC from the Deployment. Both, the volume entry and the
 // volume mount entry in the containers, are deleted.
-func (c *Client) RemoveVolumeFromDeploymentConfig(pvc string, depName string) error {
+func (c *Client) RemoveVolumeFromDeployment(pvc string, depName string) error {
 
 	retryErr := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 

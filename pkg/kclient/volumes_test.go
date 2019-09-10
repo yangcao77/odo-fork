@@ -125,7 +125,7 @@ func TestDeletePVC(t *testing.T) {
 	}
 }
 
-func TestAddPVCToDeploymentConfig(t *testing.T) {
+func TestAddPVCToDeployment(t *testing.T) {
 	type args struct {
 		dc   *appsv1.Deployment
 		pvc  string
@@ -198,7 +198,7 @@ func TestAddPVCToDeploymentConfig(t *testing.T) {
 
 			// Checks for error in positive cases
 			if !tt.wantErr == (err != nil) {
-				t.Errorf("Client.AddPVCToDeploymentConfig() unexpected error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Client.AddPVCToDeployment() unexpected error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			// Checks for number of actions performed in positive cases
@@ -229,7 +229,7 @@ func TestAddPVCToDeploymentConfig(t *testing.T) {
 					}
 				}
 				if found == false {
-					t.Errorf("expected volume %s not found in DeploymentConfig.Spec.Template.Spec.Volumes", tt.args.pvc)
+					t.Errorf("expected volume %s not found in Deployment.Spec.Template.Spec.Volumes", tt.args.pvc)
 				}
 
 			}
