@@ -127,7 +127,7 @@ func TestDeletePVC(t *testing.T) {
 
 func TestAddPVCToDeployment(t *testing.T) {
 	type args struct {
-		dc   *appsv1.Deployment
+		dep  *appsv1.Deployment
 		pvc  string
 		path string
 	}
@@ -141,9 +141,9 @@ func TestAddPVCToDeployment(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test case 1: valid dc",
+			name: "Test case 1: valid dep",
 			args: args{
-				dc: &appsv1.Deployment{
+				dep: &appsv1.Deployment{
 					Spec: appsv1.DeploymentSpec{
 						Selector: &metav1.LabelSelector{
 							MatchLabels: labels,
@@ -171,9 +171,9 @@ func TestAddPVCToDeployment(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test case 2: dc without Containers defined",
+			name: "Test case 2: deployment without Containers defined",
 			args: args{
-				dc: &appsv1.Deployment{
+				dep: &appsv1.Deployment{
 					Spec: appsv1.DeploymentSpec{
 						Selector: &metav1.LabelSelector{
 							MatchLabels: labels,
@@ -194,7 +194,7 @@ func TestAddPVCToDeployment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeClient, _ := FakeNew()
 
-			err := fakeClient.AddPVCToDeployment(tt.args.dc, tt.args.pvc, tt.args.path)
+			err := fakeClient.AddPVCToDeployment(tt.args.dep, tt.args.pvc, tt.args.path)
 
 			// Checks for error in positive cases
 			if !tt.wantErr == (err != nil) {
@@ -206,11 +206,11 @@ func TestAddPVCToDeployment(t *testing.T) {
 
 				found := false // creating a flag
 				// iterating over the VolumeMounts for finding the one specified during func call
-				for bb := range tt.args.dc.Spec.Template.Spec.Containers[0].VolumeMounts {
-					if tt.args.path == tt.args.dc.Spec.Template.Spec.Containers[0].VolumeMounts[bb].MountPath {
+				for bb := range tt.args.dep.Spec.Template.Spec.Containers[0].VolumeMounts {
+					if tt.args.path == tt.args.dep.Spec.Template.Spec.Containers[0].VolumeMounts[bb].MountPath {
 						found = true
-						if !strings.Contains(tt.args.dc.Spec.Template.Spec.Containers[0].VolumeMounts[bb].Name, tt.args.pvc) {
-							t.Errorf("pvc name not matching with the specified value got: %v, expected %v", tt.args.dc.Spec.Template.Spec.Containers[0].VolumeMounts[bb].Name, tt.args.pvc)
+						if !strings.Contains(tt.args.dep.Spec.Template.Spec.Containers[0].VolumeMounts[bb].Name, tt.args.pvc) {
+							t.Errorf("pvc name not matching with the specified value got: %v, expected %v", tt.args.dep.Spec.Template.Spec.Containers[0].VolumeMounts[bb].Name, tt.args.pvc)
 						}
 					}
 				}
@@ -220,11 +220,11 @@ func TestAddPVCToDeployment(t *testing.T) {
 
 				found = false // resetting the flag
 				// iterating over the volume claims to find the one specified during func call
-				for bb := range tt.args.dc.Spec.Template.Spec.Volumes {
-					if tt.args.pvc == tt.args.dc.Spec.Template.Spec.Volumes[bb].VolumeSource.PersistentVolumeClaim.ClaimName {
+				for bb := range tt.args.dep.Spec.Template.Spec.Volumes {
+					if tt.args.pvc == tt.args.dep.Spec.Template.Spec.Volumes[bb].VolumeSource.PersistentVolumeClaim.ClaimName {
 						found = true
-						if !strings.Contains(tt.args.dc.Spec.Template.Spec.Volumes[bb].Name, tt.args.pvc) {
-							t.Errorf("pvc name not matching in PersistentVolumeClaim, got: %v, expected %v", tt.args.dc.Spec.Template.Spec.Volumes[bb].Name, tt.args.pvc)
+						if !strings.Contains(tt.args.dep.Spec.Template.Spec.Volumes[bb].Name, tt.args.pvc) {
+							t.Errorf("pvc name not matching in PersistentVolumeClaim, got: %v, expected %v", tt.args.dep.Spec.Template.Spec.Volumes[bb].Name, tt.args.pvc)
 						}
 					}
 				}

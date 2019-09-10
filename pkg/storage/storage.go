@@ -59,7 +59,7 @@ func Unmount(client *kclient.Client, storageName string, componentName string, a
 	// Get Deployment for the given component
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
-	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
+	dep, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get Deployment Config for component: %v in application: %v", componentName, applicationName)
 	}
@@ -70,8 +70,8 @@ func Unmount(client *kclient.Client, storageName string, componentName string, a
 	}
 
 	// Remove PVC from Deployment Config
-	if err := client.RemoveVolumeFromDeployment(pvcName, dc.Name); err != nil {
-		return errors.Wrapf(err, "unable to remove volume: %v from Deployment Config: %v", pvcName, dc.Name)
+	if err := client.RemoveVolumeFromDeployment(pvcName, dep.Name); err != nil {
+		return errors.Wrapf(err, "unable to remove volume: %v from Deployment Config: %v", pvcName, dep.Name)
 	}
 
 	pvc, err := client.GetPVCFromName(pvcName)
@@ -112,7 +112,7 @@ func List(client *kclient.Client, componentName string, applicationName string) 
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 
-	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
+	dep, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
 		return StorageList{}, errors.Wrapf(err, "unable to get Deployment associated with component %v", componentName)
 	}
@@ -131,22 +131,22 @@ func List(client *kclient.Client, componentName string, applicationName string) 
 
 	// store the storage in a map for faster searching with the key instead of list
 	mountedStorageMap := make(map[string]string)
-	volumeMounts := client.GetVolumeMountsFromDeployment(dc)
+	volumeMounts := client.GetVolumeMountsFromDeployment(dep)
 	for _, volumeMount := range volumeMounts {
 
 		// We should ignore emptyDir (related to supervisord implementation)
-		if client.IsVolumeAnEmptyDir(volumeMount.Name, dc) {
+		if client.IsVolumeAnEmptyDir(volumeMount.Name, dep) {
 			continue
 		}
 
-		pvcName := client.GetPVCNameFromVolumeMountName(volumeMount.Name, dc)
+		pvcName := client.GetPVCNameFromVolumeMountName(volumeMount.Name, dep)
 		if pvcName == "" {
 			return StorageList{}, fmt.Errorf("no PVC associated with Volume Mount %v", volumeMount.Name)
 		}
 
 		pvc, ok := pvcMap[pvcName]
 		if !ok {
-			if client.IsAppSupervisorDVolume(volumeMount.Name, dc.Name) {
+			if client.IsAppSupervisorDVolume(volumeMount.Name, dep.Name) {
 				continue
 			}
 			return StorageList{}, fmt.Errorf("unable to get PVC %v", pvcName)
@@ -332,14 +332,14 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 	// Get Deployment for the given component
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
-	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
+	dep, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get Deployment for component: %v in application: %v", componentName, applicationName)
 	}
-	glog.V(4).Infof("Deployment Config: %v is associated with the component: %v", dc.Name, componentName)
+	glog.V(4).Infof("Deployment Config: %v is associated with the component: %v", dep.Name, componentName)
 
 	// Add PVC to Deployment
-	if err := client.AddPVCToDeployment(dc, pvc.Name, path); err != nil {
+	if err := client.AddPVCToDeployment(dep, pvc.Name, path); err != nil {
 		return errors.Wrap(err, "unable to add PVC to Deployment")
 	}
 	err = client.UpdatePVCLabels(pvc, storagelabels.GetLabels(storageName, componentName, applicationName, true))

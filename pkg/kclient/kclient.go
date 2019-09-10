@@ -1410,6 +1410,6 @@ func (c *Client) RemoveVolumeFromDeployment(pvc string, depName string) error {
 	return nil
 }
 
-func getAppRootVolumeName(dcName string) string {
-	return fmt.Sprintf("%s-idpdata", dcName)
+func getAppRootVolumeName(depName string) string {
+	return fmt.Sprintf("%s-idpdata", depName)
 }

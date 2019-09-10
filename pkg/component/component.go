@@ -670,12 +670,12 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 	// Find Deployment for component
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
-	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
+	dep, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
 		return errors.Wrap(err, "unable to get deployment for component")
 	}
 	// Find Pod for component
-	podSelector := fmt.Sprintf("deployment=%s", dc.Name)
+	podSelector := fmt.Sprintf("deployment=%s", dep.Name)
 
 	// Wait for Pod to be in running state otherwise we can't sync data to it.
 	pod, err := client.WaitAndGetPod(podSelector, corev1.PodRunning, "Waiting for component to start")

@@ -19,11 +19,11 @@ type CommonImageMeta struct {
 	Ports     []corev1.ContainerPort
 }
 
-// GetResourceRequirementsFromCmpSettings converts the cpu and memory request info from component configuration into format usable in dc
+// GetResourceRequirementsFromCmpSettings converts the cpu and memory request info from component configuration into format usable in deployment
 // Parameters:
 //	cfg: Compoennt configuration/settings
 // Returns:
-//	*corev1.ResourceRequirements: component configuration converted into format usable in dc
+//	*corev1.ResourceRequirements: component configuration converted into format usable in deployment
 func GetResourceRequirementsFromCmpSettings(cfg config.LocalConfigInfo) (*corev1.ResourceRequirements, error) {
 	var resourceRequirements corev1.ResourceRequirements
 	requests := make(corev1.ResourceList)
@@ -85,7 +85,7 @@ func parseResourceQuantity(resQuantity string) (resource.Quantity, error) {
 
 // generateDeployment generates a deployment for local and binary components
 // Parameters:
-//	commonObjectMeta: Contains annotations and labels for dc
+//	commonObjectMeta: Contains annotations and labels for deployment
 //	commonImageMeta: Contains details like image NS, name, tag and ports to be exposed
 //	envVar: env vars to be exposed
 //	resourceRequirements: Container cpu and memory resource requirements

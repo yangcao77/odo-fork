@@ -58,7 +58,7 @@ func (c *Client) AddPVCToDeployment(dep *appsv1.Deployment, pvc string, path str
 		},
 	})
 
-	// Validating dc.Spec.Template.Spec.Containers[] is present before dereferencing
+	// Validating dep.Spec.Template.Spec.Containers[] is present before dereferencing
 	if len(dep.Spec.Template.Spec.Containers) == 0 {
 		return fmt.Errorf("Deployment %s doesn't have any Containers defined", dep.Name)
 	}
@@ -86,8 +86,8 @@ func (c *Client) DeletePVC(name string) error {
 }
 
 // IsAppSupervisorDVolume checks if the volume is a supervisorD volume
-func (c *Client) IsAppSupervisorDVolume(volumeName, dcName string) bool {
-	if volumeName == getAppRootVolumeName(dcName) {
+func (c *Client) IsAppSupervisorDVolume(volumeName, depName string) bool {
+	if volumeName == getAppRootVolumeName(depName) {
 		return true
 	}
 	return false
@@ -156,12 +156,12 @@ func addOrRemoveVolumeAndVolumeMount(client *Client, dep *appsv1.Deployment, sto
 		return fmt.Errorf("more than one container found in deployment")
 	}
 
-	// find the volume mount to be unmounted from the dc
+	// find the volume mount to be unmounted from the deployment
 	for i, volumeMount := range dep.Spec.Template.Spec.Containers[0].VolumeMounts {
 		if _, ok := storageUnMount[volumeMount.MountPath]; ok {
 			dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts[:i], dep.Spec.Template.Spec.Containers[0].VolumeMounts[i+1:]...)
 
-			// now find the volume to be deleted from the dc
+			// now find the volume to be deleted from the deployment
 			for j, volume := range dep.Spec.Template.Spec.Volumes {
 				if volume.Name == volumeMount.Name {
 					dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes[:j], dep.Spec.Template.Spec.Volumes[j+1:]...)
