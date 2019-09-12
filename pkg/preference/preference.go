@@ -18,7 +18,7 @@ const (
 	globalConfigEnvName  = "GLOBALODOCONFIG"
 	configFileName       = "preference.yaml"
 	preferenceKind       = "Preference"
-	preferenceAPIVersion = "odo.openshift.io/v1alpha1"
+	preferenceAPIVersion = "udo.udo.io/v1alpha1"
 
 	//DefaultTimeout for openshift server connection check
 	DefaultTimeout = 1

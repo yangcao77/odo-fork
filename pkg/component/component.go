@@ -920,7 +920,7 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 // 	var err error
 // 	for _, path := range paths {
 // 		err = filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-// 			if f != nil && strings.Contains(f.Name(), "udo") {
+// 			if f != nil && strings.Contains(f.Name(), ".udo") {
 // 				data, err := config.NewLocalConfigInfo(filepath.Dir(path))
 // 				if err != nil {
 // 					return err
@@ -1349,7 +1349,7 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 // 	return Component{
 // 		TypeMeta: metav1.TypeMeta{
 // 			Kind:       "Component",
-// 			APIVersion: "odo.openshift.io/v1alpha1",
+// 			APIVersion: "udo.udo.io/v1alpha1",
 // 		},
 // 		ObjectMeta: metav1.ObjectMeta{
 // 			Name: componentName,
@@ -1370,7 +1370,7 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 // 	return ComponentList{
 // 		TypeMeta: metav1.TypeMeta{
 // 			Kind:       "List",
-// 			APIVersion: "odo.openshift.io/v1alpha1",
+// 			APIVersion: "udo.udo.io/v1alpha1",
 // 		},
 // 		ListMeta: metav1.ListMeta{},
 // 		Items:    components,

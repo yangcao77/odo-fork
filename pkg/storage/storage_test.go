@@ -87,7 +87,7 @@ func TestGetMachineReadableFormat(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pvc-example",
 				},
-				TypeMeta: metav1.TypeMeta{Kind: "storage", APIVersion: "odo.openshift.io/v1alpha1"},
+				TypeMeta: metav1.TypeMeta{Kind: "storage", APIVersion: "udo.udo.io/v1alpha1"},
 				Spec: StorageSpec{
 					Size: "100Mi",
 				},
@@ -106,7 +106,7 @@ func TestGetMachineReadableFormat(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pvc-example",
 				},
-				TypeMeta: metav1.TypeMeta{Kind: "storage", APIVersion: "odo.openshift.io/v1alpha1"},
+				TypeMeta: metav1.TypeMeta{Kind: "storage", APIVersion: "udo.udo.io/v1alpha1"},
 				Spec: StorageSpec{
 					Size: "500Mi",
 				},
@@ -142,7 +142,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 					},
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "List",
-						APIVersion: "odo.openshift.io/v1alpha1",
+						APIVersion: "udo.udo.io/v1alpha1",
 					},
 					Spec: StorageSpec{
 						Size: "100Mi",
@@ -155,7 +155,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 			want: StorageList{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "List",
-					APIVersion: "odo.openshift.io/v1alpha1",
+					APIVersion: "udo.udo.io/v1alpha1",
 				},
 				ListMeta: metav1.ListMeta{},
 				Items: []Storage{
@@ -165,7 +165,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 						},
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "List",
-							APIVersion: "odo.openshift.io/v1alpha1",
+							APIVersion: "udo.udo.io/v1alpha1",
 						},
 						Spec: StorageSpec{
 							Size: "100Mi",
@@ -186,7 +186,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 					},
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "List",
-						APIVersion: "odo.openshift.io/v1alpha1",
+						APIVersion: "udo.udo.io/v1alpha1",
 					},
 					Spec: StorageSpec{
 						Size: "100Mi",
@@ -201,7 +201,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 					},
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "List",
-						APIVersion: "odo.openshift.io/v1alpha1",
+						APIVersion: "udo.udo.io/v1alpha1",
 					},
 					Spec: StorageSpec{
 						Size: "500Mi",
@@ -214,7 +214,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 			want: StorageList{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "List",
-					APIVersion: "odo.openshift.io/v1alpha1",
+					APIVersion: "udo.udo.io/v1alpha1",
 				},
 				ListMeta: metav1.ListMeta{},
 				Items: []Storage{
@@ -224,7 +224,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 						},
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "List",
-							APIVersion: "odo.openshift.io/v1alpha1",
+							APIVersion: "udo.udo.io/v1alpha1",
 						},
 						Spec: StorageSpec{
 							Size: "100Mi",
@@ -239,7 +239,7 @@ func TestGetMachineReadableFormatForList(t *testing.T) {
 						},
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "List",
-							APIVersion: "odo.openshift.io/v1alpha1",
+							APIVersion: "udo.udo.io/v1alpha1",
 						},
 						Spec: StorageSpec{
 							Size: "500Mi",

@@ -61,7 +61,7 @@ func Unmount(client *kclient.Client, storageName string, componentName string, a
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 	dep, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
-		return errors.Wrapf(err, "unable to get Deployment Config for component: %v in application: %v", componentName, applicationName)
+		return errors.Wrapf(err, "unable to get Deployment for component: %v in application: %v", componentName, applicationName)
 	}
 
 	pvcName, err := getPVCNameFromStorageName(client, storageName)
@@ -69,9 +69,9 @@ func Unmount(client *kclient.Client, storageName string, componentName string, a
 		return errors.Wrapf(err, "unable to get PVC for storage %v", storageName)
 	}
 
-	// Remove PVC from Deployment Config
+	// Remove PVC from Deployment
 	if err := client.RemoveVolumeFromDeployment(pvcName, dep.Name); err != nil {
-		return errors.Wrapf(err, "unable to remove volume: %v from Deployment Config: %v", pvcName, dep.Name)
+		return errors.Wrapf(err, "unable to remove volume: %v from Deployment: %v", pvcName, dep.Name)
 	}
 
 	pvc, err := client.GetPVCFromName(pvcName)
@@ -146,7 +146,7 @@ func List(client *kclient.Client, componentName string, applicationName string) 
 
 		pvc, ok := pvcMap[pvcName]
 		if !ok {
-			if client.IsAppSupervisorDVolume(volumeMount.Name, dep.Name) {
+			if client.IsAppIterativeDevPackVolume(volumeMount.Name, dep.Name) {
 				continue
 			}
 			return StorageList{}, fmt.Errorf("unable to get PVC %v", pvcName)
@@ -336,7 +336,7 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 	if err != nil {
 		return errors.Wrapf(err, "unable to get Deployment for component: %v in application: %v", componentName, applicationName)
 	}
-	glog.V(4).Infof("Deployment Config: %v is associated with the component: %v", dep.Name, componentName)
+	glog.V(4).Infof("Deployment: %v is associated with the component: %v", dep.Name, componentName)
 
 	// Add PVC to Deployment
 	if err := client.AddPVCToDeployment(dep, pvc.Name, path); err != nil {
@@ -364,7 +364,7 @@ func GetStorageNameFromMountPath(client *kclient.Client, path string, componentN
 	return "", nil
 }
 
-// Push creates/deletes the required storage during `odo push`
+// Push creates/deletes the required storage during `udo push`
 // storageList are the storage mentioned in the config
 // isComponentExists indicates if the component exists or not, if not, we don't run the list operation
 // returns the storage for mounting and unMounting from the DC
@@ -437,7 +437,7 @@ func GetMachineReadableFormatForList(storage []Storage) StorageList {
 	return StorageList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "List",
-			APIVersion: "odo.openshift.io/v1alpha1",
+			APIVersion: "udo.udo.io/v1alpha1",
 		},
 		ListMeta: metav1.ListMeta{},
 		Items:    storage,
@@ -448,7 +448,7 @@ func GetMachineReadableFormatForList(storage []Storage) StorageList {
 // storagePath indicates the path to which the storage is mounted to, "" if not mounted
 func GetMachineReadableFormat(storageName, storageSize, storagePath string) Storage {
 	return Storage{
-		TypeMeta:   metav1.TypeMeta{Kind: "storage", APIVersion: "odo.openshift.io/v1alpha1"},
+		TypeMeta:   metav1.TypeMeta{Kind: "storage", APIVersion: "udo.udo.io/v1alpha1"},
 		ObjectMeta: metav1.ObjectMeta{Name: storageName},
 		Spec: StorageSpec{
 			Size: storageSize,

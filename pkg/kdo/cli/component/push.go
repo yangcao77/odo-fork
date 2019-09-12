@@ -135,7 +135,7 @@ func (po *PushOptions) Validate() (err error) {
 	}
 
 	if !isCmpExists && po.pushSource && !po.pushConfig {
-		return fmt.Errorf("Component %s does not exist and hence cannot push only source. Please use `odo push` without any flags or with both `--source` and `--config` flags", po.localConfig.GetName())
+		return fmt.Errorf("Component %s does not exist and hence cannot push only source. Please use `udo push` without any flags or with both `--source` and `--config` flags", po.localConfig.GetName())
 	}
 
 	s.End(true)
@@ -152,7 +152,7 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 	cmpName := po.localConfig.GetName()
 	appName := po.localConfig.GetApplication()
 
-	// First off, we check to see if the component exists. This is ran each time we do `odo push`
+	// First off, we check to see if the component exists. This is ran each time we do `udo push`
 	s := log.Spinner("Checking component")
 	defer s.End(false)
 	isCmpExists, err := component.Exists(po.Context.Client, cmpName, appName)

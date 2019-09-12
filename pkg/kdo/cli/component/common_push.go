@@ -60,7 +60,7 @@ func (cpo *CommonPushOptions) ResolveSrcAndConfigFlags() {
 // 	cmpName := cpo.localConfigInfo.GetName()
 // 	appName := cpo.localConfigInfo.GetApplication()
 
-// 	// First off, we check to see if the component exists. This is ran each time we do `odo push`
+// 	// First off, we check to see if the component exists. This is ran each time we do `udo push`
 // 	s := log.Spinner("Checking component")
 // 	defer s.End(false)
 // 	isCmpExists, err := component.Exists(cpo.Context.Client, cmpName, appName)

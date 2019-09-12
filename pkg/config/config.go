@@ -20,7 +20,7 @@ const (
 	localConfigEnvName    = "LOCALODOCONFIG"
 	configFileName        = "config.yaml"
 	localConfigKind       = "LocalConfig"
-	localConfigAPIVersion = "odo.openshift.io/v1alpha1"
+	localConfigAPIVersion = "udo.udo.io/v1alpha1"
 )
 
 type ComponentStorageSettings struct {

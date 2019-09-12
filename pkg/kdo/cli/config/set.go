@@ -92,7 +92,7 @@ func (o *SetOptions) Run() (err error) {
 		}
 
 		log.Info("Environment variables were successfully updated.")
-		log.Info("Run `odo push --config` command to apply changes to the cluster.")
+		log.Info("Run `udo push --config` command to apply changes to the cluster.")
 
 		return nil
 	}
@@ -112,17 +112,17 @@ func (o *SetOptions) Run() (err error) {
 	}
 
 	log.Info("Local config was successfully updated.")
-	log.Info("Run `odo push --config` command to apply changes to the cluster.")
+	log.Info("Run `udo push --config` command to apply changes to the cluster.")
 
 	return nil
 }
 
-// NewCmdSet implements the config set odo command
+// NewCmdSet implements the config set udo command
 func NewCmdSet(name, fullName string) *cobra.Command {
 	o := NewSetOptions()
 	configurationSetCmd := &cobra.Command{
 		Use:   name,
-		Short: "Set a value in odo config file",
+		Short: "Set a value in udo config file",
 		Long:  fmt.Sprintf(setLongDesc, config.FormatLocallySupportedParameters()),
 		Example: fmt.Sprintf(fmt.Sprint("\n", setExample), fullName, config.Type,
 			config.Name, config.MinMemory, config.MaxMemory, config.Memory, config.Ignore, config.MinCPU, config.MaxCPU, config.CPU),

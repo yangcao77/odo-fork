@@ -85,7 +85,7 @@ Consult your Kubernetes distribution's documentation for more details
 // Client is a collection of fields used for client configuration and interaction
 type Client struct {
 	KubeClient       kubernetes.Interface
-  AppsV1Client appsv1Client.AppsV1Interface
+	AppsV1Client     appsv1Client.AppsV1Interface
 	CoreV1Client     corev1Client.CoreV1Interface
 	KubeConfig       clientcmd.ClientConfig
 	KubeClientConfig *rest.Config
@@ -835,7 +835,7 @@ func (c *Client) GetServicesFromSelector(selector string) ([]corev1.Service, err
 	return serviceList.Items, nil
 }
 
-// GetDeploymentFromName returns the Deployment Config resource given
+// GetDeploymentFromName returns the Deployment resource given
 // the Deployment name
 func (c *Client) GetDeploymentFromName(name string) (*appsv1.Deployment, error) {
 	glog.V(4).Infof("Getting Deployment: %s", name)
@@ -889,9 +889,9 @@ func (c *Client) GetOneDeploymentFromSelector(selector string) (*appsv1.Deployme
 
 	numDC := len(deploymentConfigs)
 	if numDC == 0 {
-		return nil, fmt.Errorf("no Deployment Config was found for the selector: %v", selector)
+		return nil, fmt.Errorf("no Deployment was found for the selector: %v", selector)
 	} else if numDC > 1 {
-		return nil, fmt.Errorf("multiple Deployment Configs exist for the selector: %v. Only one must be present", selector)
+		return nil, fmt.Errorf("multiple Deployments exist for the selector: %v. Only one must be present", selector)
 	}
 
 	return &deploymentConfigs[0], nil
@@ -1152,7 +1152,7 @@ func (c *Client) GetOneServiceFromSelector(selector string) (*corev1.Service, er
 }
 
 // AddEnvironmentVariablesToDeployment adds the given environment
-// variables to the only container in the Deployment Config and updates in the
+// variables to the only container in the Deployment and updates in the
 // cluster
 func (c *Client) AddEnvironmentVariablesToDeployment(envs []corev1.EnvVar, dep *appsv1.Deployment) error {
 	numContainers := len(dep.Spec.Template.Spec.Containers)
@@ -1339,7 +1339,7 @@ func (c *Client) GetEnvVarsFromDep(deploymentName string) ([]corev1.EnvVar, erro
 
 	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
 	}
 
 	return deployment.Spec.Template.Spec.Containers[0].Env, nil
@@ -1408,7 +1408,7 @@ func (c *Client) RemoveVolumeFromDeployment(pvc string, depName string) error {
 		return updateErr
 	})
 	if retryErr != nil {
-		return errors.Wrapf(retryErr, "updating Deployment Config %v failed", depName)
+		return errors.Wrapf(retryErr, "updating Deployment %v failed", depName)
 	}
 	return nil
 }

@@ -32,7 +32,7 @@ func (c *Client) CreatePVC(name string, size string, labels map[string]string) (
 				},
 			},
 			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
+				corev1.ReadWriteMany,
 			},
 		},
 	}
@@ -85,8 +85,8 @@ func (c *Client) DeletePVC(name string) error {
 	return c.KubeClient.CoreV1().PersistentVolumeClaims(c.Namespace).Delete(name, nil)
 }
 
-// IsAppSupervisorDVolume checks if the volume is a supervisorD volume
-func (c *Client) IsAppSupervisorDVolume(volumeName, depName string) bool {
+// IsAppIterativeDevPackVolume checks if the volume is the iterative-dev pack volume
+func (c *Client) IsAppIterativeDevPackVolume(volumeName, depName string) bool {
 	if volumeName == getAppRootVolumeName(depName) {
 		return true
 	}
@@ -94,7 +94,7 @@ func (c *Client) IsAppSupervisorDVolume(volumeName, depName string) bool {
 }
 
 // getVolumeNamesFromPVC returns the name of the volume associated with the given
-// PVC in the given Deployment Config
+// PVC in the given Deployment
 func (c *Client) getVolumeNamesFromPVC(pvc string, dep *appsv1.Deployment) []string {
 	var volumes []string
 	for _, volume := range dep.Spec.Template.Spec.Volumes {
@@ -128,7 +128,7 @@ func removeVolumeFromDeployment(vol string, dep *appsv1.Deployment) bool {
 }
 
 // removeVolumeMountFromDeployment removes the volumeMount from all the given containers
-// in the given Deployment Config and return true. If the given volumeMount is
+// in the given Deployment and return true. If the given volumeMount is
 // not found, it returns false
 func removeVolumeMountFromDeployment(vm string, dep *appsv1.Deployment) bool {
 	found := false
