@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	var root = cli.NewCmdKdo(cli.KdoRecommendedName, cli.KdoRecommendedName)
+	var root = cli.NewCmdUdo(cli.UdoRecommendedName, cli.UdoRecommendedName)
 
 	// override usage so that flag.Parse uses root command's usage instead of default one when invoked with -h
 	root.Flags().AddGoFlagSet(flag.CommandLine)

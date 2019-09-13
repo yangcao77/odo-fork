@@ -64,7 +64,7 @@ func (o *VersionOptions) Run() (err error) {
 		}
 	}
 
-	fmt.Println("kdo " + VERSION + " (" + GITCOMMIT + ")")
+	fmt.Println("udo " + VERSION + " (" + GITCOMMIT + ")")
 
 	return
 }

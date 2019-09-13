@@ -27,7 +27,7 @@ var buildCmdExample = ktemplates.Examples(`  # Command for a full-build
 %[1]s inc <project name> <reuse build container>
   `)
 
-// BuildIDPOptions encapsulates the options for the kdo catalog list idp command
+// BuildIDPOptions encapsulates the options for the udo catalog list idp command
 type BuildIDPOptions struct {
 	// list of build options
 	buildTaskType       string
@@ -217,7 +217,7 @@ func (o *BuildIDPOptions) Run() (err error) {
 	return
 }
 
-// NewCmdBuild implements the kdo catalog list idps command
+// NewCmdBuild implements the udo catalog list idps command
 func NewCmdBuild(name, fullName string) *cobra.Command {
 	o := NewBuildIDPOptions()
 

@@ -10,7 +10,7 @@ import (
 // RecommendedCommandName is the recommended command name
 const RecommendedCommandName = "list"
 
-// NewCmdCatalogList implements the kdo catalog list command
+// NewCmdCatalogList implements the udo catalog list command
 func NewCmdCatalogList(name, fullName string) *cobra.Command {
 	idp := NewCmdCatalogListIDPs(idpRecommendedCommandName, util.GetFullName(fullName, idpRecommendedCommandName))
 

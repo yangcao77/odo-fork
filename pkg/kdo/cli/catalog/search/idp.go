@@ -14,7 +14,7 @@ const idpRecommendedCommandName = "idp"
 var idpExample = `  # Search for an iterative-dev pack
   %[1]s python`
 
-// SearchIDPOptions encapsulates the options for the kdo catalog search idp command
+// SearchIDPOptions encapsulates the options for the udo catalog search idp command
 type SearchIDPOptions struct {
 	searchTerm string
 	idps       []string
@@ -52,7 +52,7 @@ func (o *SearchIDPOptions) Run() (err error) {
 	return
 }
 
-// NewCmdCatalogSearchIDP implements the kdo catalog search idp command
+// NewCmdCatalogSearchIDP implements the udo catalog search idp command
 func NewCmdCatalogSearchIDP(name, fullName string) *cobra.Command {
 	o := NewSearchIDPOptions()
 	return &cobra.Command{

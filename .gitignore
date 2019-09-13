@@ -4,11 +4,13 @@
 
 # Ignore compiled files
 kdo
+udo
 dist
 bin
 
 # Un-ignore odo directories
 !kdo/
+!udo/
 
 # Ignore coverage report
 coverage.txt

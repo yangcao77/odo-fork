@@ -14,7 +14,7 @@ const idpRecommendedCommandName = "idp"
 
 var idpsExample = `  # Get the supported Iterative-dev Packs`
 
-// ListIDPOptions encapsulates the options for the kdo catalog list idp command
+// ListIDPOptions encapsulates the options for the udo catalog list idp command
 type ListIDPOptions struct {
 	// list of known images
 	catalogList []catalog.CatalogEntry
@@ -61,7 +61,7 @@ func (o *ListIDPOptions) Run() (err error) {
 	return
 }
 
-// NewCmdCatalogListIDPs implements the kdo catalog list idps command
+// NewCmdCatalogListIDPs implements the udo catalog list idps command
 func NewCmdCatalogListIDPs(name, fullName string) *cobra.Command {
 	o := NewListIDPOptions()
 

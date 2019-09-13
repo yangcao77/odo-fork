@@ -10,7 +10,7 @@ import (
 // RecommendedCommandName is the recommended command name
 const RecommendedCommandName = "search"
 
-// NewCmdCatalogSearch implements the kdo catalog search command
+// NewCmdCatalogSearch implements the udo catalog search command
 func NewCmdCatalogSearch(name, fullName string) *cobra.Command {
 	component := NewCmdCatalogSearchIDP(idpRecommendedCommandName, util.GetFullName(fullName, idpRecommendedCommandName))
 	catalogSearchCmd := &cobra.Command{
