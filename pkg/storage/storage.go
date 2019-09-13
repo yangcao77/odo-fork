@@ -34,7 +34,7 @@ func Create(client *kclient.Client, name string, size string, componentName stri
 	// Namespace the component
 	// We will use name+applicationName instead of componentName+applicationName until:
 	// https://github.com/openshift/odo/issues/504 is resolved.
-	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(name, applicationName)
+	namespaceKubernetesObject, err := util.NamespaceKubernetesObject(name, applicationName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create namespaced name")
 	}
@@ -44,7 +44,7 @@ func Create(client *kclient.Client, name string, size string, componentName stri
 	glog.V(4).Infof("Got labels for PVC: %v", labels)
 
 	// Create PVC
-	pvc, err := client.CreatePVC(generatePVCNameFromStorageName(namespacedOpenShiftObject), size, labels)
+	pvc, err := client.CreatePVC(generatePVCNameFromStorageName(namespaceKubernetesObject), size, labels)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create PVC")
 	}
@@ -319,12 +319,12 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 		return fmt.Errorf("the given storage is already mounted to the component %v", storageComponent)
 	}
 
-	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(storageName, applicationName)
+	namespaceKubernetesObject, err := util.NamespaceKubernetesObject(storageName, applicationName)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create namespaced name")
 	}
 
-	pvc, err := client.GetPVCFromName(generatePVCNameFromStorageName(namespacedOpenShiftObject))
+	pvc, err := client.GetPVCFromName(generatePVCNameFromStorageName(namespaceKubernetesObject))
 	if err != nil {
 		return errors.Wrap(err, "unable to get the pvc from the storage name")
 	}
