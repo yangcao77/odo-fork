@@ -628,19 +628,19 @@ func TestGetDeploymentFromSelector(t *testing.T) {
 				}
 				return true, &listOfDep, nil
 			})
-			dc, err := fakeClient.GetDeploymentsFromSelector(tt.selector)
+			dep, err := fakeClient.GetDeploymentsFromSelector(tt.selector)
 
 			if len(fakeClientSet.Kubernetes.Actions()) != 1 {
 				t.Errorf("expected 1 AppsClientset.Actions() in GetDeploymentsFromSelector, got: %v", fakeClientSet.Kubernetes.Actions())
 			}
 
 			if tt.wantErr == false && err != nil {
-				t.Errorf("test failed, %#v", dc[0].Labels)
+				t.Errorf("test failed, %#v", dep[0].Labels)
 			}
 
-			for _, dc1 := range dc {
-				if !reflect.DeepEqual(dc1.Labels, tt.label) {
-					t.Errorf("labels are not matching with expected labels, expected: %s, got %s", tt.label, dc1.Labels)
+			for _, dep1 := range dep {
+				if !reflect.DeepEqual(dep1.Labels, tt.label) {
+					t.Errorf("labels are not matching with expected labels, expected: %s, got %s", tt.label, dep1.Labels)
 				}
 			}
 

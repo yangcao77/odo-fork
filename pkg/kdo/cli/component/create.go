@@ -428,6 +428,7 @@ func (co *CreateOptions) Complete(name string, cmd *cobra.Command, args []string
 	}
 	co.componentSettings.Envs = envs
 	co.ignores = []string{}
+
 	if co.now {
 		co.ResolveSrcAndConfigFlags()
 		err = co.ResolveProject(co.Context.Namespace)
@@ -453,6 +454,15 @@ func (co *CreateOptions) Validate() (err error) {
 
 // Run has the logic to perform the required actions as part of command
 func (co *CreateOptions) Run() (err error) {
+
+	// Set a 1Gi storage volume by default
+	volume, err := co.localConfigInfo.StorageCreate(*co.componentSettings.Name, "1Gi", "/projects")
+	if err != nil {
+		return err
+	}
+	componentStorage := []config.ComponentStorageSettings{volume}
+	co.componentSettings.Storage = &componentStorage
+
 	err = co.localConfigInfo.SetComponentSettings(co.componentSettings)
 	if err != nil {
 		return errors.Wrapf(err, "failed to persist the component settings to config file")
@@ -474,7 +484,7 @@ func (co *CreateOptions) Run() (err error) {
 		// 	return errors.Wrapf(err, "failed to push the changes")
 		// }
 	} else {
-		log.Infof("Please use `odo push` command to create the component with source deployed\n")
+		log.Infof("Please use `kdo push` command to create the component with source deployed\n")
 	}
 	return
 }

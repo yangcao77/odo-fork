@@ -35,10 +35,12 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	appsv1Client "k8s.io/client-go/kubernetes/typed/apps/v1"
 	corev1Client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/util/retry"
 )
 
 var (
@@ -83,6 +85,7 @@ Consult your Kubernetes distribution's documentation for more details
 // Client is a collection of fields used for client configuration and interaction
 type Client struct {
 	KubeClient       kubernetes.Interface
+	AppsV1Client     appsv1Client.AppsV1Interface
 	CoreV1Client     corev1Client.CoreV1Interface
 	KubeConfig       clientcmd.ClientConfig
 	KubeClientConfig *rest.Config
@@ -432,7 +435,7 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		Ports:     containerPorts,
 	}
 
-	// Generate the DeploymentConfig that will be used.
+	// Generate the Deployment that will be used.
 	deployment := generateDeployment(
 		commonObjectMeta,
 		commonImageMeta,
@@ -448,9 +451,12 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		}
 	}
 
+	// Attach any volumes to the deployment, before creating it on the cluster
+	err = addOrRemoveVolumeAndVolumeMount(c, &deployment, params.StorageToBeMounted, nil)
+
 	_, err = c.KubeClient.AppsV1().Deployments(c.Namespace).Create(&deployment)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create DeploymentConfig for %s", commonObjectMeta.Name)
+		return errors.Wrapf(err, "unable to create Deployment for %s", commonObjectMeta.Name)
 	}
 
 	svc, err := c.CreateService(commonObjectMeta, deployment.Spec.Template.Spec.Containers[0].Ports)
@@ -675,7 +681,7 @@ func (c *Client) DeleteNamespace(name string) error {
 // returns slice of unique label values
 func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
 
-	// List DeploymentConfig according to selectors
+	// List Deployment according to selectors
 	deploymentList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list Deployments")
@@ -829,9 +835,9 @@ func (c *Client) GetServicesFromSelector(selector string) ([]corev1.Service, err
 	return serviceList.Items, nil
 }
 
-// GetDeploymentsFromName returns the Deployment Config resource given
-// the Deployment Config name
-func (c *Client) GetDeploymentsFromName(name string) (*appsv1.Deployment, error) {
+// GetDeploymentFromName returns the Deployment resource given
+// the Deployment name
+func (c *Client) GetDeploymentFromName(name string) (*appsv1.Deployment, error) {
 	glog.V(4).Infof("Getting Deployment: %s", name)
 	deployment, err := c.KubeClient.AppsV1().Deployments(c.Namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
@@ -883,9 +889,9 @@ func (c *Client) GetOneDeploymentFromSelector(selector string) (*appsv1.Deployme
 
 	numDC := len(deploymentConfigs)
 	if numDC == 0 {
-		return nil, fmt.Errorf("no Deployment Config was found for the selector: %v", selector)
+		return nil, fmt.Errorf("no Deployment was found for the selector: %v", selector)
 	} else if numDC > 1 {
-		return nil, fmt.Errorf("multiple Deployment Configs exist for the selector: %v. Only one must be present", selector)
+		return nil, fmt.Errorf("multiple Deployments exist for the selector: %v. Only one must be present", selector)
 	}
 
 	return &deploymentConfigs[0], nil
@@ -1146,7 +1152,7 @@ func (c *Client) GetOneServiceFromSelector(selector string) (*corev1.Service, er
 }
 
 // AddEnvironmentVariablesToDeployment adds the given environment
-// variables to the only container in the Deployment Config and updates in the
+// variables to the only container in the Deployment and updates in the
 // cluster
 func (c *Client) AddEnvironmentVariablesToDeployment(envs []corev1.EnvVar, dep *appsv1.Deployment) error {
 	numContainers := len(dep.Spec.Template.Spec.Containers)
@@ -1326,14 +1332,14 @@ func GetInputEnvVarsFromStrings(envVars []string) ([]corev1.EnvVar, error) {
 // deploymentName is the name of the deployment from which the env vars are retrieved
 // projectName is the name of the project
 func (c *Client) GetEnvVarsFromDep(deploymentName string) ([]corev1.EnvVar, error) {
-	deployment, err := c.GetDeploymentsFromName(deploymentName)
+	deployment, err := c.GetDeploymentFromName(deploymentName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error occurred while retrieving the deployment")
 	}
 
 	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", deployment.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
 	}
 
 	return deployment.Spec.Template.Spec.Containers[0].Env, nil
@@ -1364,4 +1370,49 @@ func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string,
 		return err
 	}
 	return err
+}
+
+// RemoveVolumeFromDeployment removes the volume associated with the
+// given PVC from the Deployment. Both, the volume entry and the
+// volume mount entry in the containers, are deleted.
+func (c *Client) RemoveVolumeFromDeployment(pvc string, depName string) error {
+
+	retryErr := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+
+		dep, err := c.GetDeploymentFromName(depName)
+		if err != nil {
+			return errors.Wrapf(err, "unable to get Deployment: %v", depName)
+		}
+
+		volumeNames := c.getVolumeNamesFromPVC(pvc, dep)
+		numVolumes := len(volumeNames)
+		if numVolumes == 0 {
+			return fmt.Errorf("no volume found for PVC %v in Deployment %v, expected one", pvc, dep.Name)
+		} else if numVolumes > 1 {
+			return fmt.Errorf("found more than one volume for PVC %v in Deployment %v, expected one", pvc, dep.Name)
+		}
+		volumeName := volumeNames[0]
+
+		// Remove volume if volume exists in Deployment
+		if !removeVolumeFromDeployment(volumeName, dep) {
+			return fmt.Errorf("could not find volume '%v' in Deployment '%v'", volumeName, dep.Name)
+		}
+		glog.V(4).Infof("Found volume: %v in Deployment: %v", volumeName, dep.Name)
+
+		// Remove volume mount if volume mount exists
+		if !removeVolumeFromDeployment(volumeName, dep) {
+			return fmt.Errorf("could not find volumeMount: %v in Deployment: %v", volumeName, dep)
+		}
+
+		_, updateErr := c.KubeClient.AppsV1().Deployments(c.Namespace).Update(dep)
+		return updateErr
+	})
+	if retryErr != nil {
+		return errors.Wrapf(retryErr, "updating Deployment %v failed", depName)
+	}
+	return nil
+}
+
+func getAppRootVolumeName(depName string) string {
+	return fmt.Sprintf("%s-idpdata", depName)
 }
