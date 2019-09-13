@@ -23,7 +23,7 @@ const UdoRecommendedName = "udo"
 
 var (
 	udoLong = ktemplates.LongDesc(`
-(Universal Do) udo is a CLI tool for running Kubernetes applications in a fast and automated matter. Reducing the complexity of deployment, udo adds iterative development without the worry of deploying your source code.
+(Universal Do) udo is a CLI tool for running cloud native applications in a fast and automated matter. Reducing the complexity of deployment, udo adds iterative development without the worry of deploying your source code.
 
 Find more information at https://github.com/redhat-developer/odo-fork`)
 	udoExample = ktemplates.Examples(`  # Creating and deploying a Node.js project
