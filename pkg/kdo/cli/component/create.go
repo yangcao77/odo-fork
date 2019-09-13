@@ -429,14 +429,6 @@ func (co *CreateOptions) Complete(name string, cmd *cobra.Command, args []string
 	co.componentSettings.Envs = envs
 	co.ignores = []string{}
 
-	// Set a 1Gi storage volume by default
-	volume, err := co.localConfigInfo.StorageCreate(*co.componentSettings.Name, "1Gi", "/projects")
-	if err != nil {
-		return err
-	}
-	componentStorage := []config.ComponentStorageSettings{volume}
-	co.componentSettings.Storage = &componentStorage
-
 	if co.now {
 		co.ResolveSrcAndConfigFlags()
 		err = co.ResolveProject(co.Context.Namespace)
@@ -462,6 +454,15 @@ func (co *CreateOptions) Validate() (err error) {
 
 // Run has the logic to perform the required actions as part of command
 func (co *CreateOptions) Run() (err error) {
+
+	// Set a 1Gi storage volume by default
+	volume, err := co.localConfigInfo.StorageCreate(*co.componentSettings.Name, "1Gi", "/projects")
+	if err != nil {
+		return err
+	}
+	componentStorage := []config.ComponentStorageSettings{volume}
+	co.componentSettings.Storage = &componentStorage
+
 	err = co.localConfigInfo.SetComponentSettings(co.componentSettings)
 	if err != nil {
 		return errors.Wrapf(err, "failed to persist the component settings to config file")
