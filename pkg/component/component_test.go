@@ -322,14 +322,14 @@ import (
 // 			output: ComponentList{
 // 				TypeMeta: metav1.TypeMeta{
 // 					Kind:       "List",
-// 					APIVersion: "odo.openshift.io/v1alpha1",
+// 					APIVersion: "udo.udo.io/v1alpha1",
 // 				},
 // 				ListMeta: metav1.ListMeta{},
 // 				Items: []Component{
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name:      "frontend",
@@ -348,7 +348,7 @@ import (
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name:      "backend",
@@ -557,7 +557,7 @@ func TestGetComponentDir(t *testing.T) {
 // 			want: Component{
 // 				TypeMeta: metav1.TypeMeta{
 // 					Kind:       "Component",
-// 					APIVersion: "odo.openshift.io/v1alpha1",
+// 					APIVersion: "udo.udo.io/v1alpha1",
 // 				},
 // 				ObjectMeta: metav1.ObjectMeta{
 // 					Name: "frontend",
@@ -595,7 +595,7 @@ func TestGetComponentDir(t *testing.T) {
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name: "frontend",
@@ -608,7 +608,7 @@ func TestGetComponentDir(t *testing.T) {
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name: "backend",
@@ -623,14 +623,14 @@ func TestGetComponentDir(t *testing.T) {
 // 			want: ComponentList{
 // 				TypeMeta: metav1.TypeMeta{
 // 					Kind:       "List",
-// 					APIVersion: "odo.openshift.io/v1alpha1",
+// 					APIVersion: "udo.udo.io/v1alpha1",
 // 				},
 // 				ListMeta: metav1.ListMeta{},
 // 				Items: []Component{
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name: "frontend",
@@ -643,7 +643,7 @@ func TestGetComponentDir(t *testing.T) {
 // 					{
 // 						TypeMeta: metav1.TypeMeta{
 // 							Kind:       "Component",
-// 							APIVersion: "odo.openshift.io/v1alpha1",
+// 							APIVersion: "udo.udo.io/v1alpha1",
 // 						},
 // 						ObjectMeta: metav1.ObjectMeta{
 // 							Name: "backend",

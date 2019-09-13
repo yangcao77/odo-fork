@@ -70,7 +70,7 @@ func getDeployment(namespace string, componentName string, componentType string,
 	}
 }
 
-func FakeDeploymentConfigs() *v1.DeploymentList {
+func FakeDeployments() *v1.DeploymentList {
 
 	var componentName string
 	var applicationName string
@@ -104,7 +104,7 @@ func FakeDeploymentConfigs() *v1.DeploymentList {
 			Protocol:      corev1.ProtocolUDP,
 		},
 	}, nil)
-	dc1 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c1, c2})
+	dep1 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c1, c2})
 
 	// DC2 with single container and single port
 	componentType = "nodejs"
@@ -132,7 +132,7 @@ func FakeDeploymentConfigs() *v1.DeploymentList {
 			},
 		},
 	})
-	dc2 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c3})
+	dep2 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c3})
 
 	// DC3 with single container and multiple ports
 	componentType = "wildfly"
@@ -150,20 +150,20 @@ func FakeDeploymentConfigs() *v1.DeploymentList {
 			Protocol:      corev1.ProtocolTCP,
 		},
 	}, nil)
-	dc3 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c4})
+	dep3 := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c4})
 
 	return &v1.DeploymentList{
 		Items: []v1.Deployment{
-			dc1,
-			dc2,
-			dc3,
+			dep1,
+			dep2,
+			dep3,
 		},
 	}
 }
 
 // mountedStorage is the map of the storage to be mounted
 // key is the path for the mount, value is the pvc
-func OneFakeDeploymentConfigWithMounts(componentName, componentType, applicationName string, mountedStorage map[string]*corev1.PersistentVolumeClaim) *v1.Deployment {
+func OneFakeDeploymentWithMounts(componentName, componentType, applicationName string, mountedStorage map[string]*corev1.PersistentVolumeClaim) *v1.Deployment {
 	c := getContainer(componentName, applicationName, []corev1.ContainerPort{
 		{
 			Name:          fmt.Sprintf("%v-%v-p1", componentName, applicationName),
@@ -177,13 +177,13 @@ func OneFakeDeploymentConfigWithMounts(componentName, componentType, application
 		},
 	}, nil)
 
-	dc := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c})
+	dep := getDeployment("myproject", componentName, componentType, applicationName, []corev1.Container{c})
 
-	supervisorDPVC := FakePVC(getAppRootVolumeName(dc.Name), "1Gi", nil)
+	supervisorDPVC := FakePVC(getAppRootVolumeName(dep.Name), "1Gi", nil)
 
 	for path, pvc := range mountedStorage {
 		volumeName := generateVolumeNameFromPVC(pvc.Name)
-		dc.Spec.Template.Spec.Volumes = append(dc.Spec.Template.Spec.Volumes, corev1.Volume{
+		dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, corev1.Volume{
 			Name: volumeName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
@@ -191,15 +191,15 @@ func OneFakeDeploymentConfigWithMounts(componentName, componentType, application
 				},
 			},
 		})
-		dc.Spec.Template.Spec.Containers[0].VolumeMounts = append(dc.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
 			Name:      volumeName,
 			MountPath: path,
 		})
 	}
 
 	// now append the supervisorD volume
-	dc.Spec.Template.Spec.Volumes = append(dc.Spec.Template.Spec.Volumes, corev1.Volume{
-		Name: getAppRootVolumeName(dc.Name),
+	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, corev1.Volume{
+		Name: getAppRootVolumeName(dep.Name),
 		VolumeSource: corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 				ClaimName: supervisorDPVC.Name,
@@ -208,13 +208,13 @@ func OneFakeDeploymentConfigWithMounts(componentName, componentType, application
 	})
 
 	// now append the supervisorD volume mount
-	dc.Spec.Template.Spec.Containers[0].VolumeMounts = append(dc.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
-		Name:      getAppRootVolumeName(dc.Name),
+	dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		Name:      getAppRootVolumeName(dep.Name),
 		MountPath: "/opt/app-root",
 		SubPath:   "app-root",
 	})
 
-	return &dc
+	return &dep
 }
 
 // generateVolumeNameFromPVC generates a random volume name based on the name
@@ -223,6 +223,6 @@ func generateVolumeNameFromPVC(pvc string) string {
 	return fmt.Sprintf("%v-%v-volume", pvc, util.GenerateRandomString(5))
 }
 
-func getAppRootVolumeName(dcName string) string {
-	return fmt.Sprintf("%s-s2idata", dcName)
+func getAppRootVolumeName(depName string) string {
+	return fmt.Sprintf("%s-idpdata", depName)
 }

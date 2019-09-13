@@ -18,7 +18,7 @@ const (
 	globalConfigEnvName  = "GLOBALODOCONFIG"
 	configFileName       = "preference.yaml"
 	preferenceKind       = "Preference"
-	preferenceAPIVersion = "odo.openshift.io/v1alpha1"
+	preferenceAPIVersion = "udo.udo.io/v1alpha1"
 
 	//DefaultTimeout for openshift server connection check
 	DefaultTimeout = 1
@@ -84,14 +84,14 @@ func getPreferenceFile() (string, error) {
 	}
 
 	if len(customHomeDir) != 0 {
-		return filepath.Join(customHomeDir, ".odo", configFileName), nil
+		return filepath.Join(customHomeDir, ".udo", configFileName), nil
 	}
 
 	currentUser, err := user.Current()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(currentUser.HomeDir, ".odo", configFileName), nil
+	return filepath.Join(currentUser.HomeDir, ".udo", configFileName), nil
 }
 
 // New returns the PreferenceInfo to retain the expected behavior
