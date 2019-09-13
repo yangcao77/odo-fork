@@ -18,15 +18,15 @@ import (
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
 )
 
-// KdoRecommendedName is the recommended kdo command name
-const KdoRecommendedName = "kdo"
+// udoRecommendedName is the recommended udo command name
+const UdoRecommendedName = "udo"
 
 var (
-	kdoLong = ktemplates.LongDesc(`
-(Kubernetes Do) kdo is a CLI tool for running Kubernetes applications in a fast and automated matter. Reducing the complexity of deployment, kdo adds iterative development without the worry of deploying your source code.
+	udoLong = ktemplates.LongDesc(`
+(Universal Do) udo is a CLI tool for running cloud native applications in a fast and automated matter. Reducing the complexity of deployment, udo adds iterative development without the worry of deploying your source code.
 
 Find more information at https://github.com/redhat-developer/odo-fork`)
-	kdoExample = ktemplates.Examples(`  # Creating and deploying a Node.js project
+	udoExample = ktemplates.Examples(`  # Creating and deploying a Node.js project
   git clone https://github.com/openshift/nodejs-ex && cd nodejs-ex
   %[1]s create nodejs
   %[1]s push
@@ -65,14 +65,14 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 )
 
-// NewCmdKdo creates a new root command for kdo
-func NewCmdKdo(name, fullName string) *cobra.Command {
+// NewCmdudo creates a new root command for udo
+func NewCmdUdo(name, fullName string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd := &cobra.Command{
 		Use:     name,
-		Short:   "kdo (Kubernetes Do)",
-		Long:    kdoLong,
-		Example: fmt.Sprintf(kdoExample, fullName),
+		Short:   "udo (Universal Do)",
+		Long:    udoLong,
+		Example: fmt.Sprintf(udoExample, fullName),
 	}
 
 	// Here you will define your flags and configuration settings.
@@ -101,7 +101,7 @@ func NewCmdKdo(name, fullName string) *cobra.Command {
 
 	rootCmd.AddCommand(
 		catalog.NewCmdCatalog(catalog.RecommendedCommandName, kdoutil.GetFullName(fullName, catalog.RecommendedCommandName)),
-		common.CmdPrintKdo,
+		common.CmdPrintUdo,
 		component.NewCmdCreate(component.CreateRecommendedCommandName, kdoutil.GetFullName(fullName, component.CreateRecommendedCommandName)),
 		component.NewCmdPush(component.PushRecommendedCommandName, kdoutil.GetFullName(fullName, component.PushRecommendedCommandName)),
 		component.NewCmdBuild(component.BuildRecommendedCommandName, kdoutil.GetFullName(fullName, component.BuildRecommendedCommandName)),

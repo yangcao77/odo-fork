@@ -498,7 +498,7 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 		return errors.Wrapf(err, "Failed to create component of type %s", componentType)
 	}
 	if !exists {
-		log.Info("Run 'kdo catalog list idp' for a list of supported Iterative-Dev packs")
+		log.Info("Run 'udo catalog list idp' for a list of supported Iterative-Dev packs")
 		return fmt.Errorf("Failed to find component of type %s", componentType)
 	}
 
@@ -508,7 +508,7 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 		return errors.Wrapf(err, "Failed to create component of type %s of version %s", componentType, componentVersion)
 	}
 	if !versionExists {
-		log.Info("Run 'kdo catalog list idp' to see a list of supported component type versions")
+		log.Info("Run 'udo catalog list idp' to see a list of supported component type versions")
 		return fmt.Errorf("Invalid component version %s:%s", componentType, componentVersion)
 	}
 

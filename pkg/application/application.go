@@ -13,7 +13,7 @@ import (
 const (
 	appPrefixMaxLen   = 12
 	appNameMaxRetries = 3
-	appAPIVersion     = "apps.kdo.io/v1alpha1"
+	appAPIVersion     = "apps.udo.io/v1alpha1"
 	appKind           = "app"
 	appList           = "List"
 )

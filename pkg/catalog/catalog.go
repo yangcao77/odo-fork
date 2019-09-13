@@ -31,7 +31,7 @@ type CatalogEntry struct {
 func List() ([]CatalogEntry, error) {
 	// See if we have an index.json already cached
 	var idpList []CatalogEntry
-	indexJSONFile := path.Join(os.TempDir(), ".kdo", "index.json")
+	indexJSONFile := path.Join(os.TempDir(), ".udo", "index.json")
 	// Load the index.json file into memory
 	var jsonBytes []byte
 	if _, err := os.Stat(indexJSONFile); os.IsNotExist(err) {
@@ -120,7 +120,7 @@ func VersionExists(client *kclient.Client, idpName string, idpVersion string) (b
 	return false, nil
 }
 
-// downloadIDPs downloads the index.json to a temp directory for KDO to access
+// downloadIDPs downloads the index.json to a temp directory for UDO to access
 func downloadIDPs() ([]byte, error) {
 	// Download the IDP index.json
 	var httpClient = &http.Client{Timeout: 10 * time.Second}
