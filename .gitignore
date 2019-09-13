@@ -12,6 +12,9 @@ bin
 !kdo/
 !udo/
 
+# Ignore .udo folder
+.udo/
+
 # Ignore coverage report
 coverage.txt
 
