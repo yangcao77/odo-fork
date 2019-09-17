@@ -114,9 +114,6 @@ spec:
       - volumeName: idp-data-volume
         containerPath: /idp-data-voume
       # Map a directory for the build job to be able to copy the .war file
-      - volumeName: maven-cache-volume
-        containerPath: /home/default/.m2       
-      # This allows the .m2 cache to be persisted across job, so it doesn't need to be redownloaded every time.
 
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
       - srcPath: "/scripts" # path in remote git repo, where folder containing "idp.yaml" is /
