@@ -103,7 +103,7 @@ spec:
   tasks:
     - name: maven-build
       buildImage: docker.io/maven:3.6
-      command: /scripts2/build.sh # could also just be a normal command ala `mvn clean package`
+      command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
       workingDirectory: /codewind-workspace-mount-point # optional, where in the container to run the command
 
       logs: # Ability to reference arbitrary log file types that aren't included in container stderr/stdout
@@ -116,12 +116,12 @@ spec:
       # Map a directory for the build job to be able to copy the .war file
 
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
-      - srcPath: "/scripts" # path in remote git repo, where folder containing "idp.yaml" is /
-        destPath: "/home/user" # path inside container to upload the directory
-        setExecuteBit: true # Set execute bit on all files in the directory (required for windows local, git repos without execute, http serving)
-      - srcPath: "/scripts2/build.sh"
+      - srcPath: "/scripts/build.sh"
         destPath: "/home/user/build-scripts"
         setExecuteBit: true # Set execute bit on a single file
+      - srcPath: "/scripts2" # path in remote git repo, where folder containing "idp.yaml" is /
+        destPath: "/home/user" # path inside container to upload the directory
+        setExecuteBit: true # Set execute bit on all files in the directory (required for windows local, git repos without execute, http serving)
 
       sourceMappings: # Optional: Ability to map files in the local project directory (eg the user's current working dir)` into the container
       - srcPath: "/src" # copy from $CURRENT_DIR/src
