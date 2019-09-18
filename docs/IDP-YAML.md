@@ -116,8 +116,8 @@ spec:
       # Map a directory for the build job to be able to copy the .war file
 
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
-      - srcPath: "/scripts/build.sh"
-        destPath: "/home/user/build-scripts"
+      - srcPath: "/resources/scripts/build.sh"
+        destPath: "/scripts/build.sh"
         setExecuteBit: true # Set execute bit on a single file
       - srcPath: "/scripts2" # path in remote git repo, where folder containing "idp.yaml" is /
         destPath: "/home/user" # path inside container to upload the directory
