@@ -150,4 +150,4 @@ spec:
 
 #### Update History:
 - September 16th: Remove `kind`, update `github-id` to `githubId`
-- September 17th: Remove `buildImage: docker.io/maven:3.6` from `server-start`, remove `maven-cache-volume` volume, removed `spec.shared.volumes.labels` and `spec.shared.volumes.accessModes`. `env` updated to Kuberenetes-style `key/value`, to allow easy parsing.
+- September 17th: Remove `buildImage: docker.io/maven:3.6` from `server-start`, remove `maven-cache-volume` volume, removed `spec.shared.volumes.labels` and `spec.shared.volumes.accessModes`. `env` updated to Kubernetes-style `key/value`, to allow easy parsing.
