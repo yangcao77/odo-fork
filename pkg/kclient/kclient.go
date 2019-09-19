@@ -39,6 +39,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	appsv1Client "k8s.io/client-go/kubernetes/typed/apps/v1"
 	corev1Client "k8s.io/client-go/kubernetes/typed/core/v1"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Required for Kube Clusters w/ OIDC authentication
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
