@@ -59,7 +59,6 @@ spec:
     volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
     - volumeName: idp-data-volume
       containerPath: /some/path/idp-data
-    # Map a directory for the build job to be able to copy the .war file
 
     kubernetes: # Values only used for Kube deployments
     
@@ -74,10 +73,9 @@ spec:
 
       memoryLimit: 600Mi # Arguable whether this should only be in kubernetes 
 
-    # runAsUser: 185 
-
   shared:
-    # tasks: removed on 09/20, as we have hardcoded specific defaults for these, at this time. 
+    # tasks: removed on (09/20), as we have hardcoded specific defaults for these, at this time. See 'Tasks' below.
+    
     # tasks: 
 
       # If true, tasks that share the same build image will NOT run within the same container during a scenario.
@@ -129,7 +127,7 @@ spec:
       volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
       - volumeName: idp-data-volume
         containerPath: /some/path/idp-data
-      # Map a directory for the build job to be able to copy the .war file
+      # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
 
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
       - srcPath: "/resources/scripts/build.sh"
@@ -156,12 +154,15 @@ spec:
       
     - name: server-start
       command: /opt/ibm/wlp/bin/server start $SERVER 
-
+      # Validation Constraint: If a task doesn't specifiy a build image field (indicating a task should run in the runtime container), then that task should not have volume mappings. 
+      # The task will still be able to use whichever mappings are specified in the runtime volumeMapping/
+      # For example, if this 'server-start' task had volume mappings, the UDO tool should fail to run it.
+      
   scenarios:
     - name: full-build
       tasks: ["maven-build", "server-start"]
     - name: incremental-build
-      tasks: ["incremental-maven-build", "server-start"]
+      tasks: ["incremental-maven-build", "server-start"] # incremental-maven-build not actually defined in this sample
 ```
 
 #### Update History:
