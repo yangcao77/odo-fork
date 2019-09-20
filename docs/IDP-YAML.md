@@ -172,8 +172,3 @@ spec:
   - `sourceMappings` -> `sourceMapping`, and removed the `srcPath` field (will always sync from project root).
   - Removed `spec.shared.tasks`, and all the fields under it, as we have hardcoded defaults for these values.
   - Added ability to map volumes into runtime image (this was always implied, but is now included), under `spec.runtime.volumeMappings`
-```
-    volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
-    - volumeName: idp-data-volume
-      containerPath: /some/path/idp-data
-
