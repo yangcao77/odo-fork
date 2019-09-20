@@ -56,6 +56,11 @@ spec:
 
     env: # As below
 
+    volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
+    - volumeName: idp-data-volume
+      containerPath: /some/path/idp-data
+    # Map a directory for the build job to be able to copy the .war file
+
     kubernetes: # Values only used for Kube deployments
     
       # TODO: Are there other Kube resource parameters we need to include here? securityContext? (cluster) role bindings?
@@ -72,24 +77,28 @@ spec:
     # runAsUser: 185 
 
   shared:
-    tasks: # Optional, see defaults below
+    # tasks: removed on 09/20, as we have hardcoded specific defaults for these, at this time. 
+    # tasks: 
 
       # If true, tasks that share the same build image will NOT run within the same container during a scenario.
       # If false, tasks that share the same build image WILL run in the same container during a scenario.
       # Note: Whether the container will be disposed after the scenario has completed is determined by disposeOnScenarioComplete.
       # Optional: default is true.
-      disposeOfSharedContainersOnTaskComplete: true # (true/false) 
-
+      # disposeOfSharedContainersOnTaskComplete: true # (true/false) 
+      # (09/20) Not in plan to support at this time.
+      
       # Whether a task container will be disposed of after the scenario has completed.
       # If true, all containers that were used in a scenario will be destroyed once the scenario ends. 
       # If false, all containers that were used in a scenario will be preserved for the next run.
       # Note: this applies BOTH to tasks that share a build image with another task, and those that don't.
       # Optional: default is true.
-      disposeOnScenarioComplete: true # (true/false) 
+      # disposeOnScenarioComplete: true # (true/false) 
+      # (09/20) Not in plan to support at this time.
 
       # Number of seconds to keep a task container alive, if the task container is not invoked during that period.
       # Optional: default is no timeout.
-      idleTaskContainerTimeout: 3600 
+      # idleTaskContainerTimeout: 3600 
+      # (09/20) Not in plan to support at this time.
     
     volumes: 
     - name: idp-data-volume 
@@ -101,9 +110,16 @@ spec:
       value: value
 
   tasks:
+    # Task containers will ALWAYS stay up and be reused after they are used (eg they will never be disposed of after a single use).
+
+    # Tasks that share the same build image will ALWAYS run in the same container during a scenario.
+    # - Tasks that share a build image value, must have the exact same volume mappings, or the IDP is invalid and should not be executed.
+
     - name: maven-build
       buildImage: docker.io/maven:3.6
       command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
+      # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
+      
       workingDirectory: /codewind-workspace-mount-point # optional, where in the container to run the command
 
       logs: # Ability to reference arbitrary log file types that aren't included in container stderr/stdout
@@ -112,7 +128,7 @@ spec:
     
       volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
       - volumeName: idp-data-volume
-        containerPath: /idp-data-voume
+        containerPath: /some/path/idp-data
       # Map a directory for the build job to be able to copy the .war file
 
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
@@ -123,11 +139,11 @@ spec:
         destPath: "/home/user" # path inside container to upload the directory
         setExecuteBit: true # Set execute bit on all files in the directory (required for windows local, git repos without execute, http serving)
 
-      sourceMappings: # Optional: Ability to map files in the local project directory (eg the user's current working dir)` into the container
-      - srcPath: "/src" # copy from $CURRENT_DIR/src
+      sourceMapping: # Optional: Ability to map files in the local project directory (eg the user's current working dir)` into the container
         destPath: "/home/user/src" # path inside container to copy the folder
         setExecuteBit: true # Set execute bit on all files in the directory
       # This is used to know where the source files should be copied into the container, might be useful for other scenarios like customization
+      # Path should be a valid path within the container (but if volumes are mapped into paths in the container, you can use those volume paths)
               
       env: # Optional key/value env var pairs, as above
 
@@ -151,3 +167,12 @@ spec:
 #### Update History:
 - September 16th: Remove `kind`, update `github-id` to `githubId`
 - September 17th: Remove `buildImage: docker.io/maven:3.6` from `server-start`, remove `maven-cache-volume` volume, removed `spec.shared.volumes.labels` and `spec.shared.volumes.accessModes`. `env` updated to Kubernetes-style `key/value`, to allow easy parsing.
+- September 20th: 
+  - `sourceMappings` -> `sourceMapping`, and removed the `srcPath` field (will always sync from project root).
+  - Removed `spec.shared.tasks`, and all the fields under it, as we have hardcoded defaults for these values.
+  - Added ability to map volumes into runtime image (this was always implied, but is now included)
+```
+    volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
+    - volumeName: idp-data-volume
+      containerPath: /some/path/idp-data
+
