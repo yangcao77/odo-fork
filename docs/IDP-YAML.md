@@ -187,4 +187,4 @@ spec:
   - `runAsUser` removed from `spec.tasks`
   - `buildImage` renamed to `image` under `spec.tasks`
   - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
-`image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which task will reference by name.
+  - `image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which task will reference by name.
