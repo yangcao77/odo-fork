@@ -186,3 +186,8 @@ spec:
   - `buildImage` renamed to `image` under `spec.tasks`
   - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
   - `image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which tasks will reference by name.
+  
+#### Requirements
+  
+1) We have heard that the time it takes for an existing volume to attach to a container can be upwards of several minutes. We have not seen this ourselves, but we need to handle this. For this reason, we are NOT tearing down on task containers on the completion of the task, and task containers are shared across scenario runs.
+  
