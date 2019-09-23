@@ -132,7 +132,6 @@ spec:
     # Task containers will ALWAYS stay up and be reused after they are used (eg they will never be disposed of after a single use).
 
     # Tasks that share the same build image will ALWAYS run in the same container during a scenario.
-    # - Tasks that share a build image value, must have the exact same volume mappings, or the IDP is invalid and should not be executed.
 
     - name: maven-build
       container: maven-build-container
@@ -164,9 +163,6 @@ spec:
 
     - name: server-start
       command: /opt/ibm/wlp/bin/server start $SERVER 
-      # Validation Constraint: If a task doesn't specifiy a build image field (indicating a task should run in the runtime container), then that task should not have volume mappings. 
-      # The task will still be able to use whichever mappings are specified in the runtime volumeMapping/
-      # For example, if this 'server-start' task had volume mappings, the UDO tool should fail to run it.
       
   scenarios:
     - name: full-build
