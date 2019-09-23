@@ -71,10 +71,10 @@ spec:
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      requests: # Are these optional in Kube?
+      requests: # TODO: Are these optional in Kube? If so, what are the defaults?
         memory: "64Mi"
         cpu: "250m"
-      limits: # Are these optional in Kube?
+      limits:  # TODO: Are these optional in Kube? If so, what are the defaults?
         memory: "128Mi"
         cpu: "500m"
 
