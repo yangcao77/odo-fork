@@ -54,7 +54,7 @@ spec:
     - type: some.type
       path: /logs/(etc)
 
-    env: # As below
+    env: # Defined As below
 
     volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
     - volumeName: idp-data-volume
@@ -71,14 +71,30 @@ spec:
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      requests:
+      requests: # Are these optional in Kube?
         memory: "64Mi"
         cpu: "250m"
-      limits:
+      limits: # Are these optional in Kube?
         memory: "128Mi"
         cpu: "500m"
 
   shared:
+
+    containers:
+    - name: maven-build-container
+      image: docker.io/maven:3.6
+      
+      volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
+      - volumeName: idp-data-volume
+        containerPath: /some/path/idp-data
+      # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
+  
+      env: # Optional key/value env var pairs, as above
+
+      kubernetes: # Optional
+        # Defined same as above
+
+    
     # tasks: removed on (09/20), as we have hardcoded specific defaults for these, at this time. See 'Tasks' below.
     
     # tasks: 
@@ -119,7 +135,7 @@ spec:
     # - Tasks that share a build image value, must have the exact same volume mappings, or the IDP is invalid and should not be executed.
 
     - name: maven-build
-      image: docker.io/maven:3.6
+      container: maven-build-container
       command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
       # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
       
@@ -129,11 +145,6 @@ spec:
       - type: maven.build
         path: /logs/(etc)
     
-      volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
-      - volumeName: idp-data-volume
-        containerPath: /some/path/idp-data
-      # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
-
       repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
       - srcPath: "/resources/scripts/build.sh"
         destPath: "/scripts/build.sh"
@@ -149,9 +160,7 @@ spec:
       # Path should be a valid path within the container (but if volumes are mapped into paths in the container, you can use those volume paths)
               
       env: # Optional key/value env var pairs, as above
-
-      kubernetes: # Optional
-        # Defined same as above
+      # Values specified here will replace those specified in container, if there is an overlap.
 
     - name: server-start
       command: /opt/ibm/wlp/bin/server start $SERVER 
@@ -164,6 +173,7 @@ spec:
       tasks: ["maven-build", "server-start"]
     - name: incremental-build
       tasks: ["incremental-maven-build", "server-start"] # incremental-maven-build not actually defined in this sample
+
 ```
 
 #### Update History:
