@@ -174,5 +174,6 @@ spec:
   - Removed `spec.shared.tasks`, and all the fields under it, as we have hardcoded defaults for these values.
   - Added ability to map volumes into runtime image (this was always implied, but is now included), under `spec.runtime.volumeMappings`
 - September 23rd:
-  - `runAsUser` removed from `spec.tasks`, `buildImage -> image` under `spec.tasks`.
+  - `runAsUser` removed from `spec.tasks`
+  - `buildImage` renamed to `image` under `spec.tasks`
   - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
