@@ -114,7 +114,7 @@ spec:
     # - Tasks that share a build image value, must have the exact same volume mappings, or the IDP is invalid and should not be executed.
 
     - name: maven-build
-      buildImage: docker.io/maven:3.6
+      image: docker.io/maven:3.6
       command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
       # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
       
@@ -145,8 +145,6 @@ spec:
               
       env: # Optional key/value env var pairs, as above
 
-      runAsUser: 185 # Optional, same as above
-      
       kubernetes: # Optional, as above
         livenessProbe: 
         readinessProbe:
@@ -172,3 +170,5 @@ spec:
   - `sourceMappings` -> `sourceMapping`, and removed the `srcPath` field (will always sync from project root).
   - Removed `spec.shared.tasks`, and all the fields under it, as we have hardcoded defaults for these values.
   - Added ability to map volumes into runtime image (this was always implied, but is now included), under `spec.runtime.volumeMappings`
+- September 23rd:
+  - `runAsUser` removed from `spec.tasks`, `buildImage -> image` under `spec.tasks`.
