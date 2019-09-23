@@ -189,6 +189,6 @@ spec:
   
 ## Architectural Significant Requirements
   
-We have heard that the time it takes for an existing volume to attach to a container can be upwards of several minutes. We have not seen this ourselves, but we need to handle this. 
+We have heard that the time it takes for an existing volume to attach to a new Pod can be upwards of several minutes. We have not seen this ourselves, but we need to handle this. 
 - For this reason, we are NOT tearing down our task containers on the completion of the task, and likewise task containers are shared across scenario runs.
   
