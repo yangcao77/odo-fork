@@ -394,6 +394,7 @@ func (lci *LocalConfigInfo) writeToFile() error {
 	plc := newProxyLocalConfig()
 	plc.TypeMeta = lci.typeMeta
 	plc.ComponentSettings = lci.componentSettings
+	fmt.Println("inside lci write to file")
 	return util.WriteToFile(&plc, lci.Filename)
 }
 
