@@ -91,6 +91,8 @@ spec:
   
       env: # Optional key/value env var pairs, as above
 
+      privileged: false # Optional, default: false.
+
       kubernetes: # Optional
         # Defined same as above
 
