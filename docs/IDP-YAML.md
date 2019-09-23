@@ -71,7 +71,12 @@ spec:
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      memoryLimit: 600Mi # Arguable whether this should only be in kubernetes 
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
 
   shared:
     # tasks: removed on (09/20), as we have hardcoded specific defaults for these, at this time. See 'Tasks' below.
@@ -145,11 +150,9 @@ spec:
               
       env: # Optional key/value env var pairs, as above
 
-      kubernetes: # Optional, as above
-        livenessProbe: 
-        readinessProbe:
-        memoryLimit: 600Mi # As above
-      
+      kubernetes: # Optional
+        # Defined same as above
+
     - name: server-start
       command: /opt/ibm/wlp/bin/server start $SERVER 
       # Validation Constraint: If a task doesn't specifiy a build image field (indicating a task should run in the runtime container), then that task should not have volume mappings. 
@@ -172,3 +175,4 @@ spec:
   - Added ability to map volumes into runtime image (this was always implied, but is now included), under `spec.runtime.volumeMappings`
 - September 23rd:
   - `runAsUser` removed from `spec.tasks`, `buildImage -> image` under `spec.tasks`.
+  - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
