@@ -44,6 +44,7 @@ func Delete(client *kclient.Client, urlName string, applicationName string) erro
 // Create creates a URL and returns url string and error if any
 // portNumber is the target port number for the ingress and is -1 in case no port number is specified in which case it is automatically detected for components which expose only one service port)
 func Create(client *kclient.Client, urlName string, portNumber int, ingressDomain string, componentName, applicationName string) (string, error) {
+	fmt.Println("IN Create function")
 	labels := urlLabels.GetLabels(urlName, componentName, applicationName, false)
 
 	serviceName, err := util.NamespaceKubernetesObject(componentName, applicationName)

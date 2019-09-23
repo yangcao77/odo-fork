@@ -22,7 +22,8 @@ import (
 	"github.com/redhat-developer/odo-fork/pkg/preference"
 	"github.com/redhat-developer/odo-fork/pkg/storage"
 
-	// urlpkg "github.com/redhat-developer/odo-fork/pkg/url"
+	// "github.com/redhat-developer/odo-fork/pkg/storage"
+	urlpkg "github.com/redhat-developer/odo-fork/pkg/url"
 	"github.com/redhat-developer/odo-fork/pkg/util"
 
 	corev1 "k8s.io/api/core/v1"
@@ -547,102 +548,104 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 	return
 }
 
-// // ApplyConfig applies the component config onto component dc
-// // Parameters:
-// //	client: kclient instance
-// //	appName: Name of application of which the component is a part
-// //	componentName: Name of the component which is being patched with config
-// //	componentConfig: Component configuration
-// //  	cmpExist: true if components exists in the cluster
-// // Returns:
-// //	err: Errors if any else nil
-// func ApplyConfig(client *kclient.Client, componentConfig config.LocalConfigInfo, stdout io.Writer, cmpExist bool) (err error) {
+// ApplyConfig applies the component config onto component dc
+// Parameters:
+//	client: kclient instance
+//	appName: Name of application of which the component is a part
+//	componentName: Name of the component which is being patched with config
+//	componentConfig: Component configuration
+//  	cmpExist: true if components exists in the cluster
+// Returns:
+//	err: Errors if any else nil
+func ApplyConfig(client *kclient.Client, componentConfig config.LocalConfigInfo, stdout io.Writer, cmpExist bool) (err error) {
 
-// 	s := log.Spinner("Applying configuration")
-// 	defer s.End(false)
-// 	// if component exist then only call the update function
-// 	if cmpExist {
+	// s := log.Spinner("Applying configuration")
+	// defer s.End(false)
+	// // if component exist then only call the update function
+	// if cmpExist {
 
-// 		if err = Update(client, componentConfig, componentConfig.GetSourceLocation(), stdout); err != nil {
-// 			return err
-// 		}
-// 	}
-// 	s.End(true)
+	// 	if err = Update(client, componentConfig, componentConfig.GetSourceLocation(), stdout); err != nil {
+	// 		return err
+	// 	}
+	// }
+	// s.End(true)
 
-// 	showChanges, err := checkIfURLChangesWillBeMade(client, componentConfig)
-// 	if err != nil {
-// 		return err
-// 	}
+	showChanges, err := checkIfURLChangesWillBeMade(client, componentConfig)
+	if err != nil {
+		return err
+	}
 
-// 	if showChanges {
-// 		log.Info("\nApplying URL changes")
-// 		// Create any URLs that have been added to the component
-// 		err = ApplyConfigCreateURL(client, componentConfig)
-// 		if err != nil {
-// 			return err
-// 		}
+	if showChanges {
+		log.Info("\nApplying URL changes")
+		// Create any URLs that have been added to the component
+		err = ApplyConfigCreateURL(client, componentConfig)
+		if err != nil {
+			return err
+		}
 
-// 		// Delete any URLs
-// 		err = applyConfigDeleteURL(client, componentConfig)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
+		// Delete any URLs
+		err = applyConfigDeleteURL(client, componentConfig)
+		if err != nil {
+			return err
+		}
+	}
 
-// 	return
-// }
+	return
+}
 
-// // ApplyConfigDeleteURL applies url config deletion onto component
-// func applyConfigDeleteURL(client *kclient.Client, componentConfig config.LocalConfigInfo) (err error) {
+// ApplyConfigDeleteURL applies url config deletion onto component
+func applyConfigDeleteURL(client *kclient.Client, componentConfig config.LocalConfigInfo) (err error) {
 
-// 	urlList, err := urlpkg.List(client, componentConfig.GetName(), componentConfig.GetApplication())
-// 	if err != nil {
-// 		return err
-// 	}
-// 	localUrlList := componentConfig.GetUrl()
-// 	for _, u := range urlList.Items {
-// 		if !checkIfUrlPresentInConfig(localUrlList, u.Name) {
-// 			err = urlpkg.Delete(client, u.Name, componentConfig.GetApplication())
-// 			if err != nil {
-// 				return err
-// 			}
-// 			log.Successf("URL %s successfully deleted", u.Name)
-// 		}
-// 	}
-// 	return nil
-// }
+	urlList, err := urlpkg.List(client, componentConfig.GetName(), componentConfig.GetApplication())
+	if err != nil {
+		return err
+	}
+	localUrlList := componentConfig.GetUrl()
+	for _, u := range urlList.Items {
+		if !checkIfUrlPresentInConfig(localUrlList, u.Name) {
+			err = urlpkg.Delete(client, u.Name, componentConfig.GetApplication())
+			if err != nil {
+				return err
+			}
+			log.Successf("URL %s successfully deleted", u.Name)
+		}
+	}
+	return nil
+}
 
-// func checkIfUrlPresentInConfig(localUrl []config.ConfigUrl, url string) bool {
-// 	for _, u := range localUrl {
-// 		if u.Name == url {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func checkIfUrlPresentInConfig(localUrl []config.ConfigUrl, url string) bool {
+	for _, u := range localUrl {
+		if u.Name == url {
+			return true
+		}
+	}
+	return false
+}
 
-// // ApplyConfigCreateURL applies url config onto component
-// func ApplyConfigCreateURL(client *kclient.Client, componentConfig config.LocalConfigInfo) error {
+// ApplyConfigCreateURL applies url config onto component
+func ApplyConfigCreateURL(client *kclient.Client, componentConfig config.LocalConfigInfo) error {
 
-// 	urls := componentConfig.GetUrl()
-// 	for _, urlo := range urls {
-// 		exist, err := urlpkg.Exists(client, urlo.Name, componentConfig.GetName(), componentConfig.GetApplication())
-// 		if err != nil {
-// 			return errors.Wrapf(err, "unable to check url")
-// 		}
-// 		if exist {
-// 			log.Successf("URL %s already exists", urlo.Name)
-// 		} else {
-// 			host, err := urlpkg.Create(client, urlo.Name, urlo.Port, componentConfig.GetName(), componentConfig.GetApplication())
-// 			if err != nil {
-// 				return errors.Wrapf(err, "unable to create url")
-// 			}
-// 			log.Successf("URL %s: %s created", urlo.Name, host)
-// 		}
-// 	}
+	urls := componentConfig.GetUrl()
+	for _, urlo := range urls {
+		exist, err := urlpkg.Exists(client, urlo.Name, componentConfig.GetName(), componentConfig.GetApplication())
+		if err != nil {
+			return errors.Wrapf(err, "unable to check url")
+		}
+		if exist {
+			log.Successf("URL %s already exists", urlo.Name)
+		} else {
+			fmt.Println("urlo.Name is %s, urlo.Port is %s, urlo.Host is %s", urlo.Name, urlo.Port, urlo.Host)
+			fmt.Println("component name is %s, appName is %s", componentConfig.GetName(), componentConfig.GetApplication())
+			host, err := urlpkg.Create(client, urlo.Name, urlo.Port, urlo.Host, componentConfig.GetName(), componentConfig.GetApplication())
+			if err != nil {
+				return errors.Wrapf(err, "unable to create url")
+			}
+			log.Successf("URL %s: %s created", urlo.Name, host)
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // PushLocal push local code to the cluster and trigger build there.
 // During copying binary components, path represent base directory path to binary and files contains path of binary
@@ -1411,20 +1414,20 @@ func getStorageFromConfig(localConfig *config.LocalConfigInfo) storage.StorageLi
 	return storageList
 }
 
-// // checkIfURLChangesWillBeMade checks to see if there are going to be any changes
-// // to the URLs when deploying and returns a true / false
-// func checkIfURLChangesWillBeMade(client *kclient.Client, componentConfig config.LocalConfigInfo) (bool, error) {
+// checkIfURLChangesWillBeMade checks to see if there are going to be any changes
+// to the URLs when deploying and returns a true / false
+func checkIfURLChangesWillBeMade(client *kclient.Client, componentConfig config.LocalConfigInfo) (bool, error) {
 
-// 	urlList, err := urlpkg.List(client, componentConfig.GetName(), componentConfig.GetApplication())
-// 	if err != nil {
-// 		return false, err
-// 	}
+	urlList, err := urlpkg.List(client, componentConfig.GetName(), componentConfig.GetApplication())
+	if err != nil {
+		return false, err
+	}
 
-// 	// If config has URL(s) (since we check) or if the cluster has URL's but
-// 	// componentConfig does not (deleting)
-// 	if len(componentConfig.GetUrl()) > 0 || len(componentConfig.GetUrl()) == 0 && (len(urlList.Items) > 0) {
-// 		return true, nil
-// 	}
+	// If config has URL(s) (since we check) or if the cluster has URL's but
+	// componentConfig does not (deleting)
+	if len(componentConfig.GetUrl()) > 0 || len(componentConfig.GetUrl()) == 0 && (len(urlList.Items) > 0) {
+		return true, nil
+	}
 
-// 	return false, nil
-// }
+	return false, nil
+}

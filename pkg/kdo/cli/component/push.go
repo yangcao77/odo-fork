@@ -185,10 +185,10 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 
 	// TODO-KDO: Add when implementing update
 	// // Apply config
-	// err = component.ApplyConfig(po.Context.Client, *po.localConfig, stdout, isCmpExists)
-	// if err != nil {
-	// 	kdoutil.LogErrorAndExit(err, "Failed to update config to component deployed")
-	// }
+	err = component.ApplyConfig(po.Context.Client, *po.localConfig, stdout, isCmpExists)
+	if err != nil {
+		odoutil.LogErrorAndExit(err, "Failed to update config to component deployed")
+	}
 
 	return nil
 }

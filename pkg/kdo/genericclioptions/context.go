@@ -165,6 +165,9 @@ func getValidConfig(command *cobra.Command) (*config.LocalConfigInfo, error) {
 		if fcc.Name() == "logout" {
 			return lci, nil
 		}
+		if fcc.Name() == "url" {
+			return lci, nil
+		}
 
 	} else {
 		return lci, nil
