@@ -189,6 +189,19 @@ spec:
   
 ## Architectural Significant Requirements
   
-We have heard that the time it takes for an existing volume to attach to a new Pod can be upwards of several minutes. We have not seen this ourselves, but we need to handle this. 
+#### The time takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
 - For this reason, we are NOT tearing down our task containers on the completion of the task, and likewise task containers are shared across scenario runs.
   
+#### There exists at least one case where we must override the entrypoint on the runtime:
+
+IDP:
+- Runtime Container A (Liberty MP, running as non-root)
+- Task 1, runtime task, runs in container A.
+
+Logic:
+- If we don't override the entrypoint, then we need to put build content (server.xml, binaries) into `/config` for the runtime, before the runtime starts.
+- This content can only be the result of a build task.
+- But in this scenario, with only a runtime task, the task must run inside the runtime container, which hasn't started yet.
+- One option is running the task inside an initContainer, but that doesn't actually work because we wouldn't be able to sync the source before the initContainer runs.
+- Thus, since the build task can't run in a non-running container, and there is no other mechanism to run it, it is not possible to support this scenario w/o override the entrypoint.
+
