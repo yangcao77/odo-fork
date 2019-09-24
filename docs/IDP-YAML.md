@@ -166,6 +166,7 @@ spec:
       # Values specified here will replace those specified in container, if there is an overlap.
 
     - name: server-start
+      type: Runtime
       command: /opt/ibm/wlp/bin/server start $SERVER 
       
   scenarios:
