@@ -196,6 +196,7 @@ spec:
 
 - September 24th:
   - Added `Type` under `spec.tasks`, with a value of `Shared`, `Standalone`, or `Runtime`. 
+  - Added `spec.runtime.overrideEntrypointTailToFile`
   
 ## Requirements
   
