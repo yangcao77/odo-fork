@@ -41,8 +41,8 @@ spec:
     image: docker.io/ibmcom/websphere-liberty:latest
 
     # If this field is specified, the `ENTRYPOINT` of the container will be replaced with:
-    # sh -c `touch (path specified); tail -f (path specified)`
-    overrideEntrypointTailToFile: file path 
+    # a container command of "sh -c `mkdir -p (parent dit); touch (path specified); tail -f (path specified)`"
+    overrideEntrypointTailToFile: file path # file path within the container to tail
     
     endpoints: # Not optional if HTTP(S) port is specified
       containerHealth: /health # How to tell the container is healthy
