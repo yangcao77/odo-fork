@@ -100,7 +100,7 @@ func (o *URLCreateOptions) Run() (err error) {
 		return errors.Wrapf(err, "failed to persist the component settings to config file")
 	}
 	log.Successf("URL %s created", o.urlName)
-	log.Infof("\nRun `kdo push` to apply URL: %s", o.urlName)
+	log.Infof("\nRun `udo push` to apply URL: %s", o.urlName)
 	return
 }
 

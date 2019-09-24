@@ -193,7 +193,7 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 	// // Apply config
 	err = component.ApplyConfig(po.Context.Client, *po.localConfig, stdout, isCmpExists)
 	if err != nil {
-		odoutil.LogErrorAndExit(err, "Failed to update config to component deployed")
+		kdoutil.LogErrorAndExit(err, "Failed to update config to component deployed")
 	}
 
 	return nil
