@@ -137,6 +137,7 @@ spec:
     # Tasks that share the same build image will ALWAYS run in the same container during a scenario.
 
     - name: maven-build
+      type: Standalone # Required field: One of: Runtime (task runs in runtime container), Shared (task runs outside runtime, but shares a container with another task), Standalone (task runs outside runtime, should not share a container with another task)
       container: maven-build-container
       command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
       # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
@@ -187,8 +188,11 @@ spec:
   - `buildImage` renamed to `image` under `spec.tasks`
   - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
   - `image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which tasks will reference by name.
+
+- September 24th:
+  - Added `Type` under `spec.tasks`, with a value of `Shared`, `Standalone`, or `Runtime`. 
   
-## Architectural Significant Requirements
+## Requirements
   
 #### The time it takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
 - For this reason, we are NOT tearing down our task containers on the completion of the task, and likewise task containers are shared across scenario runs.
