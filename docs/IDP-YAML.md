@@ -193,7 +193,7 @@ spec:
 #### The time it takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
 - For this reason, we are NOT tearing down our task containers on the completion of the task, and likewise task containers are shared across scenario runs.
   
-#### There exists at least one case where we must override the entrypoint on the runtime:
+#### There exists at least one case where we must override the entrypoint on the runtime, therefore (if we need to support this case) we need to support overriding the entrypoint in general.:
 
 IDP:
 - Runtime Container A (Liberty MP, running as non-root)
