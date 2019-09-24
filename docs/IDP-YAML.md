@@ -205,6 +205,3 @@ Logic:
 - One option is running the task inside an initContainer, but that doesn't actually work because we wouldn't be able to sync the source before the initContainer runs.
 - Thus, since the build task can't run in a non-running container, and there is no other mechanism to run it, it is not possible to support this scenario w/o override the entrypoint.
 
-####  Since we must necessarily override the entrypoint in at least the above scenario, then we should probably override the entrypoint in all scenarios, to make our lives easier
-
-- The alternative is to only override the entrypoint for SOME idp configurations (for example, override if a runtime task is first in the scenario task list, but don't override if a  shared/standalone task is first in the scenario list), but this seems like a fair bit of complexity
