@@ -51,7 +51,7 @@ func (o *URLListOptions) Complete(name string, cmd *cobra.Command, args []string
 
 // Validate validates the UrlListOptions based on completed values
 func (o *URLListOptions) Validate() (err error) {
-	if util.CheckOutputFlag(o.OutputFlag) {
+	if !util.CheckOutputFlag(o.OutputFlag) {
 		return fmt.Errorf("the specified output format is not supported")
 	}
 	return
@@ -90,7 +90,7 @@ func (o *URLListOptions) Run() (err error) {
 				var present bool
 				for _, u := range urls.Items {
 					if i.Name == u.Name {
-						fmt.Fprintln(tabWriterURL, u.Name, "\t", url.GetURLString(u.Spec.Protocol, u.Spec.Host), "\t", u.Spec.Port)
+						fmt.Fprintln(tabWriterURL, u.Name, "\t", url.GetURLString(url.GetProtocol(u), u.Spec.Rules[0].Host)) // , "\t", u.Spec.Port)
 						present = true
 					}
 				}
@@ -100,7 +100,7 @@ func (o *URLListOptions) Run() (err error) {
 			}
 
 			tabWriterURL.Flush()
-			fmt.Println("\nUse `kdo push` to create url on cluster")
+			fmt.Println("\nUse `udo push` to create url on cluster")
 		}
 
 	}

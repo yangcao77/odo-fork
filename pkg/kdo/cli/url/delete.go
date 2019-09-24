@@ -75,7 +75,7 @@ func (o *URLDeleteOptions) Run() (err error) {
 			return err
 		}
 		log.Successf("URL %s removed from the config file", o.urlName)
-		log.Infof("\nRun 'kdo push' to delete URL: %s", o.urlName)
+		log.Infof("\nRun 'udo push' to delete URL: %s", o.urlName)
 	} else {
 		return fmt.Errorf("aborting deletion of URL: %v", o.urlName)
 	}

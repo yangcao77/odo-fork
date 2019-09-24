@@ -19,15 +19,25 @@ import (
 )
 
 // Get returns URL defination for given URL name
-func (urls UrlList) Get(urlName string) Url {
-	for _, url := range urls.Items {
-		if url.Name == urlName {
-			return url
-		}
-	}
-	return Url{}
+// func (urls UrlList) Get(urlName string) Url {
+// 	for _, url := range urls.Items {
+// 		if url.Name == urlName {
+// 			return url
+// 		}
+// 	}
+// 	return Url{}
 
-}
+// }
+
+// func (ingresses iextensionsv1.IngressList) Get(urlName string) iextensionsv1.Ingress {
+// 	for _, ingress := range ingresses.Items {
+// 		if ingress.Name == urlName {
+// 			return ingress
+// 		}
+// 	}
+// 	return iextensionsv1.Ingress{}
+
+// }
 
 // Delete deletes a URL
 func Delete(client *kclient.Client, urlName string, applicationName string) error {
@@ -44,7 +54,6 @@ func Delete(client *kclient.Client, urlName string, applicationName string) erro
 // Create creates a URL and returns url string and error if any
 // portNumber is the target port number for the ingress and is -1 in case no port number is specified in which case it is automatically detected for components which expose only one service port)
 func Create(client *kclient.Client, urlName string, portNumber int, ingressDomain string, componentName, applicationName string) (string, error) {
-	fmt.Println("IN Create function")
 	labels := urlLabels.GetLabels(urlName, componentName, applicationName, false)
 
 	serviceName, err := util.NamespaceKubernetesObject(componentName, applicationName)
@@ -62,13 +71,13 @@ func Create(client *kclient.Client, urlName string, portNumber int, ingressDomai
 		return "", errors.Wrap(err, "unable to create ingress")
 	}
 
-	return GetURLString(getProtocol(*ingress), ingressDomain), nil
+	return GetURLString(GetProtocol(*ingress), ingressDomain), nil
 }
 
 // List lists the URLs in an application. The results can further be narrowed
 // down if a component name is provided, which will only list URLs for the
 // given component
-func List(client *kclient.Client, componentName string, applicationName string) (UrlList, error) {
+func List(client *kclient.Client, componentName string, applicationName string) (iextensionsv1.IngressList, error) {
 
 	labelSelector := fmt.Sprintf("%v=%v", applabels.ApplicationLabel, applicationName)
 
@@ -79,10 +88,10 @@ func List(client *kclient.Client, componentName string, applicationName string) 
 	glog.V(4).Infof("Listing ingresses with label selector: %v", labelSelector)
 	ingresses, err := client.ListIngresses(labelSelector)
 	if err != nil {
-		return UrlList{}, errors.Wrap(err, "unable to list ingress names")
+		return iextensionsv1.IngressList{}, errors.Wrap(err, "unable to list ingress names")
 	}
 
-	var urls []Url
+	var urls []iextensionsv1.Ingress
 	for _, i := range ingresses {
 		a := getMachineReadableFormat(i)
 		urls = append(urls, a)
@@ -92,7 +101,7 @@ func List(client *kclient.Client, componentName string, applicationName string) 
 	return urlList, nil
 }
 
-func getProtocol(ingress iextensionsv1.Ingress) string {
+func GetProtocol(ingress iextensionsv1.Ingress) string {
 	if ingress.Spec.TLS != nil {
 		return "https"
 	}
@@ -185,23 +194,22 @@ func GetValidPortNumber(client *kclient.Client, portNumber int, componentName st
 	return portNumber, nil
 }
 
-// getMachineReadableFormat gives machine readable URL definition
-func getMachineReadableFormat(i iextensionsv1.Ingress) Url {
-	return Url{
-		TypeMeta:   metav1.TypeMeta{Kind: "url", APIVersion: "odo.openshift.io/v1alpha1"},
+func getMachineReadableFormat(i iextensionsv1.Ingress) iextensionsv1.Ingress {
+	return iextensionsv1.Ingress{
+		TypeMeta:   metav1.TypeMeta{Kind: "Ingress", APIVersion: "extensions/v1beta1"},
 		ObjectMeta: metav1.ObjectMeta{Name: i.Labels[urlLabels.URLLabel]},
-		Spec:       UrlSpec{Host: i.Spec.Backend.ServiceName, Port: i.Spec.Backend.ServicePort.IntValue(), Protocol: getProtocol(i)},
+		Spec:       iextensionsv1.IngressSpec{TLS: i.Spec.TLS, Rules: i.Spec.Rules},
 	}
 
 }
 
-func getMachineReadableFormatForList(urls []Url) UrlList {
-	return UrlList{
+func getMachineReadableFormatForList(ingresses []iextensionsv1.Ingress) iextensionsv1.IngressList {
+	return iextensionsv1.IngressList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "List",
 			APIVersion: "odo.openshift.io/v1alpha1",
 		},
 		ListMeta: metav1.ListMeta{},
-		Items:    urls,
+		Items:    ingresses,
 	}
 }

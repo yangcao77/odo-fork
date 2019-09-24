@@ -494,7 +494,8 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 	}
 
 	// Parse the image name
-	_, componentType, _, componentVersion := util.ParseComponentImageName(*componentSettings.Type)
+	// _, componentType, _, componentVersion := util.ParseComponentImageName(*componentSettings.Type)
+	_, componentType, _, _ := util.ParseComponentImageName(*componentSettings.Type)
 
 	// Check to see if the catalog type actually exists
 	exists, err := catalog.Exists(componentType)
@@ -507,14 +508,14 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 	}
 
 	// Check to see if that particular version exists
-	versionExists, err := catalog.VersionExists(client, componentType, componentVersion)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to create component of type %s of version %s", componentType, componentVersion)
-	}
-	if !versionExists {
-		log.Info("Run 'udo catalog list idp' to see a list of supported component type versions")
-		return fmt.Errorf("Invalid component version %s:%s", componentType, componentVersion)
-	}
+	// versionExists, err := catalog.VersionExists(client, componentType, componentVersion)
+	// if err != nil {
+	// 	return errors.Wrapf(err, "Failed to create component of type %s of version %s", componentType, componentVersion)
+	// }
+	// if !versionExists {
+	// 	log.Info("Run 'udo catalog list idp' to see a list of supported component type versions")
+	// 	return fmt.Errorf("Invalid component version %s:%s", componentType, componentVersion)
+	// }
 
 	// Validate component name
 	err = validation.ValidateName(*componentSettings.Name)
