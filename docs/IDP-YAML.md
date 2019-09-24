@@ -84,7 +84,8 @@ spec:
     - name: maven-build-container
       image: docker.io/maven:3.6
       
-      volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
+      volumeMappings: # Required: ability to map paths in the container to persistent volume paths
+      # At least one entry must be specified: A volume is required for shared/standalone tasks
       - volumeName: idp-data-volume
         containerPath: /some/path/idp-data
       # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
