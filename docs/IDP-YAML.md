@@ -40,6 +40,10 @@ spec:
     
     image: docker.io/ibmcom/websphere-liberty:latest
 
+    # If this field is specified, the `ENTRYPOINT` of the container will be replaced with:
+    # a container command of "sh -c `mkdir -p (parent dit); touch (path specified); tail -f (path specified)`"
+    overrideEntrypointTailToFile: file path # file path within the container to tail
+    
     endpoints: # Not optional if HTTP(S) port is specified
       containerHealth: /health # How to tell the container is healthy
       appRoot: /app # Not a health check
@@ -71,10 +75,10 @@ spec:
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      requests: # Are these optional in Kube?
+      requests: # TODO: Are these optional in Kube? If so, what are the defaults?
         memory: "64Mi"
         cpu: "250m"
-      limits: # Are these optional in Kube?
+      limits:  # TODO: Are these optional in Kube? If so, what are the defaults?
         memory: "128Mi"
         cpu: "500m"
 
@@ -84,12 +88,15 @@ spec:
     - name: maven-build-container
       image: docker.io/maven:3.6
       
-      volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
+      volumeMappings: # Required: ability to map paths in the container to persistent volume paths
+      # At least one entry must be specified: A volume is required for shared/standalone tasks
       - volumeName: idp-data-volume
         containerPath: /some/path/idp-data
       # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
   
       env: # Optional key/value env var pairs, as above
+
+      privileged: false # Optional, default: false.
 
       kubernetes: # Optional
         # Defined same as above
@@ -132,9 +139,9 @@ spec:
     # Task containers will ALWAYS stay up and be reused after they are used (eg they will never be disposed of after a single use).
 
     # Tasks that share the same build image will ALWAYS run in the same container during a scenario.
-    # - Tasks that share a build image value, must have the exact same volume mappings, or the IDP is invalid and should not be executed.
 
     - name: maven-build
+      type: Standalone # Required field: One of: Runtime (task runs in runtime container), Shared (task runs outside runtime, but shares a container with another task), Standalone (task runs outside runtime, should not share a container with another task)
       container: maven-build-container
       command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
       # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
@@ -163,10 +170,8 @@ spec:
       # Values specified here will replace those specified in container, if there is an overlap.
 
     - name: server-start
+      type: Runtime
       command: /opt/ibm/wlp/bin/server start $SERVER 
-      # Validation Constraint: If a task doesn't specifiy a build image field (indicating a task should run in the runtime container), then that task should not have volume mappings. 
-      # The task will still be able to use whichever mappings are specified in the runtime volumeMapping/
-      # For example, if this 'server-start' task had volume mappings, the UDO tool should fail to run it.
       
   scenarios:
     - name: full-build
@@ -187,4 +192,27 @@ spec:
   - `runAsUser` removed from `spec.tasks`
   - `buildImage` renamed to `image` under `spec.tasks`
   - Replace previous memory limit with `kubernetes.requests` and `kubernetes.limits`
-  - `image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which task will reference by name.
+  - `image`, `volumeMappings`, `kubernetes`, and `env`, have moved from task to a new `shared.containers` entry, which tasks will reference by name.
+
+- September 24th:
+  - Added `Type` under `spec.tasks`, with a value of `Shared`, `Standalone`, or `Runtime`. 
+  - Added `spec.runtime.overrideEntrypointTailToFile`
+  
+## Requirements
+  
+#### The time it takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
+- For this reason, we are NOT tearing down our task containers on the completion of the task, and likewise task containers are shared across scenario runs.
+  
+#### There exists at least one case where we must override the entrypoint on the runtime, therefore (if we need to support this case) we need to support overriding the entrypoint in general:
+
+IDP:
+- Runtime Container A (Liberty MP, running as non-root)
+- Task 1, runtime task, runs in container A.
+
+Logic:
+- If we don't override the entrypoint, then we need to put build content (server.xml, binaries) into `/config` for the runtime, before the runtime starts.
+- This content can only be the result of a build task.
+- But in this scenario, with only a runtime task, the task must run inside the runtime container, which hasn't started yet.
+- One option is running the task inside an initContainer, but that doesn't actually work because we wouldn't be able to sync the source before the initContainer runs.
+- Thus, since the build task can't run in a non-running container, and there is no other mechanism to run it, it is not possible to support this scenario w/o override the entrypoint.
+

@@ -11,11 +11,12 @@ import (
 	// "github.com/redhat-developer/odo-fork/pkg/catalog"
 	"github.com/pkg/errors"
 
-	// applabels "github.com/redhat-developer/odo-fork/pkg/application/labels"
+	applabels "github.com/redhat-developer/odo-fork/pkg/application/labels"
 	"github.com/redhat-developer/odo-fork/pkg/catalog"
 	componentlabels "github.com/redhat-developer/odo-fork/pkg/component/labels"
 
 	"github.com/redhat-developer/odo-fork/pkg/config"
+	"github.com/redhat-developer/odo-fork/pkg/idp"
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/util/validation"
 	"github.com/redhat-developer/odo-fork/pkg/log"
@@ -203,24 +204,24 @@ func validateSourceType(sourceType string) bool {
 // 	return ports, nil
 // }
 
-// // GetComponentLinkedSecretNames provides a slice containing the names of the secrets that are present in envFrom
-// func GetComponentLinkedSecretNames(client *kclient.Client, componentName string, applicationName string) (secretNames []string, err error) {
-// 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
-// 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
+// GetComponentLinkedSecretNames provides a slice containing the names of the secrets that are present in envFrom
+func GetComponentLinkedSecretNames(client *kclient.Client, componentName string, applicationName string) (secretNames []string, err error) {
+	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
+	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 
-// 	dc, err := client.GetOneDeploymentConfigFromSelector(componentSelector)
-// 	if err != nil {
-// 		return nil, errors.Wrapf(err, "unable to fetch deployment configs for the selector %v", componentSelector)
-// 	}
+	dc, err := client.GetOneDeploymentConfigFromSelector(componentSelector)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to fetch deployment configs for the selector %v", componentSelector)
+	}
 
-// 	for _, env := range dc.Spec.Template.Spec.Containers[0].EnvFrom {
-// 		if env.SecretRef != nil {
-// 			secretNames = append(secretNames, env.SecretRef.Name)
-// 		}
-// 	}
+	for _, env := range dc.Spec.Template.Spec.Containers[0].EnvFrom {
+		if env.SecretRef != nil {
+			secretNames = append(secretNames, env.SecretRef.Name)
+		}
+	}
 
-// 	return secretNames, nil
-// }
+	return secretNames, nil
+}
 
 // CreateFromPath create new component with source or binary from the given local path
 // sourceType indicates the source type of the component and can be either local or binary
@@ -284,22 +285,22 @@ func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
 	return nil
 }
 
-// // Delete whole component
-// func Delete(client *kclient.Client, componentName string, applicationName string) error {
+// Delete whole component
+func Delete(client *kclient.Client, componentName string, applicationName string) error {
 
-// 	// Loading spinner
-// 	s := log.Spinnerf("Deleting component %s", componentName)
-// 	defer s.End(false)
+	// Loading spinner
+	s := log.Spinnerf("Deleting component %s", componentName)
+	defer s.End(false)
 
-// 	labels := componentlabels.GetLabels(componentName, applicationName, false)
-// 	err := client.Delete(labels)
-// 	if err != nil {
-// 		return errors.Wrapf(err, "error deleting component %s", componentName)
-// 	}
+	labels := componentlabels.GetLabels(componentName, applicationName, false)
+	err := client.Delete(labels)
+	if err != nil {
+		return errors.Wrapf(err, "error deleting component %s", componentName)
+	}
 
-// 	s.End(true)
-// 	return nil
-// }
+	s.End(true)
+	return nil
+}
 
 // // getEnvFromPodEnvs loops through the passed slice of pod#EnvVars and gets the value corresponding to the key passed, returns empty stirng if not available
 // func getEnvFromPodEnvs(envName string, podEnvs []corev1.EnvVar) string {
@@ -359,7 +360,7 @@ func CreateFromPath(client *kclient.Client, params kclient.CreateArgs) error {
 //		stdout: io.Writer instance to write output to
 //	Returns:
 //		err: errors if any
-func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigInfo, context string, stdout io.Writer) (err error) {
+func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigInfo, context string, stdout io.Writer, devPack *idp.IDP) (err error) {
 
 	cmpName := componentConfig.GetName()
 	// cmpType := componentConfig.GetType()
@@ -375,7 +376,7 @@ func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigI
 		return err
 	}
 	// TODO-KDO: remove following line and implement storage handling properly for KDO
-	imgName := "jeevandroid/node-express-template:latest"
+	imgName := devPack.Spec.Runtime.Image
 	log.Successf("Initializing component")
 	createArgs := kclient.CreateArgs{
 		Name: cmpName,
@@ -388,8 +389,11 @@ func CreateComponent(client *kclient.Client, componentConfig config.LocalConfigI
 	createArgs.SourceType = cmpSrcType
 	createArgs.SourcePath = componentConfig.GetSourceLocation()
 
+	// If the user overrides ports in the udo config, set them as the component's ports instead (Rather than what the IDP specified)
 	if len(cmpPorts) > 0 {
 		createArgs.Ports = cmpPorts
+	} else {
+		createArgs.Ports = devPack.GetPorts()
 	}
 
 	createArgs.Resources, err = kclient.GetResourceRequirementsFromCmpSettings(componentConfig)
@@ -494,7 +498,6 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 	}
 
 	// Parse the image name
-	// _, componentType, _, componentVersion := util.ParseComponentImageName(*componentSettings.Type)
 	_, componentType, _, _ := util.ParseComponentImageName(*componentSettings.Type)
 
 	// Check to see if the catalog type actually exists
@@ -506,16 +509,6 @@ func ValidateComponentCreateRequest(client *kclient.Client, componentSettings co
 		log.Info("Run 'udo catalog list idp' for a list of supported Iterative-Dev packs")
 		return fmt.Errorf("Failed to find component of type %s", componentType)
 	}
-
-	// Check to see if that particular version exists
-	// versionExists, err := catalog.VersionExists(client, componentType, componentVersion)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "Failed to create component of type %s of version %s", componentType, componentVersion)
-	// }
-	// if !versionExists {
-	// 	log.Info("Run 'udo catalog list idp' to see a list of supported component type versions")
-	// 	return fmt.Errorf("Invalid component version %s:%s", componentType, componentVersion)
-	// }
 
 	// Validate component name
 	err = validation.ValidateName(*componentSettings.Name)
@@ -867,31 +860,31 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 // 	return nil
 // }
 
-// // GetComponentType returns type of component in given application and project
-// func GetComponentType(client *kclient.Client, componentName string, applicationName string) (string, error) {
+// GetComponentType returns type of component in given application and project
+func GetComponentType(client *kclient.Client, componentName string, applicationName string) (string, error) {
 
-// 	// filter according to component and application name
-// 	selector := fmt.Sprintf("%s=%s,%s=%s", componentlabels.ComponentLabel, componentName, applabels.ApplicationLabel, applicationName)
-// 	componentImageTypes, err := client.GetDeploymentConfigLabelValues(componentlabels.ComponentTypeLabel, selector)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "unable to get type of %s component")
-// 	}
-// 	if len(componentImageTypes) < 1 {
-// 		// no type returned
-// 		return "", errors.Wrap(err, "unable to find type of %s component")
+	// filter according to component and application name
+	selector := fmt.Sprintf("%s=%s,%s=%s", componentlabels.ComponentLabel, componentName, applabels.ApplicationLabel, applicationName)
+	componentImageTypes, err := client.GetDeploymentConfigLabelValues(componentlabels.ComponentTypeLabel, selector)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to get type of %s component")
+	}
+	if len(componentImageTypes) < 1 {
+		// no type returned
+		return "", errors.Wrap(err, "unable to find type of %s component")
 
-// 	}
-// 	// check if all types are the same
-// 	// it should be as we are secting only exactly one component, and it doesn't make sense
-// 	// to have one component labeled with different component type labels
-// 	for _, componentImageType := range componentImageTypes {
-// 		if componentImageTypes[0] != componentImageType {
-// 			return "", errors.Wrap(err, "data mismatch: %s component has objects with different types")
-// 		}
+	}
+	// check if all types are the same
+	// it should be as we are secting only exactly one component, and it doesn't make sense
+	// to have one component labeled with different component type labels
+	for _, componentImageType := range componentImageTypes {
+		if componentImageTypes[0] != componentImageType {
+			return "", errors.Wrap(err, "data mismatch: %s component has objects with different types")
+		}
 
-// 	}
-// 	return componentImageTypes[0], nil
-// }
+	}
+	return componentImageTypes[0], nil
+}
 
 // // List lists components in active application
 // func List(client *kclient.Client, applicationName string) (ComponentList, error) {
@@ -960,33 +953,33 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 // 	return GetMachineReadableFormatForList(components), err
 // }
 
-// // GetComponentSource what source type given component uses
-// // The first returned string is component source type ("git" or "local" or "binary")
-// // The second returned string is a source (url to git repository or local path or path to binary)
-// // we retrieve the source type by looking up the DeploymentConfig that's deployed
-// func GetComponentSource(client *kclient.Client, componentName string, applicationName string) (string, string, error) {
+// GetComponentSource what source type given component uses
+// The first returned string is component source type ("git" or "local" or "binary")
+// The second returned string is a source (url to git repository or local path or path to binary)
+// we retrieve the source type by looking up the DeploymentConfig that's deployed
+func GetComponentSource(client *kclient.Client, componentName string, applicationName string) (string, string, error) {
 
-// 	// Namespace the application
-// 	namespacedOpenShiftObject, err := util.NamespaceOpenShiftObject(componentName, applicationName)
-// 	if err != nil {
-// 		return "", "", errors.Wrapf(err, "unable to create namespaced name")
-// 	}
+	// Namespace the application
+	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(componentName, applicationName)
+	if err != nil {
+		return "", "", errors.Wrapf(err, "unable to create namespaced name")
+	}
 
-// 	deploymentConfig, err := client.GetDeploymentConfigFromName(namespacedOpenShiftObject)
-// 	if err != nil {
-// 		return "", "", errors.Wrapf(err, "unable to get source path for component %s", componentName)
-// 	}
+	deploymentConfig, err := client.GetDeploymentConfigFromName(namespacedOpenShiftObject)
+	if err != nil {
+		return "", "", errors.Wrapf(err, "unable to get source path for component %s", componentName)
+	}
 
-// 	sourcePath := deploymentConfig.ObjectMeta.Annotations[componentSourceURLAnnotation]
-// 	sourceType := deploymentConfig.ObjectMeta.Annotations[ComponentSourceTypeAnnotation]
+	sourcePath := deploymentConfig.ObjectMeta.Annotations[componentSourceURLAnnotation]
+	sourceType := deploymentConfig.ObjectMeta.Annotations[ComponentSourceTypeAnnotation]
 
-// 	if !validateSourceType(sourceType) {
-// 		return "", "", fmt.Errorf("unsupported component source type %s", sourceType)
-// 	}
+	if !validateSourceType(sourceType) {
+		return "", "", fmt.Errorf("unsupported component source type %s", sourceType)
+	}
 
-// 	glog.V(4).Infof("Source for component %s is %s (%s)", componentName, sourcePath, sourceType)
-// 	return sourceType, sourcePath, nil
-// }
+	glog.V(4).Infof("Source for component %s is %s (%s)", componentName, sourcePath, sourceType)
+	return sourceType, sourcePath, nil
+}
 
 // // Update updates the requested component
 // // Parameters:
@@ -1022,7 +1015,7 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 // 	}
 
 // 	// Namespace the application
-// 	namespacedOpenShiftObject, err := util.NamespaceOpenShiftObject(componentName, applicationName)
+// 	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(componentName, applicationName)
 // 	if err != nil {
 // 		return errors.Wrapf(err, "unable to create namespaced name")
 // 	}
@@ -1251,91 +1244,91 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 	return false, nil
 }
 
-// // GetComponent provides component definition
-// func GetComponent(client *kclient.Client, componentName string, applicationName string, projectName string) (component Component, err error) {
-// 	// Component Type
-// 	componentType, err := GetComponentType(client, componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get source type")
-// 	}
-// 	// Source
-// 	_, path, err := GetComponentSource(client, componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get source path")
-// 	}
-// 	// URL
-// 	urlList, err := urlpkg.List(client, componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get url list")
-// 	}
-// 	var urls []string
-// 	for _, url := range urlList.Items {
-// 		urls = append(urls, url.Name)
-// 	}
+// GetComponent provides component definition
+func GetComponent(client *kclient.Client, componentName string, applicationName string, projectName string) (component Component, err error) {
+	// Component Type
+	componentType, err := GetComponentType(client, componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get source type")
+	}
+	// Source
+	_, path, err := GetComponentSource(client, componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get source path")
+	}
+	// URL
+	urlList, err := urlpkg.List(client, componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get url list")
+	}
+	var urls []string
+	for _, url := range urlList.Items {
+		urls = append(urls, url.Name)
+	}
 
-// 	// Storage
-// 	appStore, err := storage.List(client, componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get storage list")
-// 	}
-// 	var storage []string
-// 	for _, store := range appStore.Items {
-// 		storage = append(storage, store.Name)
-// 	}
-// 	// Environment Variables
-// 	DC, err := util.NamespaceOpenShiftObject(componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get DC list")
-// 	}
-// 	envVars, err := client.GetEnvVarsFromDC(DC)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get envVars list")
-// 	}
-// 	var filteredEnv []corev1.EnvVar
-// 	for _, env := range envVars {
-// 		if !strings.Contains(env.Name, "ODO") {
-// 			filteredEnv = append(filteredEnv, env)
-// 		}
-// 	}
+	// Storage
+	appStore, err := storage.List(client, componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get storage list")
+	}
+	var storage []string
+	for _, store := range appStore.Items {
+		storage = append(storage, store.Name)
+	}
+	// Environment Variables
+	DC, err := util.NamespaceKubernetesObject(componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get DC list")
+	}
+	envVars, err := client.GetEnvVarsFromDC(DC)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get envVars list")
+	}
+	var filteredEnv []corev1.EnvVar
+	for _, env := range envVars {
+		if !strings.Contains(env.Name, "ODO") {
+			filteredEnv = append(filteredEnv, env)
+		}
+	}
 
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to get envVars list")
-// 	}
+	if err != nil {
+		return component, errors.Wrap(err, "unable to get envVars list")
+	}
 
-// 	linkedServices := make([]string, 0, 5)
-// 	linkedComponents := make(map[string][]string)
-// 	linkedSecretNames, err := GetComponentLinkedSecretNames(client, componentName, applicationName)
-// 	if err != nil {
-// 		return component, errors.Wrap(err, "unable to list linked secrets")
-// 	}
-// 	for _, secretName := range linkedSecretNames {
-// 		secret, err := client.GetSecret(secretName, projectName)
-// 		if err != nil {
-// 			return component, errors.Wrapf(err, "unable to get info about secret %s", secretName)
-// 		}
-// 		componentName, containsComponentLabel := secret.Labels[componentlabels.ComponentLabel]
-// 		if containsComponentLabel {
-// 			if port, ok := secret.Annotations[kclient.ComponentPortAnnotationName]; ok {
-// 				linkedComponents[componentName] = append(linkedComponents[componentName], port)
-// 			}
-// 		} else {
-// 			linkedServices = append(linkedServices, secretName)
-// 		}
-// 	}
+	linkedServices := make([]string, 0, 5)
+	linkedComponents := make(map[string][]string)
+	linkedSecretNames, err := GetComponentLinkedSecretNames(client, componentName, applicationName)
+	if err != nil {
+		return component, errors.Wrap(err, "unable to list linked secrets")
+	}
+	for _, secretName := range linkedSecretNames {
+		secret, err := client.GetSecret(secretName, projectName)
+		if err != nil {
+			return component, errors.Wrapf(err, "unable to get info about secret %s", secretName)
+		}
+		componentName, containsComponentLabel := secret.Labels[componentlabels.ComponentLabel]
+		if containsComponentLabel {
+			if port, ok := secret.Annotations[kclient.ComponentPortAnnotationName]; ok {
+				linkedComponents[componentName] = append(linkedComponents[componentName], port)
+			}
+		} else {
+			linkedServices = append(linkedServices, secretName)
+		}
+	}
 
-// 	component = getMachineReadableFormat(componentName, componentType)
-// 	component.Namespace = client.Namespace
-// 	component.Spec.App = applicationName
-// 	component.Spec.Source = path
-// 	component.Spec.URL = urls
-// 	component.Spec.Storage = storage
-// 	component.Spec.Env = filteredEnv
-// 	component.Status.LinkedComponents = linkedComponents
-// 	component.Status.LinkedServices = linkedServices
-// 	component.Status.State = "Pushed"
+	component = getMachineReadableFormat(componentName, componentType)
+	component.Namespace = client.Namespace
+	component.Spec.App = applicationName
+	component.Spec.Source = path
+	component.Spec.URL = urls
+	component.Spec.Storage = storage
+	component.Spec.Env = filteredEnv
+	component.Status.LinkedComponents = linkedComponents
+	component.Status.LinkedServices = linkedServices
+	component.Status.State = "Pushed"
 
-// 	return component, nil
-// }
+	return component, nil
+}
 
 // // GetLogs follow the DeploymentConfig logs if follow is set to true
 // func GetLogs(client *kclient.Client, componentName string, applicationName string, follow bool, stdout io.Writer) error {
@@ -1355,38 +1348,38 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 // 	return nil
 // }
 
-// func getMachineReadableFormat(componentName, componentType string) Component {
-// 	return Component{
-// 		TypeMeta: metav1.TypeMeta{
-// 			Kind:       "Component",
-// 			APIVersion: "udo.udo.io/v1alpha1",
-// 		},
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name: componentName,
-// 		},
-// 		Spec: ComponentSpec{
-// 			Type: componentType,
-// 		},
-// 		Status: ComponentStatus{},
-// 	}
+func getMachineReadableFormat(componentName, componentType string) Component {
+	return Component{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Component",
+			APIVersion: "udo.udo.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: componentName,
+		},
+		Spec: ComponentSpec{
+			Type: componentType,
+		},
+		Status: ComponentStatus{},
+	}
 
-// }
+}
 
-// // GetMachineReadableFormatForList returns list of components in machine readable format
-// func GetMachineReadableFormatForList(components []Component) ComponentList {
-// 	if len(components) == 0 {
-// 		components = []Component{}
-// 	}
-// 	return ComponentList{
-// 		TypeMeta: metav1.TypeMeta{
-// 			Kind:       "List",
-// 			APIVersion: "udo.udo.io/v1alpha1",
-// 		},
-// 		ListMeta: metav1.ListMeta{},
-// 		Items:    components,
-// 	}
+// GetMachineReadableFormatForList returns list of components in machine readable format
+func GetMachineReadableFormatForList(components []Component) ComponentList {
+	if len(components) == 0 {
+		components = []Component{}
+	}
+	return ComponentList{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "List",
+			APIVersion: "udo.udo.io/v1alpha1",
+		},
+		ListMeta: metav1.ListMeta{},
+		Items:    components,
+	}
 
-// }
+}
 
 // isEmpty checks to see if a directory is empty
 // shamelessly taken from: https://stackoverflow.com/questions/30697324/how-to-check-if-directory-on-path-is-empty
