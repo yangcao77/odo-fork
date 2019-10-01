@@ -10,11 +10,17 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/hinshun/vt10x v0.0.0-20180616224451-1954e6464174
+	github.com/kubernetes-incubator/service-catalog v0.2.2 // indirect
+	github.com/kubernetes-sigs/service-catalog v0.2.2 // indirect
 	github.com/mattn/go-colorable v0.1.2
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
+	github.com/openshift/api v3.9.0+incompatible // indirect
+	github.com/openshift/client-go v3.9.0+incompatible // indirect
+	github.com/openshift/odo v0.0.20
 	github.com/pkg/errors v0.8.1
 	github.com/posener/complete v1.2.1
+	github.com/redhat-developer/odo v0.0.20 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
