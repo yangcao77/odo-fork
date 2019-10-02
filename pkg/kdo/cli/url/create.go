@@ -57,15 +57,13 @@ func NewURLCreateOptions() *URLCreateOptions {
 func (o *URLCreateOptions) Complete(name string, cmd *cobra.Command, args []string) (err error) {
 	o.Context = genericclioptions.NewContext(cmd)
 	o.componentPort, err = url.GetValidPortNumber(o.Client, o.urlPort, o.Component(), o.Application)
+	o.urlPort = o.componentPort
 	if err != nil {
 		return err
 	}
-	if len(args) == 0 {
-		o.urlName = url.GetURLName(o.Component(), o.componentPort)
-	} else {
-		o.urlName = args[0]
-		o.ingressDomain = args[1]
-	}
+	// o.urlName = url.GetURLName(o.Component(), o.componentPort)
+	o.urlName = o.Component()
+	o.ingressDomain = args[0]
 	o.localConfigInfo, err = config.NewLocalConfigInfo(o.componentContext)
 
 	return
@@ -112,13 +110,13 @@ func NewCmdURLCreate(name, fullName string) *cobra.Command {
 		Short:   urlCreateShortDesc,
 		Long:    urlCreateLongDesc,
 		Example: fmt.Sprintf(urlCreateExample, fullName),
-		Args:    cobra.MaximumNArgs(2),
+		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			genericclioptions.GenericRun(o, cmd, args)
 		},
 	}
 	urlCreateCmd.Flags().IntVarP(&o.urlPort, "port", "", -1, "port number for the url of the component, required in case of components which expose more than one service port")
-	_ = urlCreateCmd.MarkFlagRequired("port")
+	// _ = urlCreateCmd.MarkFlagRequired("port")
 	genericclioptions.AddOutputFlag(urlCreateCmd)
 	genericclioptions.AddContextFlag(urlCreateCmd, &o.componentContext)
 	// completion.RegisterCommandFlagHandler(urlCreateCmd, "context", completion.FileCompletionHandler)

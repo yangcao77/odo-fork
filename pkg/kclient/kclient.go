@@ -781,7 +781,6 @@ type Service struct {
 // ingressDomain is the ingress domain to use for the ingress
 // portNumber is the target port of the ingress
 func (c *Client) CreateIngress(name string, serviceName string, ingressDomain string, portNumber intstr.IntOrString, labels map[string]string) (*extensionsv1.Ingress, error) {
-	fmt.Printf("portNumber is %s", portNumber)
 	ingress := &extensionsv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name,

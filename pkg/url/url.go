@@ -55,7 +55,6 @@ func Delete(client *kclient.Client, urlName string, applicationName string) erro
 // portNumber is the target port number for the ingress and is -1 in case no port number is specified in which case it is automatically detected for components which expose only one service port)
 func Create(client *kclient.Client, urlName string, portNumber int, ingressDomain string, componentName, applicationName string) (string, error) {
 	labels := urlLabels.GetLabels(urlName, componentName, applicationName, false)
-
 	serviceName, err := util.NamespaceKubernetesObject(componentName, applicationName)
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to create namespaced name")

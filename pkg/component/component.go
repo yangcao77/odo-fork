@@ -639,8 +639,6 @@ func ApplyConfigCreateURL(client *kclient.Client, componentConfig config.LocalCo
 		if exist {
 			log.Successf("URL %s already exists", urlo.Name)
 		} else {
-			fmt.Println("urlo.Name is %s, urlo.Port is %s, urlo.Host is %s", urlo.Name, urlo.Port, urlo.Host)
-			fmt.Println("component name is %s, appName is %s", componentConfig.GetName(), componentConfig.GetApplication())
 			host, err := urlpkg.Create(client, urlo.Name, urlo.Port, urlo.Host, componentConfig.GetName(), componentConfig.GetApplication())
 			if err != nil {
 				return errors.Wrapf(err, "unable to create url")
