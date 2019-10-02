@@ -23,14 +23,13 @@ var (
 
 	The created URL can be used to access the specified component from outside the OpenShift cluster.
 	`)
-	urlCreateExample = ktemplates.Examples(`  # Create a URL for the current component with a specific port
-	%[1]s --port 8080
+	urlCreateExample = ktemplates.Examples(`
+
+  	# Create a URL with a specific port
+	%[1]s ingressDomain --port 8080
   
-	# Create a URL with a specific name and port
-	%[1]s example --port 8080
-  
-	# Create a URL with a specific name by automatic detection of port (only for components which expose only one service port) 
-	%[1]s example
+	# Create a URL by automatic detection of port (only for components which expose only one service port) 
+	%[1]s ingressDomain
   
 	# Create a URL with a specific name and port for component frontend
 	%[1]s example --port 8080 --component frontend
