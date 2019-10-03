@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	// routev1 "github.com/openshift/api/route/v1"
 	"github.com/pkg/errors"
 	applabels "github.com/redhat-developer/odo-fork/pkg/application/labels"
 	componentlabels "github.com/redhat-developer/odo-fork/pkg/component/labels"
@@ -206,7 +205,7 @@ func getMachineReadableFormatForList(ingresses []iextensionsv1.Ingress) iextensi
 	return iextensionsv1.IngressList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "List",
-			APIVersion: "odo.openshift.io/v1alpha1",
+			APIVersion: "udo.udo.io/v1alpha1",
 		},
 		ListMeta: metav1.ListMeta{},
 		Items:    ingresses,

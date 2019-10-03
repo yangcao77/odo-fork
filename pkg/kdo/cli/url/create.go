@@ -3,7 +3,6 @@ package url
 import (
 	"fmt"
 
-	// "github.com/openshift/odo/pkg/odo/util/completion"
 	"github.com/pkg/errors"
 	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
