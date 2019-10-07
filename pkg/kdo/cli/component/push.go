@@ -12,7 +12,7 @@ import (
 
 	"github.com/redhat-developer/odo-fork/pkg/component"
 	"github.com/redhat-developer/odo-fork/pkg/config"
-	"github.com/redhat-developer/odo-fork/pkg/idp"
+
 	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
 
@@ -52,6 +52,7 @@ type PushOptions struct {
 	pushConfig bool
 	pushSource bool
 
+	localIDPRepo string
 	*genericclioptions.Context
 }
 
@@ -126,10 +127,6 @@ func (po *PushOptions) Validate() (err error) {
 	s := log.Spinner("Validating component")
 	defer s.End(false)
 
-	if err = component.ValidateComponentCreateRequest(po.Context.Client, po.localConfig.GetComponentSettings(), false); err != nil {
-		return err
-	}
-
 	isCmpExists, err := component.Exists(po.Context.Client, po.localConfig.GetName(), po.localConfig.GetApplication())
 	if err != nil {
 		return err
@@ -165,11 +162,6 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 	// Output the "new" section (applying changes)
 	log.Info("\nConfiguration changes")
 
-	// Get the IDP for the component
-	devPack, err := idp.Get()
-	if err != nil {
-		return errors.Wrapf(err, "unable to read the idp.yaml for %s from disk", cmpName)
-	}
 	// If the component does not exist, we will create it for the first time.
 	if !isCmpExists {
 
@@ -177,7 +169,7 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 		defer s.End(false)
 
 		// Classic case of component creation
-		if err = component.CreateComponent(po.Context.Client, *po.localConfig, po.componentContext, stdout, devPack); err != nil {
+		if err = component.CreateComponent(po.Context.Client, *po.localConfig, po.componentContext, stdout, po.Context.DevPack); err != nil {
 			log.Errorf(
 				"Failed to create component with name %s. Please use `odo config view` to view settings used to create component. Error: %+v",
 				cmpName,

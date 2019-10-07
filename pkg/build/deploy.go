@@ -9,6 +9,7 @@ import (
 
 //BuildTask is a struct of essential data
 type BuildTask struct {
+	UseRuntime         bool
 	Kind               string
 	Name               string
 	Image              string
@@ -31,8 +32,8 @@ type BuildTask struct {
 // CreateDeploy creates a Kubernetes deployment
 func (b *BuildTask) CreateDeploy() appsv1.Deployment {
 
-	volumes, volumeMounts := b.setPFEVolumes()
-	envVars := b.setPFEEnvVars()
+	volumes, volumeMounts := b.SetVolumes()
+	envVars := b.SetEnvVars()
 
 	return b.generateDeployment(volumes, volumeMounts, envVars)
 }
@@ -43,13 +44,12 @@ func (b *BuildTask) CreateService() corev1.Service {
 	return b.generateService()
 }
 
-// setPFEVolumes returns the 3 volumes & corresponding volume mounts required by the PFE container:
-// project workspace, buildah volume, and the docker registry secret (the latter of which is optional)
-func (b *BuildTask) setPFEVolumes() ([]corev1.Volume, []corev1.VolumeMount) {
+// SetVolumes sets the IDP task volumes with either the PVC or the Empty Dir depending on the task
+func (b *BuildTask) SetVolumes() ([]corev1.Volume, []corev1.VolumeMount) {
 
 	volumes := []corev1.Volume{
 		{
-			Name: "idp-volume",
+			Name: IDPVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: b.PVCName,
@@ -60,105 +60,32 @@ func (b *BuildTask) setPFEVolumes() ([]corev1.Volume, []corev1.VolumeMount) {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      "idp-volume",
+			Name:      IDPVolumeName,
 			MountPath: b.MountPath,
 			SubPath:   b.SubPath,
 		},
 	}
 
+	if b.UseRuntime {
+		volumes = []corev1.Volume{
+			{
+				Name: IDPVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{
+						Medium: corev1.StorageMediumMemory,
+					},
+				},
+			},
+		}
+	}
+
 	return volumes, volumeMounts
 }
 
-// setPFEEnvVars sets the env var for the component pod
-func (b *BuildTask) setPFEEnvVars() []corev1.EnvVar {
-	booleanTrue := bool(true)
+// SetEnvVars sets the env var for the component pod
+func (b *BuildTask) SetEnvVars() []corev1.EnvVar {
 
-	envVars := []corev1.EnvVar{
-		{
-			Name:  "PORT",
-			Value: "9080",
-		},
-		{
-			Name:  "APPLICATION_NAME",
-			Value: "cw-maysunliberty2-6c1b1ce0-cb4c-11e9-be96",
-		},
-		{
-			Name:  "PROJECT_NAME",
-			Value: "maysunliberty2",
-		},
-		{
-			Name:  "LOG_FOLDER",
-			Value: "maysunliberty2-6c1b1ce0-cb4c-11e9-be96-bfc50f05726d",
-		},
-		{
-			Name:  "IN_K8",
-			Value: "true",
-		},
-		{
-			Name: "IBM_APM_SERVER_URL",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "apm-server-config",
-					},
-					Key:      "ibm_apm_server_url",
-					Optional: &booleanTrue,
-				},
-			},
-		},
-		{
-			Name: "IBM_APM_KEYFILE",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "apm-server-config",
-					},
-					Key:      "ibm_apm_keyfile_password",
-					Optional: &booleanTrue,
-				},
-			},
-		},
-		{
-			Name: "IBM_APM_INGRESS_URL",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "apm-server-config",
-					},
-					Key:      "ibm_apm_ingress_url",
-					Optional: &booleanTrue,
-				},
-			},
-		},
-		{
-			Name: "IBM_APM_KEYFILE_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "apm-server-config",
-					},
-					Key:      "ibm_apm_keyfile_password",
-					Optional: &booleanTrue,
-				},
-			},
-		},
-		{
-			Name: "IBM_APM_ACCESS_TOKEN",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "apm-server-config",
-					},
-					Key:      "ibm_apm_access_token",
-					Optional: &booleanTrue,
-				},
-			},
-		},
-	}
-
-	if b.Kind == string(ReusableBuildContainer) {
-		envVars = []corev1.EnvVar{}
-	}
+	envVars := []corev1.EnvVar{}
 
 	return envVars
 }
@@ -184,7 +111,7 @@ func (b *BuildTask) generateDeployment(volumes []corev1.Volume, volumeMounts []c
 			Env:          envVars,
 		},
 	}
-	if b.Kind == string(ReusableBuildContainer) {
+	if b.Kind == ReusableBuildContainer || b.UseRuntime {
 		container = []corev1.Container{
 			{
 				Name:            containerName,
@@ -263,7 +190,7 @@ func (b *BuildTask) generateService() corev1.Service {
 		},
 	}
 
-	if b.Kind == string(ReusableBuildContainer) {
+	if b.Kind == ReusableBuildContainer {
 		ports = []corev1.ServicePort{
 			{
 				Port: int32(port1),

@@ -2,7 +2,6 @@ package kclient
 
 import (
 	taro "archive/tar"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apimachinery/pkg/watch"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	appsv1Client "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -561,6 +559,46 @@ func updateEnvVar(deployment *appsv1.Deployment, envVars []corev1.EnvVar) error 
 	return nil
 }
 
+// CreatePod creates a pod with the specifications and tails /dev/null for the entrypoint
+func (c *Client) CreatePod(podName, containerName, image, serviceAccountName string, labels map[string]string, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, envVars []corev1.EnvVar, privileged bool) (*corev1.Pod, error) {
+	container := []corev1.Container{
+		{
+			Name:            containerName,
+			Image:           image,
+			ImagePullPolicy: corev1.PullAlways,
+			SecurityContext: &corev1.SecurityContext{
+				Privileged: &privileged,
+			},
+			VolumeMounts: volumeMounts,
+			Command:      []string{"tail"},
+			Args:         []string{"-f", "/dev/null"},
+			Env:          envVars,
+		},
+	}
+	pod := &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: c.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PodSpec{
+			ServiceAccountName: serviceAccountName,
+			Volumes:            volumes,
+			Containers:         container,
+		},
+	}
+
+	pod, err := c.KubeClient.CoreV1().Pods(c.Namespace).Create(pod)
+	if err != nil {
+		return nil, errors.New("Unable to create the pod: " + err.Error())
+	}
+	return pod, nil
+}
+
 // WaitAndGetPod block and waits until pod matching selector is in in Running state
 // desiredPhase cannot be PodFailed or PodUnknown
 func (c *Client) WaitAndGetPod(watchOptions metav1.ListOptions, desiredPhase corev1.PodPhase, waitMessage string) (*corev1.Pod, error) {
@@ -631,54 +669,6 @@ func (c *Client) GetPodLogs(pod *corev1.Pod, file *os.File) (err error) {
 
 	_, err = io.Copy(file, readCloser)
 	return err
-}
-
-// ExecPodCmd executes command in the pod container
-func (c *Client) ExecPodCmd(command []string, containerName, podName string) (string, string, error) {
-
-	glog.V(0).Infof("Executing command: %s in pod: %s container: %s\n", strings.Join(command, " "), podName, containerName)
-
-	clientset := c.KubeClient
-	config := c.KubeClientConfig
-	namespace := c.Namespace
-
-	req := clientset.CoreV1().RESTClient().Post().
-		Resource("pods").
-		Name(podName).
-		Namespace(namespace).
-		SubResource("exec")
-	scheme := runtime.NewScheme()
-	if err := corev1.AddToScheme(scheme); err != nil {
-		panic(err)
-	}
-
-	parameterCodec := runtime.NewParameterCodec(scheme)
-	req.VersionedParams(&corev1.PodExecOptions{
-		Command:   command,
-		Container: containerName,
-		Stdin:     false,
-		Stdout:    true,
-		Stderr:    true,
-		TTY:       false,
-	}, parameterCodec)
-
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
-	if err != nil {
-		return "", "", err
-	}
-
-	var stdout, stderr bytes.Buffer
-	err = exec.Stream(remotecommand.StreamOptions{
-		Stdin:  nil,
-		Stdout: &stdout,
-		Stderr: &stderr,
-		Tty:    false,
-	})
-	if err != nil {
-		return "", "", err
-	}
-
-	return stdout.String(), stderr.String(), nil
 }
 
 // WaitAndGetSecret blocks and waits until the secret is available
@@ -1022,7 +1012,7 @@ func (c *Client) CopyFile(localPath string, targetPodName string, targetPath str
 	dest := filepath.ToSlash(filepath.Join(targetPath, filepath.Base(localPath)))
 	targetPath = filepath.ToSlash(targetPath)
 
-	glog.V(4).Infof("CopyFile arguments: localPath %s, dest %s, copyFiles %s, globalExps %s", localPath, dest, copyFiles, globExps)
+	glog.V(4).Infof("Copying from %s to %s, with files: %s & global expression: %s in Pod: %s", localPath, dest, copyFiles, globExps, targetPodName)
 	reader, writer := io.Pipe()
 	// inspired from https://github.com/kubernetes/kubernetes/blob/master/pkg/kubectl/cmd/cp.go#L235
 	go func() {
@@ -1039,7 +1029,7 @@ func (c *Client) CopyFile(localPath string, targetPodName string, targetPath str
 
 	// cmdArr will run inside container
 	cmdArr := []string{"tar", "xf", "-", "-C", targetPath, "--strip", "1"}
-	err := c.ExecCMDInContainer(targetPodName, cmdArr, nil, nil, reader, false)
+	err := c.ExecCMDInContainer(targetPodName, "", cmdArr, nil, nil, reader, false)
 	if err != nil {
 		return err
 	}
@@ -1300,8 +1290,8 @@ func (c *Client) GetServerVersion() (*ServerInfo, error) {
 	return &info, nil
 }
 
-// ExecCMDInContainer execute command in first container of a pod
-func (c *Client) ExecCMDInContainer(podName string, cmd []string, stdout io.Writer, stderr io.Writer, stdin io.Reader, tty bool) error {
+// ExecCMDInContainer execute command in the container of a pod, pass an empty string for containerName to execute in the first container of the pod
+func (c *Client) ExecCMDInContainer(podName, containerName string, cmd []string, stdout io.Writer, stderr io.Writer, stdin io.Reader, tty bool) error {
 
 	req := c.KubeClient.CoreV1().RESTClient().
 		Post().
@@ -1310,11 +1300,12 @@ func (c *Client) ExecCMDInContainer(podName string, cmd []string, stdout io.Writ
 		Name(podName).
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
-			Command: cmd,
-			Stdin:   stdin != nil,
-			Stdout:  stdout != nil,
-			Stderr:  stderr != nil,
-			TTY:     tty,
+			Command:   cmd,
+			Container: containerName,
+			Stdin:     stdin != nil,
+			Stdout:    stdout != nil,
+			Stderr:    stderr != nil,
+			TTY:       tty,
 		}, scheme.ParameterCodec)
 
 	config, err := c.KubeConfig.ClientConfig()
@@ -1458,7 +1449,7 @@ func (c *Client) PropagateDeletes(targetPodName string, delSrcRelPaths []string,
 	cmdArr := []string{"rm", "-rf"}
 	cmdArr = append(cmdArr, rmPaths...)
 
-	err := c.ExecCMDInContainer(targetPodName, cmdArr, writer, writer, reader, false)
+	err := c.ExecCMDInContainer(targetPodName, "", cmdArr, writer, writer, reader, false)
 	if err != nil {
 		return err
 	}
