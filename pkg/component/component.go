@@ -896,35 +896,35 @@ func GetComponentType(client *kclient.Client, componentName string, applicationN
 }
 
 // // List lists components in active application
-// func List(client *kclient.Client, applicationName string) (ComponentList, error) {
+func List(client *kclient.Client, applicationName string) (ComponentList, error) {
 
-// 	var applicationSelector string
-// 	if applicationName != "" {
-// 		applicationSelector = fmt.Sprintf("%s=%s", applabels.ApplicationLabel, applicationName)
-// 	}
+	var applicationSelector string
+	if applicationName != "" {
+		applicationSelector = fmt.Sprintf("%s=%s", applabels.ApplicationLabel, applicationName)
+	}
 
-// 	// retrieve all the deployment configs that are associated with this application
-// 	dcList, err := client.GetDeploymentConfigsFromSelector(applicationSelector)
-// 	if err != nil {
-// 		return ComponentList{}, errors.Wrapf(err, "unable to list components")
-// 	}
+	// retrieve all the deployment configs that are associated with this application
+	dcList, err := client.GetDeploymentConfigsFromSelector(applicationSelector)
+	if err != nil {
+		return ComponentList{}, errors.Wrapf(err, "unable to list components")
+	}
 
-// 	var components []Component
+	var components []Component
 
-// 	// extract the labels we care about from each component
-// 	for _, elem := range dcList {
-// 		component, err := GetComponent(client, elem.Labels[componentlabels.ComponentLabel], applicationName, client.Namespace)
-// 		if err != nil {
-// 			return ComponentList{}, errors.Wrap(err, "Unable to get component")
-// 		}
-// 		component.Status.State = "Pushed"
-// 		components = append(components, component)
+	// extract the labels we care about from each component
+	for _, elem := range dcList {
+		component, err := GetComponent(client, elem.Labels[componentlabels.ComponentLabel], applicationName, client.Namespace)
+		if err != nil {
+			return ComponentList{}, errors.Wrap(err, "Unable to get component")
+		}
+		component.Status.State = "Pushed"
+		components = append(components, component)
 
-// 	}
+	}
 
-// 	compoList := GetMachineReadableFormatForList(components)
-// 	return compoList, nil
-// }
+	compoList := GetMachineReadableFormatForList(components)
+	return compoList, nil
+}
 
 // // ListIfPathGiven lists all available component in given path directory
 // func ListIfPathGiven(client *kclient.Client, paths []string) (ComponentList, error) {

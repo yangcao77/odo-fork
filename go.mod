@@ -15,9 +15,6 @@ require (
 	github.com/mattn/go-colorable v0.1.2
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/olekukonko/tablewriter v0.0.1 // indirect
-	github.com/openshift/api v3.9.0+incompatible
-	github.com/openshift/client-go v3.9.0+incompatible // indirect
-	github.com/openshift/odo v0.0.20
 	github.com/pkg/errors v0.8.1
 	github.com/posener/complete v1.2.1
 	github.com/redhat-developer/odo v0.0.20 // indirect

@@ -7,18 +7,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	// "github.com/openshift/odo/pkg/odo/util/completion"
 	"github.com/redhat-developer/odo-fork/pkg/component"
 	"github.com/redhat-developer/odo-fork/pkg/config"
+	"github.com/redhat-developer/odo-fork/pkg/kclient"
 	odoutil "github.com/redhat-developer/odo-fork/pkg/kdo/util"
+	"github.com/redhat-developer/odo-fork/pkg/url"
 
 	// appCmd "github.com/redhat-developer/odo-fork/pkg/kdo/cli/application"
-	"github.com/redhat-developer/odo-fork/pkg/kclient"
+
 	projectCmd "github.com/redhat-developer/odo-fork/pkg/kdo/cli/project"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/ui"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
 	"github.com/redhat-developer/odo-fork/pkg/log"
-	"github.com/redhat-developer/odo-fork/pkg/url"
+	"github.com/redhat-developer/odo-fork/pkg/storage"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
 )
@@ -70,7 +71,7 @@ func (do *DeleteOptions) Run() (err error) {
 	glog.V(4).Infof("component delete called")
 	glog.V(4).Infof("args: %#v", do)
 
-	err = printDeleteComponentInfo(do.Client, do.componentName, do.Context.Application, do.Context.Namespace)
+	// err = printDeleteComponentInfo(do.Client, do.componentName, do.Context.Application, do.Context.Namespace)
 	if err != nil {
 		return err
 	}
@@ -154,18 +155,18 @@ func printDeleteComponentInfo(client *kclient.Client, componentName string, appN
 			return errors.Wrap(err, "Could not get url list")
 		}
 		for _, u := range ul.Items {
-			log.Info("URL named", u.GetName(), "with host", u.Spec.Host, "having protocol", u.Spec.Protocol, "at port", u.Spec.Port)
+			log.Info("URL named", u.GetName())
 		}
 	}
 
-	// storages, err := storage.List(client, componentDesc.Name, appName)
-	// odoutil.LogErrorAndExit(err, "")
-	// if len(storages.Items) != 0 {
-	// 	log.Info("This component has following storages which will be deleted with the component")
-	// 	for _, storageName := range componentDesc.Spec.Storage {
-	// 		store := storages.Get(storageName)
-	// 		log.Info("Storage", store.GetName(), "of size", store.Spec.Size)
-	// 	}
-	// }
+	storages, err := storage.List(client, componentDesc.Name, appName)
+	odoutil.LogErrorAndExit(err, "")
+	if len(storages.Items) != 0 {
+		log.Info("This component has following storages which will be deleted with the component")
+		for _, storageName := range componentDesc.Spec.Storage {
+			store := storages.Get(storageName)
+			log.Info("Storage", store.GetName(), "of size", store.Spec.Size)
+		}
+	}
 	return nil
 }

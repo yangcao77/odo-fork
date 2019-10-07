@@ -140,6 +140,24 @@ func New(skipConnectionCheck bool) (*Client, error) {
 	}
 	client.KubeClient = kubeClient
 
+	appsClient, err := appsv1Client.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	client.AppsV1Client = appsClient
+
+	coreClient, err := corev1Client.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	client.CoreV1Client = coreClient
+
+	ingressClient, err := v1beta1Client.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	client.IngressClient = ingressClient
+
 	namespace, _, err := client.KubeConfig.Namespace()
 	if err != nil {
 		return nil, err
@@ -1510,16 +1528,11 @@ func (c *Client) Delete(labels map[string]string) error {
 	var errorList []string
 	// Delete DeploymentConfig
 	glog.V(4).Info("Deleting DeploymentConfigs")
+
 	err := c.AppsV1Client.Deployments(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		errorList = append(errorList, "unable to delete deploymentconfig")
 	}
-	// Delete Route
-	// glog.V(4).Info("Deleting Routes")
-	// err = c.routeClient.Routes(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
-	// if err != nil {
-	// 	errorList = append(errorList, "unable to delete route")
-	// }
 	glog.V(4).Info("Deleting Ingress")
 	err = c.IngressClient.Ingresses(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
