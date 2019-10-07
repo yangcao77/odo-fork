@@ -143,8 +143,9 @@ spec:
     - name: maven-build
       type: Standalone # Required field: One of: Runtime (task runs in runtime container), Shared (task runs outside runtime, but shares a container with another task), Standalone (task runs outside runtime, should not share a container with another task)
       container: maven-build-container
-      command: /scripts/build.sh # could also just be a normal command ala `mvn clean package`
-      # Tasks containers will always be started with a command to tail -f /dev/null, so that they persist. The actual tasks themselves will be run w/ kubectl exec
+      command:
+      - /scripts/build.sh # could also just be a normal command ala `mvn clean package`
+      # Tasks containers will always be started with a command to `tail -f /dev/null`, so that they persist. The actual tasks themselves will be run w/ kubectl exec
       
       workingDirectory: /codewind-workspace-mount-point # optional, where in the container to run the command
 
@@ -171,14 +172,16 @@ spec:
 
     - name: server-start
       type: Runtime
-      command: /opt/ibm/wlp/bin/server start $SERVER 
+      command: 
+      - "/opt/ibm/wlp/bin/server"
+      - "start"
+      - "$SERVER"
       
   scenarios:
     - name: full-build
       tasks: ["maven-build", "server-start"]
     - name: incremental-build
       tasks: ["incremental-maven-build", "server-start"] # incremental-maven-build not actually defined in this sample
-
 ```
 
 #### Update History:
@@ -197,7 +200,10 @@ spec:
 - September 24th:
   - Added `Type` under `spec.tasks`, with a value of `Shared`, `Standalone`, or `Runtime`. 
   - Added `spec.runtime.overrideEntrypointTailToFile`
-  
+
+- October 7th:
+  - `spec.tasks.command` is now a string array, rather than a single string. 
+
 ## Requirements
   
 #### The time it takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
