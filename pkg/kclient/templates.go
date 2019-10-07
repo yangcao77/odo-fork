@@ -151,3 +151,12 @@ func generateDeployment(commonObjectMeta metav1.ObjectMeta, commonImageMeta Comm
 	}
 	return deployment
 }
+
+// FetchContainerResourceLimits returns cpu and memory resource limits of the component container from the passed dc
+// Parameter:
+//	container: Component container
+// Returns:
+//	resource limits from passed component container
+func FetchContainerResourceLimits(container corev1.Container) corev1.ResourceRequirements {
+	return container.Resources
+}

@@ -39,6 +39,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	appsv1Client "k8s.io/client-go/kubernetes/typed/apps/v1"
 	corev1Client "k8s.io/client-go/kubernetes/typed/core/v1"
+	v1beta1Client "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // Required for Kube Clusters w/ OIDC authentication
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -67,6 +68,30 @@ type CreateArgs struct {
 	StdOut             io.Writer
 }
 
+// UpdateComponentParams serves the purpose of holding the arguments to a component update request
+type UpdateComponentParams struct {
+	// CommonObjectMeta is the object meta containing the labels and annotations expected for the new deployment
+	CommonObjectMeta metav1.ObjectMeta
+	// ResourceLimits are the cpu and memory constraints to be applied on to the component
+	ResourceLimits corev1.ResourceRequirements
+	// EnvVars to be exposed
+	EnvVars []corev1.EnvVar
+	// ExistingDC is the dc of the existing component that is requested for an update
+	ExistingDC *appsv1.Deployment
+	// DcRollOutWaitCond holds the logic to wait for dc with requested updates to be applied
+	DcRollOutWaitCond dcRollOutWait
+	// ImageMeta describes the image to be used in dc(builder image for local/binary and built component image for git deployments)
+	ImageMeta CommonImageMeta
+	// StorageToBeMounted describes the storage to be mounted
+	// storagePath is the key of the map, the generatedPVC is the value of the map
+	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
+	// StorageToBeUnMounted describes the storage to be unmounted
+	// path is the key of the map,storageName is the value of the map
+	StorageToBeUnMounted map[string]string
+}
+
+type dcRollOutWait func(*appsv1.Deployment, int64) bool
+
 const (
 	// The length of the string to be generated for names of resources
 	nameLength = 5
@@ -90,6 +115,7 @@ type Client struct {
 	KubeClient       kubernetes.Interface
 	AppsV1Client     appsv1Client.AppsV1Interface
 	CoreV1Client     corev1Client.CoreV1Interface
+	IngressClient    v1beta1Client.ExtensionsV1beta1Interface
 	KubeConfig       clientcmd.ClientConfig
 	KubeClientConfig *rest.Config
 	Namespace        string
@@ -1482,4 +1508,170 @@ func (c *Client) RemoveVolumeFromDeployment(pvc string, depName string) error {
 
 func getAppRootVolumeName(depName string) string {
 	return fmt.Sprintf("%s-idpdata", depName)
+}
+
+// Delete takes labels as a input and based on it, deletes respective resource
+func (c *Client) Delete(labels map[string]string) error {
+	// convert labels to selector
+	selector := util.ConvertLabelsToSelector(labels)
+	glog.V(4).Infof("Selectors used for deletion: %s", selector)
+
+	var errorList []string
+	// Delete DeploymentConfig
+	glog.V(4).Info("Deleting DeploymentConfigs")
+	err := c.AppsV1Client.Deployments(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		errorList = append(errorList, "unable to delete deploymentconfig")
+	}
+	// Delete Route
+	// glog.V(4).Info("Deleting Routes")
+	// err = c.routeClient.Routes(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	// if err != nil {
+	// 	errorList = append(errorList, "unable to delete route")
+	// }
+	glog.V(4).Info("Deleting Ingress")
+	err = c.IngressClient.Ingresses(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		errorList = append(errorList, "unable to delete route")
+	}
+	// Delete BuildConfig
+	// glog.V(4).Info("Deleting BuildConfigs")
+	// err = c.buildClient.BuildConfigs(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	// if err != nil {
+	// 	errorList = append(errorList, "unable to delete buildconfig")
+	// }
+	// // Delete ImageStream
+	// glog.V(4).Info("Deleting ImageStreams")
+	// err = c.imageClient.ImageStreams(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	// if err != nil {
+	// 	errorList = append(errorList, "unable to delete imagestream")
+	// }
+	// Delete Services
+	glog.V(4).Info("Deleting Services")
+	svcList, err := c.KubeClient.CoreV1().Services(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		errorList = append(errorList, "unable to list services")
+	}
+	for _, svc := range svcList.Items {
+		err = c.KubeClient.CoreV1().Services(c.Namespace).Delete(svc.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			errorList = append(errorList, "unable to delete service")
+		}
+	}
+	// PersistentVolumeClaim
+	glog.V(4).Infof("Deleting PersistentVolumeClaims")
+	err = c.KubeClient.CoreV1().PersistentVolumeClaims(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		errorList = append(errorList, "unable to delete volume")
+	}
+	// Secret
+	glog.V(4).Infof("Deleting Secret")
+	err = c.KubeClient.CoreV1().Secrets(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		errorList = append(errorList, "unable to delete secret")
+	}
+
+	// Error string
+	errString := strings.Join(errorList, ",")
+	if len(errString) != 0 {
+		return errors.New(errString)
+	}
+	return nil
+
+}
+
+func (c *Client) GetDeploymentConfigLabelValues(label string, selector string) ([]string, error) {
+
+	// List DeploymentConfig according to selectors
+	dcList, err := c.AppsV1Client.Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list Deployments")
+	}
+
+	// Grab all the matched strings
+	var values []string
+	for _, elem := range dcList.Items {
+		for key, val := range elem.Labels {
+			if key == label {
+				values = append(values, val)
+			}
+		}
+	}
+
+	// Sort alphabetically
+	sort.Strings(values)
+
+	return values, nil
+}
+
+// GetDeploymentConfigFromName returns the Deployment Config resource given
+// the Deployment Config name
+func (c *Client) GetDeploymentConfigFromName(name string) (*appsv1.Deployment, error) {
+	glog.V(4).Infof("Getting Deployment: %s", name)
+	deploymentConfig, err := c.AppsV1Client.Deployments(c.Namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		if !strings.Contains(err.Error(), fmt.Sprintf(DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR, name)) {
+			return nil, errors.Wrapf(err, "unable to get Deployment: %s", name)
+		} else {
+			return nil, DEPLOYMENT_CONFIG_NOT_FOUND
+		}
+	}
+	return deploymentConfig, nil
+}
+
+// GetDeploymentConfigsFromSelector returns an array of Deployment Config
+// resources which match the given selector
+func (c *Client) GetDeploymentConfigsFromSelector(selector string) ([]appsv1.Deployment, error) {
+	var dcList *appsv1.DeploymentList
+	var err error
+	if selector != "" {
+		dcList, err = c.AppsV1Client.Deployments(c.Namespace).List(metav1.ListOptions{
+			LabelSelector: selector,
+		})
+	} else {
+		dcList, err = c.AppsV1Client.Deployments(c.Namespace).List(metav1.ListOptions{
+			FieldSelector: fields.Set{"metadata.namespace": c.Namespace}.AsSelector().String(),
+		})
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to list DeploymentConfigs")
+	}
+	return dcList.Items, nil
+}
+
+// GetEnvVarsFromDC retrieves the env vars from the DC
+// dcName is the name of the dc from which the env vars are retrieved
+// projectName is the name of the project
+func (c *Client) GetEnvVarsFromDC(dcName string) ([]corev1.EnvVar, error) {
+	dc, err := c.GetDeploymentConfigFromName(dcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "error occurred while retrieving the dc")
+	}
+
+	numContainers := len(dc.Spec.Template.Spec.Containers)
+	if numContainers != 1 {
+		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", dc.Name, numContainers)
+	}
+
+	return dc.Spec.Template.Spec.Containers[0].Env, nil
+}
+
+// GetOneDeploymentConfigFromSelector returns the Deployment Config object associated
+// with the given selector.
+// An error is thrown when exactly one Deployment Config is not found for the
+// selector.
+func (c *Client) GetOneDeploymentConfigFromSelector(selector string) (*appsv1.Deployment, error) {
+	deploymentConfigs, err := c.GetDeploymentConfigsFromSelector(selector)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to get DeploymentConfigs for the selector: %v", selector)
+	}
+
+	numDC := len(deploymentConfigs)
+	if numDC == 0 {
+		return nil, fmt.Errorf("no Deployment Config was found for the selector: %v", selector)
+	} else if numDC > 1 {
+		return nil, fmt.Errorf("multiple Deployment Configs exist for the selector: %v. Only one must be present", selector)
+	}
+
+	return &deploymentConfigs[0], nil
 }
