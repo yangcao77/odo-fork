@@ -100,31 +100,6 @@ spec:
 
       kubernetes: # Optional
         # Defined same as above
-
-    
-    # tasks: removed on (09/20), as we have hardcoded specific defaults for these, at this time. See 'Tasks' below.
-    
-    # tasks: 
-
-      # If true, tasks that share the same build image will NOT run within the same container during a scenario.
-      # If false, tasks that share the same build image WILL run in the same container during a scenario.
-      # Note: Whether the container will be disposed after the scenario has completed is determined by disposeOnScenarioComplete.
-      # Optional: default is true.
-      # disposeOfSharedContainersOnTaskComplete: true # (true/false) 
-      # (09/20) Not in plan to support at this time.
-      
-      # Whether a task container will be disposed of after the scenario has completed.
-      # If true, all containers that were used in a scenario will be destroyed once the scenario ends. 
-      # If false, all containers that were used in a scenario will be preserved for the next run.
-      # Note: this applies BOTH to tasks that share a build image with another task, and those that don't.
-      # Optional: default is true.
-      # disposeOnScenarioComplete: true # (true/false) 
-      # (09/20) Not in plan to support at this time.
-
-      # Number of seconds to keep a task container alive, if the task container is not invoked during that period.
-      # Optional: default is no timeout.
-      # idleTaskContainerTimeout: 3600 
-      # (09/20) Not in plan to support at this time.
     
     volumes: 
     - name: idp-data-volume 
@@ -153,7 +128,7 @@ spec:
       - type: maven.build
         path: /logs/(etc)
     
-      repoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
+      idpRepoMappings: # Optional: Automatically upload files/directories from the IDP repo to a container on/before startup
       - srcPath: "/resources/scripts/build.sh"
         destPath: "/scripts/build.sh"
         setExecuteBit: true # Set execute bit on a single file
@@ -204,6 +179,11 @@ spec:
 - October 7th:
   - `spec.tasks.command` is now a string array, rather than a single string. 
 
+- October 9th:
+  - `repoMappings` is now `idpRepoMappings`
+  - Moved deprecated and commented-out `.spec.shared.tasks` section out of main YAML and into a later section in the document.
+  
+
 ## Requirements
   
 #### The time it takes for an existing volume to attach to a new Pod can be upwards of several minutes, as per external team's observations. We have not seen this ourselves, but we need to handle this. 
@@ -222,3 +202,29 @@ Logic:
 - One option is running the task inside an initContainer, but that doesn't actually work because we wouldn't be able to sync the source before the initContainer runs.
 - Thus, since the build task can't run in a non-running container, and there is no other mechanism to run it, it is not possible to support this scenario w/o override the entrypoint.
 
+
+## 'Nice-to-have' items for post-MVP consideration
+
+
+#### Additional flexibilty on task lifecycle
+
+The following items were briefly attached to `.spec.shared.tasks`, but instead we decided that the flexibilty to changes these values was not compelling enought to include in the MVP. The ability to support short-lived containers (at both the task and scenario level), and the ability to remove idling containers, should be considered in the future.
+
+```
+# If true, tasks that share the same build image will NOT run within the same container during a scenario.
+# If false, tasks that share the same build image WILL run in the same container during a scenario.
+# Note: Whether the container will be disposed after the scenario has completed is determined by disposeOnScenarioComplete.
+# Optional: default is true.
+disposeOfSharedContainersOnTaskComplete: true # (true/false) 
+
+# Whether a task container will be disposed of after the scenario has completed.
+# If true, all containers that were used in a scenario will be destroyed once the scenario ends. 
+# If false, all containers that were used in a scenario will be preserved for the next run.
+# Note: this applies BOTH to tasks that share a build image with another task, and those that don't.
+# Optional: default is true.
+disposeOnScenarioComplete: true # (true/false) 
+
+# Number of seconds to keep a task container alive, if the task container is not invoked during that period.
+# Optional: default is no timeout.
+idleTaskContainerTimeout: 3600 
+```
