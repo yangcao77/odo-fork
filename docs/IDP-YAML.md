@@ -65,20 +65,20 @@ spec:
       containerPath: /some/path/idp-data
 
     kubernetes: # Values only used for Kube deployments
-    
       # TODO: Are there other Kube resource parameters we need to include here? securityContext? (cluster) role bindings?
-      livenessProbe: # Optional, otherwise sane defaults should be used
+      # All kubernetes options are currently optional; should consider adding a warning if not specified, post-MVP.
+      livenessProbe: # Optional
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      readinessProbe: # Optional, otherwise sane defaults should be used
+      readinessProbe: # Optional
         initialDelaySeconds: 15
         timeoutSeconds: 60
 
-      requests: # TODO: Are these optional in Kube? If so, what are the defaults?
+      requests: # Optional
         memory: "64Mi"
         cpu: "250m"
-      limits:  # TODO: Are these optional in Kube? If so, what are the defaults?
+      limits:  # Optional
         memory: "128Mi"
         cpu: "500m"
 
