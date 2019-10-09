@@ -70,6 +70,8 @@ type ComponentSettings struct {
 	Envs EnvVarList `yaml:"Envs,omitempty"`
 
 	Url *[]ConfigUrl `yaml:"Url,omitempty"`
+
+	// Ingress *[]ConfigIngress `yaml:"Ingress,omitempty"`
 }
 
 // ConfigUrl holds URL related information
@@ -77,8 +79,18 @@ type ConfigUrl struct {
 	// Name of the URL
 	Name string `yaml:"Name,omitempty"`
 	// Port number for the url of the component, required in case of components which expose more than one service port
-	Port int `yaml:"Port,omitempty"`
+	Port int    `yaml:"Port,omitempty"`
+	Host string `yaml:"Host,omitempty"`
 }
+
+// ConfigIngress holds Ingress related information
+// type ConfigIngress struct {
+// 	// Name of the Ingress
+// 	Name string `yaml:"Name,omitempty"`
+// 	// Port number for the ingress of the component, required in case of components which expose more than one service port
+// 	Port int    `yaml:"Port,omitempty"`
+// 	Host string `yaml:"Host,omitempty"`
+// }
 
 // LocalConfig holds all the config relavent to a specific Component.
 type LocalConfig struct {
@@ -249,8 +261,14 @@ func (lci *LocalConfigInfo) SetConfiguration(parameter string, value interface{}
 			} else {
 				lci.componentSettings.Url = &[]ConfigUrl{urlValue}
 			}
+			// case "ingress":
+			// 	ingressValue := value.(ConfigIngress)
+			// 	if lci.componentSettings.Ingress != nil {
+			// 		*lci.componentSettings.Ingress = append(*lci.componentSettings.Ingress, ingressValue)
+			// 	} else {
+			// 		lci.componentSettings.Ingress = &[]ConfigIngress{ingressValue}
+			// 	}
 		}
-
 		return lci.writeToFile()
 	}
 	return errors.Errorf("unknown parameter :'%s' is not a parameter in local odo config", parameter)
@@ -316,6 +334,18 @@ func (lci *LocalConfigInfo) DeleteUrl(parameter string) error {
 	}
 	return lci.writeToFile()
 }
+
+// DeleteIngress is used to delete config from local odo config
+// func (lci *LocalConfigInfo) DeleteIngress(parameter string) error {
+// 	for i, ingress := range *lci.componentSettings.Ingress {
+// 		if ingress.Name == parameter {
+// 			s := *lci.componentSettings.Ingress
+// 			s = append(s[:i], s[i+1:]...)
+// 			lci.componentSettings.Ingress = &s
+// 		}
+// 	}
+// 	return lci.writeToFile()
+// }
 
 // DeleteFromConfigurationList is used to delete a value from a list from the local odo config
 // parameter is the name of the config parameter
@@ -479,6 +509,14 @@ func (lc *LocalConfig) GetUrl() []ConfigUrl {
 	return *lc.componentSettings.Url
 }
 
+// GetIngress returns the ConfigIngress, returns default if nil
+// func (lc *LocalConfig) GetIngress() []ConfigIngress {
+// 	if lc.componentSettings.Ingress == nil {
+// 		return []ConfigIngress{}
+// 	}
+// 	return *lc.componentSettings.Ingress
+// }
+
 // GetStorage returns the Storage, returns empty if nil
 func (lc *LocalConfig) GetStorage() []ComponentStorageSettings {
 	if lc.componentSettings.Storage == nil {
@@ -556,6 +594,10 @@ const (
 	Url = "Url"
 	// UrlDescription is the description of URL
 	UrlDescription = "URL to access the component"
+	// Ingress
+	// Ingress = "Ingress"
+	// IngressDescription is the description of Ingress
+	// IngressDescription = "Ingress domain to access the component"
 )
 
 var (
@@ -577,6 +619,7 @@ var (
 		Storage:        StorageDescription,
 		CPU:            CPUDescription,
 		Url:            UrlDescription,
+		// Ingress: IngressDescription,
 	}
 
 	lowerCaseLocalParameters = util.GetLowerCaseParameters(GetLocallySupportedParameters())

@@ -816,14 +816,14 @@ func (c *Client) DeleteIngress(name string) error {
 
 // ListIngresses lists all the ingresses based on the given label selector
 func (c *Client) ListIngresses(labelSelector string) ([]extensionsv1.Ingress, error) {
-	routeList, err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).List(metav1.ListOptions{
+	ingressList, err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).List(metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get ingress list")
 	}
 
-	return routeList.Items, nil
+	return ingressList.Items, nil
 }
 
 // ListIngressNames lists all the names of the ingresses based on the given label
@@ -834,12 +834,12 @@ func (c *Client) ListIngressNames(labelSelector string) ([]string, error) {
 		return nil, errors.Wrap(err, "unable to list ingresses")
 	}
 
-	var routeNames []string
-	for _, r := range ingresses {
-		routeNames = append(routeNames, r.Name)
+	var ingressNames []string
+	for _, i := range ingresses {
+		ingressNames = append(ingressNames, i.Name)
 	}
 
-	return routeNames, nil
+	return ingressNames, nil
 }
 
 // ListSecrets lists all the secrets based on the given label selector

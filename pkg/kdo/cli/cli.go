@@ -9,6 +9,7 @@ import (
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/catalog"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/component"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/config"
+	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/url"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/version"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
 	kdoutil "github.com/redhat-developer/odo-fork/pkg/kdo/util"
@@ -74,7 +75,6 @@ func NewCmdUdo(name, fullName string) *cobra.Command {
 		Long:    udoLong,
 		Example: fmt.Sprintf(udoExample, fullName),
 	}
-
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -107,6 +107,7 @@ func NewCmdUdo(name, fullName string) *cobra.Command {
 		component.NewCmdBuild(component.BuildRecommendedCommandName, kdoutil.GetFullName(fullName, component.BuildRecommendedCommandName)),
 		version.NewCmdVersion(version.RecommendedCommandName, kdoutil.GetFullName(fullName, version.RecommendedCommandName)),
 		config.NewCmdConfiguration(config.RecommendedCommandName, kdoutil.GetFullName(fullName, config.RecommendedCommandName)),
+		url.NewCmdURL(url.RecommendedCommandName, kdoutil.GetFullName(fullName, url.RecommendedCommandName)),
 	)
 
 	kdoutil.VisitCommands(rootCmd, reconfigureCmdWithSubcmd)

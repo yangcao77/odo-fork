@@ -78,3 +78,5 @@ tags
 # VSCode specific
 .vscode
 
+
+**/.DS_Store
