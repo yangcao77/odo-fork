@@ -777,32 +777,6 @@ func (c *Client) DeleteNamespace(name string) error {
 	}
 }
 
-// GetDeploymentLabelValues get label values of given label from objects in project that are matching selector
-// returns slice of unique label values
-func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
-
-	// List Deployment according to selectors
-	deploymentList, err := c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to list Deployments")
-	}
-
-	// Grab all the matched strings
-	var values []string
-	for _, elem := range deploymentList.Items {
-		for key, val := range elem.Labels {
-			if key == label {
-				values = append(values, val)
-			}
-		}
-	}
-
-	// Sort alphabetically
-	sort.Strings(values)
-
-	return values, nil
-}
-
 // Service struct holds the service name and its corresponding list of plans
 type Service struct {
 	Name     string
@@ -903,26 +877,6 @@ func (c *Client) ListSecrets(labelSelector string) ([]corev1.Secret, error) {
 	return secretList.Items, nil
 }
 
-// GetDeploymentsFromSelector returns an array of Deployment
-// resources which match the given selector
-func (c *Client) GetDeploymentsFromSelector(selector string) ([]appsv1.Deployment, error) {
-	var depList *appsv1.DeploymentList
-	var err error
-	if selector != "" {
-		depList, err = c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{
-			LabelSelector: selector,
-		})
-	} else {
-		depList, err = c.KubeClient.AppsV1().Deployments(c.Namespace).List(metav1.ListOptions{
-			FieldSelector: fields.Set{"metadata.namespace": c.Namespace}.AsSelector().String(),
-		})
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to list Deployments")
-	}
-	return depList.Items, nil
-}
-
 // GetServicesFromSelector returns an array of Service resources which match the
 // given selector
 func (c *Client) GetServicesFromSelector(selector string) ([]corev1.Service, error) {
@@ -933,21 +887,6 @@ func (c *Client) GetServicesFromSelector(selector string) ([]corev1.Service, err
 		return nil, errors.Wrap(err, "unable to list Services")
 	}
 	return serviceList.Items, nil
-}
-
-// GetDeploymentFromName returns the Deployment resource given
-// the Deployment name
-func (c *Client) GetDeploymentFromName(name string) (*appsv1.Deployment, error) {
-	glog.V(4).Infof("Getting Deployment: %s", name)
-	deployment, err := c.KubeClient.AppsV1().Deployments(c.Namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		if !strings.Contains(err.Error(), fmt.Sprintf(DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR, name)) {
-			return nil, errors.Wrapf(err, "unable to get Deployment %s", name)
-		} else {
-			return nil, DEPLOYMENT_CONFIG_NOT_FOUND
-		}
-	}
-	return deployment, nil
 }
 
 // GetPVCsFromSelector returns the PVCs based on the given selector
@@ -975,26 +914,6 @@ func (c *Client) GetPVCNamesFromSelector(selector string) ([]string, error) {
 	}
 
 	return names, nil
-}
-
-// GetOneDeploymentFromSelector returns the Deployment object associated
-// with the given selector.
-// An error is thrown when exactly one Deployment is not found for the
-// selector.
-func (c *Client) GetOneDeploymentFromSelector(selector string) (*appsv1.Deployment, error) {
-	deploymentConfigs, err := c.GetDeploymentsFromSelector(selector)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to get DeploymentCo for the selector: %v", selector)
-	}
-
-	numDC := len(deploymentConfigs)
-	if numDC == 0 {
-		return nil, fmt.Errorf("no Deployment was found for the selector: %v", selector)
-	} else if numDC > 1 {
-		return nil, fmt.Errorf("multiple Deployments exist for the selector: %v. Only one must be present", selector)
-	}
-
-	return &deploymentConfigs[0], nil
 }
 
 // GetOnePodFromSelector returns the Pod  object associated with the given selector.
@@ -1525,12 +1444,12 @@ func (c *Client) Delete(labels map[string]string) error {
 	glog.V(4).Infof("Selectors used for deletion: %s", selector)
 
 	var errorList []string
-	// Delete DeploymentConfig
-	glog.V(4).Info("Deleting DeploymentConfigs")
+	// Delete Deployment
+	glog.V(4).Info("Deleting Deployment")
 
 	err := c.AppsV1Client.Deployments(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
-		errorList = append(errorList, "unable to delete deploymentconfig")
+		errorList = append(errorList, "unable to delete deployment")
 	}
 	glog.V(4).Info("Deleting Ingress")
 	err = c.IngressClient.Ingresses(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
@@ -1583,9 +1502,9 @@ func (c *Client) Delete(labels map[string]string) error {
 
 }
 
-func (c *Client) GetDeploymentConfigLabelValues(label string, selector string) ([]string, error) {
+func (c *Client) GetDeploymentLabelValues(label string, selector string) ([]string, error) {
 
-	// List DeploymentConfig according to selectors
+	// List Deployment according to selectors
 	dcList, err := c.AppsV1Client.Deployments(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list Deployments")
@@ -1607,11 +1526,11 @@ func (c *Client) GetDeploymentConfigLabelValues(label string, selector string) (
 	return values, nil
 }
 
-// GetDeploymentConfigFromName returns the Deployment Config resource given
-// the Deployment Config name
-func (c *Client) GetDeploymentConfigFromName(name string) (*appsv1.Deployment, error) {
+// GetDeploymentFromName returns the Deployment resource given
+// the Deployment name
+func (c *Client) GetDeploymentFromName(name string) (*appsv1.Deployment, error) {
 	glog.V(4).Infof("Getting Deployment: %s", name)
-	deploymentConfig, err := c.AppsV1Client.Deployments(c.Namespace).Get(name, metav1.GetOptions{})
+	deployment, err := c.AppsV1Client.Deployments(c.Namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if !strings.Contains(err.Error(), fmt.Sprintf(DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR, name)) {
 			return nil, errors.Wrapf(err, "unable to get Deployment: %s", name)
@@ -1619,12 +1538,12 @@ func (c *Client) GetDeploymentConfigFromName(name string) (*appsv1.Deployment, e
 			return nil, DEPLOYMENT_CONFIG_NOT_FOUND
 		}
 	}
-	return deploymentConfig, nil
+	return deployment, nil
 }
 
-// GetDeploymentConfigsFromSelector returns an array of Deployment Config
+// GetDeploymentsFromSelector returns an array of Deployment Config
 // resources which match the given selector
-func (c *Client) GetDeploymentConfigsFromSelector(selector string) ([]appsv1.Deployment, error) {
+func (c *Client) GetDeploymentsFromSelector(selector string) ([]appsv1.Deployment, error) {
 	var dcList *appsv1.DeploymentList
 	var err error
 	if selector != "" {
@@ -1637,7 +1556,7 @@ func (c *Client) GetDeploymentConfigsFromSelector(selector string) ([]appsv1.Dep
 		})
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to list DeploymentConfigs")
+		return nil, errors.Wrap(err, "unable to list Deployment")
 	}
 	return dcList.Items, nil
 }
@@ -1646,35 +1565,35 @@ func (c *Client) GetDeploymentConfigsFromSelector(selector string) ([]appsv1.Dep
 // dcName is the name of the dc from which the env vars are retrieved
 // projectName is the name of the project
 func (c *Client) GetEnvVarsFromDC(dcName string) ([]corev1.EnvVar, error) {
-	dc, err := c.GetDeploymentConfigFromName(dcName)
+	dc, err := c.GetDeploymentFromName(dcName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error occurred while retrieving the dc")
 	}
 
 	numContainers := len(dc.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment Config %v, got %v", dc.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", dc.Name, numContainers)
 	}
 
 	return dc.Spec.Template.Spec.Containers[0].Env, nil
 }
 
-// GetOneDeploymentConfigFromSelector returns the Deployment Config object associated
+// GetOneDeploymentFromSelector returns the Deployment object associated
 // with the given selector.
-// An error is thrown when exactly one Deployment Config is not found for the
+// An error is thrown when exactly one Deployment is not found for the
 // selector.
-func (c *Client) GetOneDeploymentConfigFromSelector(selector string) (*appsv1.Deployment, error) {
-	deploymentConfigs, err := c.GetDeploymentConfigsFromSelector(selector)
+func (c *Client) GetOneDeploymentFromSelector(selector string) (*appsv1.Deployment, error) {
+	deployment, err := c.GetDeploymentsFromSelector(selector)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to get DeploymentConfigs for the selector: %v", selector)
 	}
 
-	numDC := len(deploymentConfigs)
+	numDC := len(deployment)
 	if numDC == 0 {
-		return nil, fmt.Errorf("no Deployment Config was found for the selector: %v", selector)
+		return nil, fmt.Errorf("no Deployment was found for the selector: %v", selector)
 	} else if numDC > 1 {
-		return nil, fmt.Errorf("multiple Deployment Configs exist for the selector: %v. Only one must be present", selector)
+		return nil, fmt.Errorf("multiple Deployment exist for the selector: %v. Only one must be present", selector)
 	}
 
-	return &deploymentConfigs[0], nil
+	return &deployment[0], nil
 }

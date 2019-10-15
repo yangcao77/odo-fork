@@ -209,9 +209,9 @@ func GetComponentLinkedSecretNames(client *kclient.Client, componentName string,
 	componentLabels := componentlabels.GetLabels(componentName, applicationName, false)
 	componentSelector := util.ConvertLabelsToSelector(componentLabels)
 
-	dc, err := client.GetOneDeploymentConfigFromSelector(componentSelector)
+	dc, err := client.GetOneDeploymentFromSelector(componentSelector)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to fetch deployment configs for the selector %v", componentSelector)
+		return nil, errors.Wrapf(err, "unable to fetch deployment for the selector %v", componentSelector)
 	}
 
 	for _, env := range dc.Spec.Template.Spec.Containers[0].EnvFrom {
@@ -846,22 +846,22 @@ func PushLocal(client *kclient.Client, componentName string, applicationName str
 // 	defer s.End(false)
 
 // 	// Namespace the component
-// 	namespacedOpenShiftObject, err := util.NamespaceOpenShiftObject(params.Name, params.ApplicationName)
+// 	namespacedKubernetesObject, err := util.NamespacedKubernetesObject(params.Name, params.ApplicationName)
 // 	if err != nil {
 // 		return errors.Wrapf(err, "unable to create namespaced name")
 // 	}
 
 // 	// start the deployment
 // 	// the build must be finished before this call and the new image must be successfully updated
-// 	_, err = client.StartDeployment(namespacedOpenShiftObject)
+// 	_, err = client.StartDeployment(namespacedKubernetesObject)
 // 	if err != nil {
-// 		return errors.Wrapf(err, "unable to create DeploymentConfig for %s", namespacedOpenShiftObject)
+// 		return errors.Wrapf(err, "unable to create Deployment for %s", namespacedKubernetesObject)
 // 	}
 
-// 	// Watch / wait for deployment config to update annotations
-// 	_, err = client.WaitAndGetDC(namespacedOpenShiftObject, desiredRevision, kclient.OcUpdateTimeout, kclient.IsDCRolledOut)
+// 	// Watch / wait for deployment to update annotations
+// 	_, err = client.WaitAndGetDC(namespacedKubernetesObject, desiredRevision, kclient.OcUpdateTimeout, kclient.IsDCRolledOut)
 // 	if err != nil {
-// 		return errors.Wrapf(err, "unable to wait for DeploymentConfig %s to update", namespacedOpenShiftObject)
+// 		return errors.Wrapf(err, "unable to wait for Deployment %s to update", namespacedKubernetesObject)
 // 	}
 
 // 	s.End(true)
@@ -874,7 +874,7 @@ func GetComponentType(client *kclient.Client, componentName string, applicationN
 
 	// filter according to component and application name
 	selector := fmt.Sprintf("%s=%s,%s=%s", componentlabels.ComponentLabel, componentName, applabels.ApplicationLabel, applicationName)
-	componentImageTypes, err := client.GetDeploymentConfigLabelValues(componentlabels.ComponentTypeLabel, selector)
+	componentImageTypes, err := client.GetDeploymentLabelValues(componentlabels.ComponentTypeLabel, selector)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to get type of %s component")
 	}
@@ -903,8 +903,8 @@ func List(client *kclient.Client, applicationName string) (ComponentList, error)
 		applicationSelector = fmt.Sprintf("%s=%s", applabels.ApplicationLabel, applicationName)
 	}
 
-	// retrieve all the deployment configs that are associated with this application
-	dcList, err := client.GetDeploymentConfigsFromSelector(applicationSelector)
+	// retrieve all the deployment that are associated with this application
+	dcList, err := client.GetDeploymentsFromSelector(applicationSelector)
 	if err != nil {
 		return ComponentList{}, errors.Wrapf(err, "unable to list components")
 	}
@@ -965,22 +965,22 @@ func List(client *kclient.Client, applicationName string) (ComponentList, error)
 // GetComponentSource what source type given component uses
 // The first returned string is component source type ("git" or "local" or "binary")
 // The second returned string is a source (url to git repository or local path or path to binary)
-// we retrieve the source type by looking up the DeploymentConfig that's deployed
+// we retrieve the source type by looking up the Deployment that's deployed
 func GetComponentSource(client *kclient.Client, componentName string, applicationName string) (string, string, error) {
 
 	// Namespace the application
-	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(componentName, applicationName)
+	namespacedKubernetesObject, err := util.NamespaceKubernetesObject(componentName, applicationName)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "unable to create namespaced name")
 	}
 
-	deploymentConfig, err := client.GetDeploymentConfigFromName(namespacedOpenShiftObject)
+	deployment, err := client.GetDeploymentFromName(namespacedKubernetesObject)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "unable to get source path for component %s", componentName)
 	}
 
-	sourcePath := deploymentConfig.ObjectMeta.Annotations[componentSourceURLAnnotation]
-	sourceType := deploymentConfig.ObjectMeta.Annotations[ComponentSourceTypeAnnotation]
+	sourcePath := deployment.ObjectMeta.Annotations[componentSourceURLAnnotation]
+	sourceType := deployment.ObjectMeta.Annotations[ComponentSourceTypeAnnotation]
 
 	if !validateSourceType(sourceType) {
 		return "", "", fmt.Errorf("unsupported component source type %s", sourceType)
@@ -1024,7 +1024,7 @@ func GetComponentSource(client *kclient.Client, componentName string, applicatio
 // 	}
 
 // 	// Namespace the application
-// 	namespacedOpenShiftObject, err := util.NamespaceKubernetesObject(componentName, applicationName)
+// 	namespacedOpenShiftObject, err := util.NamespacedOpenShiftObject(componentName, applicationName)
 // 	if err != nil {
 // 		return errors.Wrapf(err, "unable to create namespaced name")
 // 	}
@@ -1054,7 +1054,7 @@ func GetComponentSource(client *kclient.Client, componentName string, applicatio
 // 	}
 
 // 	// Retrieve the current DC in order to obtain what the current inputPorts are..
-// 	currentDC, err := client.GetDeploymentConfigFromName(commonObjectMeta.Name)
+// 	currentDC, err := client.GetDeploymentFromName(commonObjectMeta.Name)
 // 	if err != nil {
 // 		return errors.Wrapf(err, "unable to get DeploymentConfig %s", commonObjectMeta.Name)
 // 	}
