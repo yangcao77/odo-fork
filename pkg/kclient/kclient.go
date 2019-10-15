@@ -66,30 +66,6 @@ type CreateArgs struct {
 	StdOut             io.Writer
 }
 
-// UpdateComponentParams serves the purpose of holding the arguments to a component update request
-type UpdateComponentParams struct {
-	// CommonObjectMeta is the object meta containing the labels and annotations expected for the new deployment
-	CommonObjectMeta metav1.ObjectMeta
-	// ResourceLimits are the cpu and memory constraints to be applied on to the component
-	ResourceLimits corev1.ResourceRequirements
-	// EnvVars to be exposed
-	EnvVars []corev1.EnvVar
-	// ExistingDC is the dc of the existing component that is requested for an update
-	ExistingDC *appsv1.Deployment
-	// DcRollOutWaitCond holds the logic to wait for dc with requested updates to be applied
-	DcRollOutWaitCond dcRollOutWait
-	// ImageMeta describes the image to be used in dc(builder image for local/binary and built component image for git deployments)
-	ImageMeta CommonImageMeta
-	// StorageToBeMounted describes the storage to be mounted
-	// storagePath is the key of the map, the generatedPVC is the value of the map
-	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
-	// StorageToBeUnMounted describes the storage to be unmounted
-	// path is the key of the map,storageName is the value of the map
-	StorageToBeUnMounted map[string]string
-}
-
-type dcRollOutWait func(*appsv1.Deployment, int64) bool
-
 const (
 	// The length of the string to be generated for names of resources
 	nameLength = 5
