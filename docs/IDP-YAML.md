@@ -63,6 +63,7 @@ spec:
     volumeMappings: #  Optional: ability to map paths in the container to persistent volume paths
     - volumeName: idp-data-volume
       containerPath: /some/path/idp-data
+      subPath: some-path # Optional: If specified, the volume subpath will be mounted as specified. This give IDP writers the flexibility to use a single volume for all persistent data storage.
 
     kubernetes: # Values only used for Kube deployments
       # TODO: Are there other Kube resource parameters we need to include here? securityContext? (cluster) role bindings?
@@ -92,7 +93,8 @@ spec:
       # At least one entry must be specified: A volume is required for shared/standalone tasks
       - volumeName: idp-data-volume
         containerPath: /some/path/idp-data
-      # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose
+        # Map a directory for the task to copy data to runtime, or for some other arbitrary purpose        
+        subPath: some-path # Optional: If specified, the volume subpath will be mounted as specified. This give IDP writers the flexibility to use a single volume for all persistent data storage.        
   
       env: # Optional key/value env var pairs, as above
 
@@ -183,6 +185,8 @@ spec:
   - `repoMappings` is now `idpRepoMappings`
   - Moved deprecated and commented-out `.spec.shared.tasks` section out of main YAML and into a later section in the document.
   
+- October 18th:
+  - `subPath` has been added to volumeMappings, for both runtime and tasks. See discussion of alternatives (eg input/output fields) to exposing `subPath` below.
 
 ## Requirements
   
