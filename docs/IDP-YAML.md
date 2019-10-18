@@ -206,7 +206,7 @@ Logic:
 ## 'Nice-to-have' items for post-MVP consideration
 
 
-#### Additional flexibilty on task lifecycle
+#### Additional flexibility on task lifecycle
 
 The following items were briefly attached to `.spec.shared.tasks`, but instead we decided that the flexibilty to changes these values was not compelling enought to include in the MVP. The ability to support short-lived containers (at both the task and scenario level), and the ability to remove idling containers, should be considered in the future.
 
@@ -228,3 +228,59 @@ disposeOnScenarioComplete: true # (true/false)
 # Optional: default is no timeout.
 idleTaskContainerTimeout: 3600 
 ```
+
+#### Input and output fields, to eliminate the complexity of transferring data between tasks for IDP writers
+
+Proposal to add input/output fields to tasks, like so:
+```
+task a:
+output:
+ - name: one
+   path: /task-a-path
+
+task b:
+input:
+ - name: one
+   path: /task-b-path1
+output:
+ - name: one
+   path: /task-b-path2
+
+task c:
+input:
+ - name: one
+   path: /task-c-path
+```
+
+The following issues were discussing while investigating this proposal.
+
+The issue of how to handle scenarios that include an optional task, using inputs and outputs, was discussed:
+- Example: 
+  - We have three tasks A, B, C
+  - We have two scenarios: Scenario 'one' containing tasks A, B, C. Scenario 'two' containing tasks A and C. Thus task B is optional in one of the scenarios.
+- Q: How to have inputs/outputs work in both scenarios?
+- A: Optional tasks must have a name field that is the same.
+- But this poses additional validation challenges in some cases.
+
+The issue of how to hook an output to an input was discussed:
+- Option 1: Have the `path` field (for both `input` and `output`) map directly to a (volume, subpath). This requires no intermediate step to synchronize the input and output data, because they both map to the same path on the same volume.
+- Option 2: Instead of connecting `input` and `output` directly, instead have an rsync step from output path (in container A) to a volume path `/v1` (in container A), with the volume path (`/v1`) mapped to the same (volume, subpath) as the path in container B.
+- Problem: We can't rely on rsync to be in the container, so the only way to sync is the slow way: `rm -rf target-dir ; cp -R src-dir target-dir`. 
+
+The issue of what if the IDP developer specifies ephemerals paths in the output field:
+- Example: What if the following output path is used in the Maven scenario:
+```
+task a:
+output:
+ - name: one
+   path: /projects/my-project/target/server
+```
+- If this path is directly volume mounted, then Maven will be unable to delete the target directory (and thus `mvn clean` et al, will always fail).
+- The solution to this problem is to use Option 2 (intermediate sync step) above, but see also the problems with this approach.
+
+To sum up the above three issues, we must necessarily choose between, either:
+- A) Disallowing the IDP developer from specifying ephemeral ports as input (and going with option 1, above)
+- _or_
+- B) Allow the IDP developer to specify ephemeral paths, go with option 2 above, but sync with the slow method.
+- _or_
+- C) Allow the IDP developer to specify ephemeral paths, go with option 2 above, but use a bad hack for syncing, such as copying rsync into the container (even if we don't know whether the container can support it).
