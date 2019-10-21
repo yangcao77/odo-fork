@@ -46,8 +46,8 @@ import (
 )
 
 var (
-	DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR string = "deployment \"%s\" not found"
-	DEPLOYMENT_CONFIG_NOT_FOUND           error  = fmt.Errorf("Requested deployment does not exist")
+	DEPLOYMENT_NOT_FOUND_ERROR_STR string = "deployment \"%s\" not found"
+	DEPLOYMENT_NOT_FOUND           error  = fmt.Errorf("Requested deployment does not exist")
 )
 
 // CreateArgs is a container of attributes of component create action
@@ -1422,7 +1422,6 @@ func (c *Client) Delete(labels map[string]string) error {
 	var errorList []string
 	// Delete Deployment
 	glog.V(4).Info("Deleting Deployment")
-
 	err := c.AppsV1Client.Deployments(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		errorList = append(errorList, "unable to delete deployment")
@@ -1432,18 +1431,6 @@ func (c *Client) Delete(labels map[string]string) error {
 	if err != nil {
 		errorList = append(errorList, "unable to delete route")
 	}
-	// Delete BuildConfig
-	// glog.V(4).Info("Deleting BuildConfigs")
-	// err = c.buildClient.BuildConfigs(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
-	// if err != nil {
-	// 	errorList = append(errorList, "unable to delete buildconfig")
-	// }
-	// // Delete ImageStream
-	// glog.V(4).Info("Deleting ImageStreams")
-	// err = c.imageClient.ImageStreams(c.Namespace).DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: selector})
-	// if err != nil {
-	// 	errorList = append(errorList, "unable to delete imagestream")
-	// }
 	// Delete Services
 	glog.V(4).Info("Deleting Services")
 	svcList, err := c.KubeClient.CoreV1().Services(c.Namespace).List(metav1.ListOptions{LabelSelector: selector})
@@ -1508,10 +1495,10 @@ func (c *Client) GetDeploymentFromName(name string) (*appsv1.Deployment, error) 
 	glog.V(4).Infof("Getting Deployment: %s", name)
 	deployment, err := c.AppsV1Client.Deployments(c.Namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
-		if !strings.Contains(err.Error(), fmt.Sprintf(DEPLOYMENT_CONFIG_NOT_FOUND_ERROR_STR, name)) {
+		if !strings.Contains(err.Error(), fmt.Sprintf(DEPLOYMENT_NOT_FOUND_ERROR_STR, name)) {
 			return nil, errors.Wrapf(err, "unable to get Deployment: %s", name)
 		} else {
-			return nil, DEPLOYMENT_CONFIG_NOT_FOUND
+			return nil, DEPLOYMENT_NOT_FOUND
 		}
 	}
 	return deployment, nil
@@ -1537,21 +1524,21 @@ func (c *Client) GetDeploymentsFromSelector(selector string) ([]appsv1.Deploymen
 	return dcList.Items, nil
 }
 
-// GetEnvVarsFromDC retrieves the env vars from the DC
+// GetEnvVarsFromDeployment retrieves the env vars from the Deployment
 // dcName is the name of the dc from which the env vars are retrieved
 // projectName is the name of the project
-func (c *Client) GetEnvVarsFromDC(dcName string) ([]corev1.EnvVar, error) {
-	dc, err := c.GetDeploymentFromName(dcName)
+func (c *Client) GetEnvVarsFromDeployment(deploymentName string) ([]corev1.EnvVar, error) {
+	deployment, err := c.GetDeploymentFromName(deploymentName)
 	if err != nil {
-		return nil, errors.Wrap(err, "error occurred while retrieving the dc")
+		return nil, errors.Wrap(err, "error occurred while retrieving the deployment")
 	}
 
-	numContainers := len(dc.Spec.Template.Spec.Containers)
+	numContainers := len(deployment.Spec.Template.Spec.Containers)
 	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", dc.Name, numContainers)
+		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
 	}
 
-	return dc.Spec.Template.Spec.Containers[0].Env, nil
+	return deployment.Spec.Template.Spec.Containers[0].Env, nil
 }
 
 // GetOneDeploymentFromSelector returns the Deployment object associated

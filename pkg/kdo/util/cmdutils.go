@@ -82,5 +82,5 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 // ThrowContextError prints a context error if application/project is not found
 func ThrowContextError() error {
 	return errors.Errorf(`Please specify the application name and project name
-Or use the command from inside a directory containing an odo component.`)
+Or use the command from inside a directory containing a component.`)
 }

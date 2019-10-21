@@ -105,9 +105,9 @@ func printDeleteProjectInfo(client *kclient.Client, projectName string) error {
 						if err != nil {
 							return errors.Wrap(err, "Could not get url list")
 						}
-						log.Info("This component has following urls that will be deleted with component")
+						log.Info("This component has following ingresses that will be deleted with component")
 						for _, u := range ul.Items {
-							log.Info("URL named", u.GetName())
+							log.Info("Ingress named", u.GetName())
 						}
 					}
 

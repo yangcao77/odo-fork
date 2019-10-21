@@ -876,11 +876,11 @@ func GetComponentType(client *kclient.Client, componentName string, applicationN
 	selector := fmt.Sprintf("%s=%s,%s=%s", componentlabels.ComponentLabel, componentName, applabels.ApplicationLabel, applicationName)
 	componentImageTypes, err := client.GetDeploymentLabelValues(componentlabels.ComponentTypeLabel, selector)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to get type of %s component")
+		return "", errors.Wrapf(err, "unable to get type of %s component", componentName)
 	}
 	if len(componentImageTypes) < 1 {
 		// no type returned
-		return "", errors.Wrap(err, "unable to find type of %s component")
+		return "", errors.Wrapf(err, "unable to find type of %s component", componentName)
 
 	}
 	// check if all types are the same
@@ -1024,7 +1024,7 @@ func GetComponentSource(client *kclient.Client, componentName string, applicatio
 // 	}
 
 // 	// Namespace the application
-// 	namespacedOpenShiftObject, err := util.NamespacedOpenShiftObject(componentName, applicationName)
+// 	namespacedOpenShiftObject, err := util.NamespaceOpenShiftObject(componentName, applicationName)
 // 	if err != nil {
 // 		return errors.Wrapf(err, "unable to create namespaced name")
 // 	}
@@ -1254,7 +1254,7 @@ func Exists(client *kclient.Client, componentName, applicationName string) (bool
 }
 
 // GetComponent provides component definition
-func GetComponent(client *kclient.Client, componentName string, applicationName string, projectName string) (component Component, err error) {
+func GetComponent(client *kclient.Client, componentName string, applicationName string, namespace string) (component Component, err error) {
 	// Component Type
 	componentType, err := GetComponentType(client, componentName, applicationName)
 	if err != nil {
@@ -1285,11 +1285,11 @@ func GetComponent(client *kclient.Client, componentName string, applicationName 
 		storage = append(storage, store.Name)
 	}
 	// Environment Variables
-	DC, err := util.NamespaceKubernetesObject(componentName, applicationName)
+	Deployment, err := util.NamespaceKubernetesObject(componentName, applicationName)
 	if err != nil {
 		return component, errors.Wrap(err, "unable to get DC list")
 	}
-	envVars, err := client.GetEnvVarsFromDC(DC)
+	envVars, err := client.GetEnvVarsFromDeployment(Deployment)
 	if err != nil {
 		return component, errors.Wrap(err, "unable to get envVars list")
 	}
@@ -1311,7 +1311,7 @@ func GetComponent(client *kclient.Client, componentName string, applicationName 
 		return component, errors.Wrap(err, "unable to list linked secrets")
 	}
 	for _, secretName := range linkedSecretNames {
-		secret, err := client.GetSecret(secretName, projectName)
+		secret, err := client.GetSecret(secretName, namespace)
 		if err != nil {
 			return component, errors.Wrapf(err, "unable to get info about secret %s", secretName)
 		}
