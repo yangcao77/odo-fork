@@ -1289,7 +1289,7 @@ func GetComponent(client *kclient.Client, componentName string, applicationName 
 	if err != nil {
 		return component, errors.Wrap(err, "unable to get DC list")
 	}
-	envVars, err := client.GetEnvVarsFromDeployment(Deployment)
+	envVars, err := client.GetEnvVarsFromDep(Deployment)
 	if err != nil {
 		return component, errors.Wrap(err, "unable to get envVars list")
 	}

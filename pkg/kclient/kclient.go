@@ -1524,23 +1524,6 @@ func (c *Client) GetDeploymentsFromSelector(selector string) ([]appsv1.Deploymen
 	return dcList.Items, nil
 }
 
-// GetEnvVarsFromDeployment retrieves the env vars from the Deployment
-// dcName is the name of the dc from which the env vars are retrieved
-// projectName is the name of the project
-func (c *Client) GetEnvVarsFromDeployment(deploymentName string) ([]corev1.EnvVar, error) {
-	deployment, err := c.GetDeploymentFromName(deploymentName)
-	if err != nil {
-		return nil, errors.Wrap(err, "error occurred while retrieving the deployment")
-	}
-
-	numContainers := len(deployment.Spec.Template.Spec.Containers)
-	if numContainers != 1 {
-		return nil, fmt.Errorf("expected exactly one container in Deployment %v, got %v", deployment.Name, numContainers)
-	}
-
-	return deployment.Spec.Template.Spec.Containers[0].Env, nil
-}
-
 // GetOneDeploymentFromSelector returns the Deployment object associated
 // with the given selector.
 // An error is thrown when exactly one Deployment is not found for the
