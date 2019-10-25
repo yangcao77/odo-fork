@@ -3,8 +3,6 @@ package url
 import (
 	"fmt"
 
-	// appCmd "github.com/openshift/odo/pkg/odo/cli/application"
-
 	projectCmd "github.com/redhat-developer/odo-fork/pkg/kdo/cli/project"
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
 

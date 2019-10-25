@@ -3,6 +3,7 @@ package component
 import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	// "github.com/redhat-developer/odo-fork/pkg/component"
 	"github.com/redhat-developer/odo-fork/pkg/config"
@@ -24,6 +25,7 @@ type CommonPushOptions struct {
 	sourceType       config.SrcType
 	sourcePath       string
 	componentContext string
+	componentName    string
 	client           *kclient.Client
 	localConfigInfo  *config.LocalConfigInfo
 
@@ -48,6 +50,20 @@ func (cpo *CommonPushOptions) ResolveSrcAndConfigFlags() {
 		cpo.pushConfig = true
 		cpo.pushSource = true
 	}
+}
+
+// Complete completes component options
+func (cpo *CommonPushOptions) Complete(name string, cmd *cobra.Command, args []string) (err error) {
+	cpo.Context = genericclioptions.NewContext(cmd)
+
+	// If no arguments have been passed, get the current component
+	// else, use the first argument and check to see if it exists
+	if len(args) == 0 {
+		cpo.componentName = cpo.Context.Component()
+	} else {
+		cpo.componentName = cpo.Context.Component(args[0])
+	}
+	return
 }
 
 // func (cpo *CommonPushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) (bool, error) {

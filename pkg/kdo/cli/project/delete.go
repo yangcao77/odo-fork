@@ -3,10 +3,12 @@ package project
 import (
 	"fmt"
 
-	// "github.com/redhat-developer/odo-fork/pkg/kdo/cli/ui"
+	"github.com/redhat-developer/odo-fork/pkg/kdo/cli/ui"
 	"github.com/redhat-developer/odo-fork/pkg/kdo/genericclioptions"
+	"github.com/redhat-developer/odo-fork/pkg/log"
+	"github.com/redhat-developer/odo-fork/pkg/project"
+
 	// "github.com/redhat-developer/odo-fork/pkg/log"
-	// "github.com/redhat-developer/odo-fork/pkg/project"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
@@ -51,34 +53,34 @@ func (pdo *ProjectDeleteOptions) Complete(name string, cmd *cobra.Command, args 
 
 // Validate validates the parameters of the ProjectDeleteOptions
 func (pdo *ProjectDeleteOptions) Validate() (err error) {
-	// // Validate existence of the project to be deleted
-	// isValidProject, err := project.Exists(pdo.Context.Client, pdo.projectName)
-	// if !isValidProject {
-	// 	return fmt.Errorf("The project %s does not exist. Please check the list of projects using `odo project list`", pdo.projectName)
-	// }
+	// Validate existence of the project to be deleted
+	isValidProject, err := project.Exists(pdo.Context.Client, pdo.projectName)
+	if !isValidProject {
+		return fmt.Errorf("The project %s does not exist. Please check the list of projects using `odo project list`", pdo.projectName)
+	}
 	return
 }
 
 // Run runs the project delete command
 func (pdo *ProjectDeleteOptions) Run() (err error) {
 	// this to set the project in the file and runtime
-	// err = project.SetCurrent(pdo.Context.Client, pdo.projectName)
-	// if err != nil {
-	// 	return
-	// }
-	// err = printDeleteProjectInfo(pdo.Context.Client, pdo.projectName)
-	// if err != nil {
-	// 	return err
-	// }
-	// if pdo.projectForceDeleteFlag || ui.Proceed(fmt.Sprintf("Are you sure you want to delete project %v", pdo.projectName)) {
-	// 	err := project.Delete(pdo.Context.Client, pdo.projectName)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	err = project.SetCurrent(pdo.Context.Client, pdo.projectName)
+	if err != nil {
+		return
+	}
+	err = printDeleteProjectInfo(pdo.Context.Client, pdo.projectName)
+	if err != nil {
+		return err
+	}
+	if pdo.projectForceDeleteFlag || ui.Proceed(fmt.Sprintf("Are you sure you want to delete project %v", pdo.projectName)) {
+		err := project.Delete(pdo.Context.Client, pdo.projectName)
+		if err != nil {
+			return err
+		}
 
-	// 	log.Infof("Deleted project : %v", pdo.projectName)
-	// 	return nil
-	// }
+		log.Infof("Deleted project : %v", pdo.projectName)
+		return nil
+	}
 
 	return fmt.Errorf("Aborting deletion of project: %v", pdo.projectName)
 }
