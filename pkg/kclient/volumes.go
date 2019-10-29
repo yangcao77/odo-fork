@@ -2,6 +2,7 @@ package kclient
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -46,7 +47,7 @@ func (c *Client) CreatePVC(name string, size string, labels map[string]string) (
 
 // AddPVCToDeployment adds the given PVC to the given Deployment
 // at the given path
-func (c *Client) AddPVCToDeployment(dep *appsv1.Deployment, pvc string, path string) error {
+func (c *Client) AddPVCToDeployment(dep *appsv1.Deployment, pvc string, path, subPath string) error {
 	volumeName := generateVolumeNameFromPVC(pvc)
 
 	dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes, corev1.Volume{
@@ -65,6 +66,34 @@ func (c *Client) AddPVCToDeployment(dep *appsv1.Deployment, pvc string, path str
 	dep.Spec.Template.Spec.Containers[0].VolumeMounts = append(dep.Spec.Template.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
 		Name:      volumeName,
 		MountPath: path,
+		SubPath:   subPath,
+	},
+	)
+	return nil
+}
+
+// AddPVCToPod adds the given PVC to the given pod
+// at the given path
+func AddPVCToPod(pod *corev1.Pod, pvc, path, subPath string) error {
+	volumeName := generateVolumeNameFromPVC(pvc)
+
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+				ClaimName: pvc,
+			},
+		},
+	})
+
+	// Validating pod.Spec.Containers[] is present before dereferencing
+	if len(pod.Spec.Containers) == 0 {
+		return fmt.Errorf("Pod %s doesn't have any Containers defined", pod.Name)
+	}
+	pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		Name:      volumeName,
+		MountPath: path,
+		SubPath:   subPath,
 	},
 	)
 	return nil
@@ -151,9 +180,8 @@ func generateVolumeNameFromPVC(pvc string) string {
 
 // addOrRemoveVolumeAndVolumeMount mounts or unmounts PVCs from the given deployment
 func addOrRemoveVolumeAndVolumeMount(client *Client, dep *appsv1.Deployment, storageToMount map[string]*corev1.PersistentVolumeClaim, storageUnMount map[string]string) error {
-
 	if len(dep.Spec.Template.Spec.Containers) == 0 || len(dep.Spec.Template.Spec.Containers) > 1 {
-		return fmt.Errorf("more than one container found in deployment")
+		return fmt.Errorf("either no container or more than one container found in deployment")
 	}
 
 	// find the volume mount to be unmounted from the deployment
@@ -170,8 +198,16 @@ func addOrRemoveVolumeAndVolumeMount(client *Client, dep *appsv1.Deployment, sto
 		}
 	}
 
-	for path, pvc := range storageToMount {
-		err := client.AddPVCToDeployment(dep, pvc.Name, path)
+	for pathAndSubPath, pvc := range storageToMount {
+		isSubPathMentioned := strings.Contains(pathAndSubPath, "#")
+		path, subPath := "", ""
+		if isSubPathMentioned {
+			path = pathAndSubPath[:strings.IndexByte(pathAndSubPath, '#')]
+			subPath = pathAndSubPath[strings.IndexByte(pathAndSubPath, '#')+1:]
+		} else {
+			path = pathAndSubPath
+		}
+		err := client.AddPVCToDeployment(dep, pvc.Name, path, subPath)
 		if err != nil {
 			return errors.Wrap(err, "unable to add pvc to deployment")
 		}

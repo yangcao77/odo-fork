@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,6 +65,7 @@ type CreateArgs struct {
 	Wait               bool
 	StorageToBeMounted map[string]*corev1.PersistentVolumeClaim
 	StdOut             io.Writer
+	UseRunTime         bool
 }
 
 const (
@@ -441,12 +443,18 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		return errors.Wrapf(err, "error adding environment variables to the container")
 	}
 
-	// TODO-KDO: Get port information from component settings
-	containerPorts := []corev1.ContainerPort{
-		{
-			ContainerPort: int32(9090),
-			Name:          "http",
-		},
+	var containerPorts []corev1.ContainerPort
+
+	for _, port := range params.Ports {
+		portInt, err := strconv.Atoi(port)
+		if err != nil {
+			return errors.Wrapf(err, "unable to convert port %s to integer", port)
+		}
+		containerPort := corev1.ContainerPort{
+			ContainerPort: int32(portInt),
+			Name:          "port-" + port,
+		}
+		containerPorts = append(containerPorts, containerPort)
 	}
 
 	commonImageMeta := CommonImageMeta{
@@ -463,14 +471,15 @@ func (c *Client) CreateComponentResources(params CreateArgs, commonObjectMeta me
 		inputEnvs,
 		[]corev1.EnvFromSource{},
 		params.Resources,
+		params.UseRunTime,
 	)
 
-	if len(inputEnvs) != 0 {
-		err = updateEnvVar(&deployment, inputEnvs)
-		if err != nil {
-			return errors.Wrapf(err, "unable to add env vars to the container")
-		}
-	}
+	// if len(inputEnvs) != 0 {
+	// 	err = updateEnvVar(&deployment, inputEnvs)
+	// 	if err != nil {
+	// 		return errors.Wrapf(err, "unable to add env vars to the container")
+	// 	}
+	// }
 
 	// Attach any volumes to the deployment, before creating it on the cluster
 	err = addOrRemoveVolumeAndVolumeMount(c, &deployment, params.StorageToBeMounted, nil)
@@ -511,6 +520,7 @@ func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPort
 	svc := corev1.Service{
 		ObjectMeta: commonObjectMeta,
 		Spec: corev1.ServiceSpec{
+			// Type:  corev1.ServiceTypeNodePort,
 			Ports: svcPorts,
 			Selector: map[string]string{
 				"deployment": commonObjectMeta.Name,
@@ -554,7 +564,7 @@ func updateEnvVar(deployment *appsv1.Deployment, envVars []corev1.EnvVar) error 
 }
 
 // CreatePod creates a pod with the specifications and tails /dev/null for the entrypoint
-func (c *Client) CreatePod(podName, containerName, image, serviceAccountName string, labels map[string]string, volumes []corev1.Volume, volumeMounts []corev1.VolumeMount, envVars []corev1.EnvVar, privileged bool) (*corev1.Pod, error) {
+func (c *Client) CreatePod(podName, containerName, image, serviceAccountName string, labels map[string]string, pvcNames, mountPath, subPath []string, privileged bool) (*corev1.Pod, error) {
 	container := []corev1.Container{
 		{
 			Name:            containerName,
@@ -563,10 +573,9 @@ func (c *Client) CreatePod(podName, containerName, image, serviceAccountName str
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: &privileged,
 			},
-			VolumeMounts: volumeMounts,
-			Command:      []string{"tail"},
-			Args:         []string{"-f", "/dev/null"},
-			Env:          envVars,
+			Command: []string{"tail"},
+			Args:    []string{"-f", "/dev/null"},
+			Env:     []corev1.EnvVar{},
 		},
 	}
 	pod := &corev1.Pod{
@@ -581,9 +590,15 @@ func (c *Client) CreatePod(podName, containerName, image, serviceAccountName str
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: serviceAccountName,
-			Volumes:            volumes,
 			Containers:         container,
 		},
+	}
+
+	for i, pvcName := range pvcNames {
+		err := AddPVCToPod(pod, pvcName, mountPath[i], subPath[i])
+		if err != nil {
+			return nil, errors.New("Unable to add volumes to the pod: " + err.Error())
+		}
 	}
 
 	pod, err := c.KubeClient.CoreV1().Pods(c.Namespace).Create(pod)

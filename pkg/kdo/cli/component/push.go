@@ -3,7 +3,6 @@ package component
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/fatih/color"
 	"github.com/golang/glog"
@@ -20,7 +19,6 @@ import (
 	"github.com/redhat-developer/odo-fork/pkg/project"
 
 	kdoutil "github.com/redhat-developer/odo-fork/pkg/kdo/util"
-	util "github.com/redhat-developer/odo-fork/pkg/util"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
 )
@@ -48,6 +46,7 @@ type PushOptions struct {
 	componentContext string
 	client           *kclient.Client
 	localConfig      *config.LocalConfigInfo
+	fullBuild        bool
 
 	pushConfig bool
 	pushSource bool
@@ -147,43 +146,14 @@ func (po *PushOptions) createCmpIfNotExistsAndApplyCmpConfig(stdout io.Writer) e
 		return nil
 	}
 
-	cmpName := po.localConfig.GetName()
-	appName := po.localConfig.GetApplication()
-
-	// First off, we check to see if the component exists. This is ran each time we do `udo push`
-	s := log.Spinner("Checking component")
-	defer s.End(false)
-	isCmpExists, err := component.Exists(po.Context.Client, cmpName, appName)
-	if err != nil {
-		return errors.Wrapf(err, "failed to check if component %s exists or not", cmpName)
-	}
-	s.End(true)
-
 	// Output the "new" section (applying changes)
 	log.Info("\nConfiguration changes")
 
-	// If the component does not exist, we will create it for the first time.
-	if !isCmpExists {
-
-		s = log.Spinner("Creating component")
-		defer s.End(false)
-
-		// Classic case of component creation
-		if err = component.CreateComponent(po.Context.Client, *po.localConfig, po.componentContext, stdout, po.Context.DevPack); err != nil {
-			log.Errorf(
-				"Failed to create component with name %s. Please use `odo config view` to view settings used to create component. Error: %+v",
-				cmpName,
-				err,
-			)
-			os.Exit(1)
-		}
-
-		s.End(true)
-	}
+	component.TaskExec(po.Context.Client, *po.localConfig, po.fullBuild, po.Context.DevPack)
 
 	// TODO-KDO: Add when implementing update
 	// // Apply config
-	err = component.ApplyConfig(po.Context.Client, *po.localConfig, stdout, isCmpExists)
+	err := component.ApplyConfig(po.Context.Client, *po.localConfig, stdout)
 	if err != nil {
 		kdoutil.LogErrorAndExit(err, "Failed to update config to component deployed")
 	}
@@ -213,40 +183,6 @@ func (po *PushOptions) Run() (err error) {
 	// if err != nil {
 	// 	return errors.Wrap(err, "unable to retrieve OS source path to source location")
 	// }
-
-	cmpName := po.localConfig.GetName()
-	appName := po.localConfig.GetApplication()
-	log.Infof("\nPushing to component %s of type %s", cmpName, po.sourceType)
-
-	switch po.sourceType {
-	case config.LOCAL:
-		glog.V(4).Infof("Copying directory %s to pod", po.sourcePath)
-		err = component.PushLocal(
-			po.Context.Client,
-			cmpName,
-			appName,
-			po.sourcePath,
-			os.Stdout,
-			[]string{},
-			[]string{},
-			true,
-			util.GetAbsGlobExps(po.sourcePath, po.ignores),
-			po.show,
-			component.ContainerAttributes{ // TODO-KDO: Retrieve container attributes from IDP
-				SrcPath:      "/projects",
-				WorkingPaths: []string{""},
-			},
-		)
-
-		if err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("Failed to push component: %v", cmpName))
-		}
-
-	default:
-		if err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("Failed to push component %v because the source type is not recognized", cmpName))
-		}
-	}
 
 	log.Success("Changes successfully pushed to component")
 	return
@@ -279,6 +215,7 @@ func NewCmdPush(name, fullName string) *cobra.Command {
 	pushCmd.Flags().StringSliceVar(&po.ignores, "ignore", []string{}, "Files or folders to be ignored via glob expressions.")
 	pushCmd.Flags().BoolVar(&po.pushConfig, "config", false, "Use config flag to only apply config on to cluster")
 	pushCmd.Flags().BoolVar(&po.pushSource, "source", false, "Use source flag to only push latest source on to cluster")
+	pushCmd.Flags().BoolVar(&po.fullBuild, "fullBuild", false, "Force a full build")
 
 	// Add a defined annotation in order to appear in the help menu
 	pushCmd.Annotations = map[string]string{"command": "component"}

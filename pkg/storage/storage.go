@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/redhat-developer/odo-fork/pkg/log"
 
@@ -34,14 +35,14 @@ func Create(client *kclient.Client, name string, size string, componentName stri
 	// Namespace the component
 	// We will use name+applicationName instead of componentName+applicationName until:
 	// https://github.com/openshift/odo/issues/504 is resolved.
+	randomChars := util.GenerateRandomString(4)
 	namespaceKubernetesObject, err := util.NamespaceKubernetesObject(name, applicationName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create namespaced name")
 	}
+	namespaceKubernetesObject = fmt.Sprintf("%v-%v", namespaceKubernetesObject, randomChars)
 
 	labels := storagelabels.GetLabels(name, componentName, applicationName, true)
-
-	glog.V(4).Infof("Got labels for PVC: %v", labels)
 
 	// Create PVC
 	pvc, err := client.CreatePVC(generatePVCNameFromStorageName(namespaceKubernetesObject), size, labels)
@@ -310,7 +311,7 @@ func IsMounted(client *kclient.Client, storageName string, componentName string,
 }
 
 // Mount mounts the given storage to the given component
-func Mount(client *kclient.Client, path string, storageName string, componentName string, applicationName string) error {
+func Mount(client *kclient.Client, pathAndSubPath string, storageName string, componentName string, applicationName string) error {
 	storageComponent, err := GetComponentNameFromStorageName(client, storageName)
 	if err != nil {
 		return errors.Wrap(err, "unable to get the component name associated with the storage")
@@ -338,8 +339,17 @@ func Mount(client *kclient.Client, path string, storageName string, componentNam
 	}
 	glog.V(4).Infof("Deployment: %v is associated with the component: %v", dep.Name, componentName)
 
+	isSubPathMentioned := strings.Contains(pathAndSubPath, "#")
+	path, subPath := "", ""
+	if isSubPathMentioned {
+		path = pathAndSubPath[:strings.IndexByte(pathAndSubPath, '#')]
+		subPath = pathAndSubPath[strings.IndexByte(pathAndSubPath, '#')+1:]
+	} else {
+		path = pathAndSubPath
+	}
+
 	// Add PVC to Deployment
-	if err := client.AddPVCToDeployment(dep, pvc.Name, path); err != nil {
+	if err := client.AddPVCToDeployment(dep, pvc.Name, path, subPath); err != nil {
 		return errors.Wrap(err, "unable to add PVC to Deployment")
 	}
 	err = client.UpdatePVCLabels(pvc, storagelabels.GetLabels(storageName, componentName, applicationName, true))
