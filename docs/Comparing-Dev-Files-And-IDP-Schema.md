@@ -4,7 +4,7 @@ A non-exhaustive list of apparent differences between dev files and IDP YAML sch
 
 ### Resources
 
-#### "Equivalent" resource types between dev files and IDP YAML:
+#### Equivalent resource types between dev files and IDP YAML:
 |Che Dev File|IDP Yaml|
 |-|-|
 |Command|Scenario|
