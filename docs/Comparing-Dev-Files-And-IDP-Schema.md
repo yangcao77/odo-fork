@@ -1,6 +1,6 @@
 ## Comparing Dev Files and IDP
 
-A non-exhaustive list of apparent differences between dev files and IDP YAML schema. 
+A non-exhaustive list of apparent differences between dev files and [IDP YAML schema](https://github.com/redhat-developer/odo-fork/blob/kdo-poc/docs/IDP-YAML.md). 
 
 ### Resources
 
