@@ -29,7 +29,7 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 	- While it's true you can target any defined container with an action, in practice (since one command will only trigger one action) you must target the runtime container in order to have an affect on the application contents running in the container.
 - Tasks can be shared between multiple scenarios; Actions cannot be shared between Commands (eg if you want the same action to run in multiple commands, you must define that action multiple times; OTOH since it's only 1 action per command, the impact is limited.)
 - IDP YAML has `sourceMappings` that allows you to customize where the source is synchronized into the container. With dev files `the source is mounted on a location stored in the CHE_PROJECTS_ROOT environment variable that is made available in the running container of the image. This location defaults to '/projects'.`
-
+- Che actions can modify source code; IDP tasks cannot modify source code (due to the use of a one-way sync).
 
 #### Components vs Containers:
 - The equivalent to our containers are dev file Components of the `dockerimage` type.
