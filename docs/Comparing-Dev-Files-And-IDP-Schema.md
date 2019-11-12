@@ -30,10 +30,10 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 - Tasks can be shared between multiple scenarios; Actions cannot be shared between Commands (eg if you want the same action to run in multiple commands, you must define that action multiple times; OTOH since it's only 1 action per command, the impact is limited.)
 - IDP YAML has `sourceMappings` that allows you to customize where the source is synchronized into the container. With dev files `the source is mounted on a location stored in the CHE_PROJECTS_ROOT environment variable that is made available in the running container of the image. This location defaults to '/projects'.`
 - Che actions can modify source code; IDP tasks cannot modify source code (due to the use of a one-way sync).
-- Our IDP tasks have a type field, which  There are 3 types of tasks (specified under the `type` field of `.spec.tasks`:
-	- Shared: Tasks that share a container 
-	- Standalone: 
-	- Runtime: 
+- Our IDP tasks have a type field, which corresponds to where the task will run. There are 3 types of tasks (specified under the `type` field of `.spec.tasks`:
+	- Shared: Tasks that run within a task container, and share that task container with another defined task.
+	- Standalone: Tasks that run within a task container, but do not share that container wiht another defined task.
+	- Runtime: Tasks that run within the runtime container; the runtime container is a special container reserved for the user's application. See more below.
 
 
 #### Components vs Containers:
