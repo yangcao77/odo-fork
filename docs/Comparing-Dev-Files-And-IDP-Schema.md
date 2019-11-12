@@ -37,7 +37,7 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 
 
 #### Components vs Containers:
-- The equivalent to our containers are dev file Components of the `dockerimage` type.
+- The equivalent to IDP containers are dev file Components of the `dockerimage` type.
 - IDP YAML has `idpRepoMappings` to allow you to customize an existing runtime/container image (eg add files to the standard maven image, or to a standard liberty image), thus the IDP developer is not required to ship their own custom container images (eg 'codewind-idp-maven'). There is no corresponding functionality in dev files (hence why, for example, the Maven image used by the Che Maven stack is a custom image from `quay.io/eclipse/che-java11-maven:nightly`, rather than the official `maven:3.6` images)
 - You CAN override the entrypoint of a container via dev file, just like with IDP yaml. (`command: ['sleep', 'infinity']` in the component)
 - Due to the limit of 1 action per command limit (see 'Actions vs Tasks' above), it appears that Actions are equivalent to our Runtime tasks (eg with the runtime defined as a container in a component).
