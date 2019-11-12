@@ -44,6 +44,7 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 	- If this restriction were to be eliminated, then we could likely simulate runtime/shared/standalone tasks with actions, communicating via shared volumes.
 - No equivalent in dev files to the IDP YAML's differentiation between a runtime container and task container.
 - Devfile volumes have no subpath field, which in the IDP case is used when volumes are mounted into containers.
+- Dev file containers may contain [long running processes such as databases](https://github.com/eclipse/che-devfile-registry/blob/master/devfiles/java-mongo/devfile.yaml). At present, the IDP yaml does not define a way for long-lived processes such as database run within independent container. 
 
 #### Runtime:
 - An IDP runtime is a container reserved for running the user's application: this may be a standalone application (Go, Node) or a runtime (Wildfly, Open Libery). It is a designed to provide a cleaner separation between the build environment (eg maven image) and runtime environment (eg Wildfly production image).
@@ -61,7 +62,7 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 - No file watching (`watched` section of IDP YAML)
 - No upload filter (`uploadFilter` section of IDP YAML)
 - Dev files have a number of pre-set environment variables, such as `CHE_PROJECTS_ROOT` (no IDP equivalent)
-- Dev files include many fields which are unrelated to our UDO use case (eg the iterative building and deploying projects), including: projects to import into the workspace, chePlugins, vscode plugins, database containers to stand up, vscode launch actions (the vscode-task and vscode-launch types, vscode resources, other che editors, and more.
+- Dev files include many fields which are unrelated to our UDO use case (eg the iterative building and deploying dev projects), including: projects to import into the workspace, chePlugins, vscode plugins, database containers to stand up, vscode launch actions (the vscode-task and vscode-launch types, vscode resources, other che editors, and more.
 
 
 ### Resources:
