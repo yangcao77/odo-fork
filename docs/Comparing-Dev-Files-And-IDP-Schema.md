@@ -44,10 +44,10 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 	- If this restriction were to be eliminated, then we could likely simulate runtime/shared/standalone tasks with actions, communicating via shared volumes.
 - No equivalent in dev files to the IDP YAML's differentiation between a runtime container and task container.
 - Devfile volumes have no subpath field, which in the IDP case is used when volumes are mounted into containers.
-- Dev file containers may contain [long running processes such as databases](https://github.com/eclipse/che-devfile-registry/blob/master/devfiles/java-mongo/devfile.yaml). At present, the IDP yaml does not define a way for long-lived processes such as database run within independent container. 
+- Dev file containers may contain [long running processes such as databases](https://github.com/eclipse/che-devfile-registry/blob/master/devfiles/java-mongo/devfile.yaml). At present, the IDP yaml does not define a way for long-lived processes such as database to run within independent containers (this is left to the user). 
 
 #### Runtime:
-- An IDP runtime is a container reserved for running the user's application: this may be a standalone application (Go, Node) or a runtime (Wildfly, Open Libery). It is a designed to provide a cleaner separation between the build environment (eg maven image) and runtime environment (eg Wildfly production image).
+- An IDP runtime is a container reserved for running the user's application: this may be a standalone application (Go, Node) or a runtime (Wildfly, Open Liberty). The runtime container is designed to provide a cleaner separation between the build environment (for example maven container images) and runtime environment (eg Wildfly production image).
 - No direct equivalent concept to an IDP runtime in the dev file; the closest equivalent is to launch a container, based on a runtime image.
 - Task container vs Runtime container:
   	- A task is a short-lived action (such as a build or a lint), which the UDO CLI will synchronously block on while it is running. Eg. If I have a task that calls `mvn package`, it will run for as long as the `mvn package` command executes within the container. 
