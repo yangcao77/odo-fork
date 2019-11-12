@@ -31,14 +31,14 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 - IDP YAML has `sourceMappings` that allows you to customize where the source is synchronized into the container. With dev files `the source is mounted on a location stored in the CHE_PROJECTS_ROOT environment variable that is made available in the running container of the image. This location defaults to '/projects'.`
 - Che actions can modify source code; IDP tasks cannot modify source code (due to the use of a one-way sync).
 - Our IDP tasks have a type field, which corresponds to where the task will run. There are 3 types of tasks (specified under the `type` field of `.spec.tasks`:
-	- Shared: Tasks that run within a task container, and share that task container with another defined task.
-	- Standalone: Tasks that run within a task container, but do not share that container wiht another defined task.
-	- Runtime: Tasks that run within the runtime container; the runtime container is a special container reserved for the user's application. See more below.
+	- *Shared*: Tasks that run within a task container, and share that task container with another defined task.
+	- *Standalone*: Tasks that run within a task container, but do not share that container wiht another defined task.
+	- *Runtime*: Tasks that run within the runtime container; the runtime container is a special container reserved for the user's application. Runtime tasks may be used to, for example, configure the container, or start/stop/restart it. See more below.
 
 
 #### Components vs Containers:
 - The equivalent to our containers are dev file Components of the `dockerimage` type.
-- IDP YAML has `idpRepoMappings` to allow you to customize an existing runtime/container image (eg add files to the standard maven image, or to a standard liberty image), thus the IDP developer is not required to ship their own custom container images (eg 'codewind-idp-maven'). There is no corresponding functionality in dev files (hence why, for example, the Maven image used by the Che Maven stack is their own from `quay.io/eclipse/che-java11-maven:nightly`)
+- IDP YAML has `idpRepoMappings` to allow you to customize an existing runtime/container image (eg add files to the standard maven image, or to a standard liberty image), thus the IDP developer is not required to ship their own custom container images (eg 'codewind-idp-maven'). There is no corresponding functionality in dev files (hence why, for example, the Maven image used by the Che Maven stack is a custom image from `quay.io/eclipse/che-java11-maven:nightly`, rather than the official `maven:3.6` images)
 - You CAN override the entrypoint of a container via dev file, just like with IDP yaml. (`command: ['sleep', 'infinity']` in the component)
 - Due to the limit of 1 action per command limit (see 'Actions vs Tasks' above), it appears that Actions are equivalent to our Runtime tasks (eg with the runtime defined as a container in a component).
 	- If this restriction were to be eliminated, then we could likely simulate runtime/shared/standalone tasks with actions, communicating via shared volumes.
