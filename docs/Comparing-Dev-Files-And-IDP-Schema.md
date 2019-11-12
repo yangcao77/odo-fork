@@ -30,6 +30,11 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 - Tasks can be shared between multiple scenarios; Actions cannot be shared between Commands (eg if you want the same action to run in multiple commands, you must define that action multiple times; OTOH since it's only 1 action per command, the impact is limited.)
 - IDP YAML has `sourceMappings` that allows you to customize where the source is synchronized into the container. With dev files `the source is mounted on a location stored in the CHE_PROJECTS_ROOT environment variable that is made available in the running container of the image. This location defaults to '/projects'.`
 - Che actions can modify source code; IDP tasks cannot modify source code (due to the use of a one-way sync).
+- Our IDP tasks have a type field, which  There are 3 types of tasks (specified under the `type` field of `.spec.tasks`:
+	- Shared: Tasks that share a container 
+	- Standalone: 
+	- Runtime: 
+
 
 #### Components vs Containers:
 - The equivalent to our containers are dev file Components of the `dockerimage` type.
@@ -38,10 +43,17 @@ A non-exhaustive list of apparent differences between dev files and [IDP YAML sc
 - Due to the limit of 1 action per command limit (see 'Actions vs Tasks' above), it appears that Actions are equivalent to our Runtime tasks (eg with the runtime defined as a container in a component).
 	- If this restriction were to be eliminated, then we could likely simulate runtime/shared/standalone tasks with actions, communicating via shared volumes.
 - No equivalent in dev files to the IDP YAML's differentiation between a runtime container and task container.
-- Devfile volumes have no subpath field, when mounting volumes.
+- Devfile volumes have no subpath field, which in the IDP case is used when volumes are mounted into containers.
 
 #### Runtime:
-- No concept of a runtime in the dev file; the closest equivalent is to launch a container, based on a runtime image. 
+- An IDP runtime is a container reserved for running the user's application: this may be a standalone application (Go, Node) or a runtime (Wildfly, Open Libery). 
+- No direct equivalent concept to an IDP runtime in the dev file; the closest equivalent is to launch a container, based on a runtime image.
+- Task container vs Runtime container:
+  	- A task is a short-lived action (such as a build or a lint), which the UDO CLI will synchronously block on while it is running. Eg. If I have a task that calls `mvn package`, it will run for as long as the `mvn package` command executes within the container. 
+		- Task containers are NOT disposed of once the short-lived action completes. We keep tasks containers around after the task completes, and reuse them for subsequent task invocations (so that we don't need to wait for a pod to mount volumes each time a task is running, though we like the idea of disposing of task containers after some amount of idle time)
+	- A runtime is a long-lived action (an application or server runtime running in the container), which the UDO CLI will NOT synchronously block on while it is running.
+	- Task containers are defined under `.spec.shared.containers`.
+	- Runtime containers are defined under `.spec.runtime`.
 
 
 #### Miscellaneous:
