@@ -375,6 +375,27 @@ func (c *Client) createSecrets(componentName string, commonObjectMeta metav1.Obj
 	return nil
 }
 
+func (c *Client) CreateTLSSecret(tlsCertificate []byte, tlsPrivKey []byte, urlLabel string, portNumber int) (*corev1.Secret, error) {
+	// TypeMeta:   metav1.TypeMeta{Kind: "Ingress", APIVersion: "extensions/v1beta1"},
+	// ObjectMeta: metav1.ObjectMeta{Name: i.Labels[urlLabels.URLLabel]},
+	portAsString := fmt.Sprintf("%v", portNumber)
+	tlsSecretName := urlLabel + "-" + portAsString + "-tlssecret"
+	data := make(map[string][]byte)
+	data["tls.crt"] = tlsCertificate
+	data["tls.key"] = tlsPrivKey
+	secretTemplate := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: tlsSecretName},
+		Type:       corev1.SecretTypeTLS,
+		Data:       data,
+	}
+
+	secret, err := c.KubeClient.CoreV1().Secrets(c.Namespace).Create(&secretTemplate)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to create secret %s", tlsSecretName)
+	}
+	return secret, nil
+}
+
 func secretKeyName(componentName, baseKeyName string) string {
 	return fmt.Sprintf("COMPONENT_%v_%v", strings.Replace(strings.ToUpper(componentName), "-", "_", -1), strings.ToUpper(baseKeyName))
 }
@@ -537,7 +558,6 @@ func (c *Client) CreateService(commonObjectMeta metav1.ObjectMeta, containerPort
 // CreateSecret generates and creates the secret
 // commonObjectMeta is the ObjectMeta for the service
 func (c *Client) CreateSecret(objectMeta metav1.ObjectMeta, data map[string]string) error {
-
 	secret := corev1.Secret{
 		ObjectMeta: objectMeta,
 		Type:       corev1.SecretTypeOpaque,
@@ -775,28 +795,38 @@ type Service struct {
 	PlanList []string
 }
 
+// IngressParamater struct for function createIngress
+type IngressParamater struct {
+	Name          string
+	ServiceName   string
+	IngressDomain string
+	PortNumber    intstr.IntOrString
+	TLSSecretName string
+}
+
 // CreateIngress creates an ingress object for the given service and with the given labels
 // serviceName is the name of the service for the target reference
 // ingressDomain is the ingress domain to use for the ingress
 // portNumber is the target port of the ingress
-func (c *Client) CreateIngress(name string, serviceName string, ingressDomain string, portNumber intstr.IntOrString, labels map[string]string) (*extensionsv1.Ingress, error) {
+func (c *Client) CreateIngress(ingressParam IngressParamater, labels map[string]string) (*extensionsv1.Ingress, error) {
+	fmt.Println("The secret value is " + ingressParam.TLSSecretName)
 	ingress := &extensionsv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
+			Name:   ingressParam.Name,
 			Labels: labels,
 		},
 		Spec: extensionsv1.IngressSpec{
 			Rules: []extensionsv1.IngressRule{
 				{
-					Host: ingressDomain,
+					Host: ingressParam.IngressDomain,
 					IngressRuleValue: extensionsv1.IngressRuleValue{
 						HTTP: &extensionsv1.HTTPIngressRuleValue{
 							Paths: []extensionsv1.HTTPIngressPath{
 								{
 									Path: "/",
 									Backend: extensionsv1.IngressBackend{
-										ServiceName: serviceName,
-										ServicePort: portNumber,
+										ServiceName: ingressParam.ServiceName,
+										ServicePort: ingressParam.PortNumber,
 									},
 								},
 							},
@@ -804,8 +834,27 @@ func (c *Client) CreateIngress(name string, serviceName string, ingressDomain st
 					},
 				},
 			},
+			TLS: []extensionsv1.IngressTLS{
+				{
+					Hosts: []string{
+						ingressParam.IngressDomain,
+					},
+					SecretName: ingressParam.TLSSecretName,
+				},
+			},
 		},
 	}
+	// secretNameLength := len(ingressParam.TLSSecretName)
+	// if secretNameLength != 0 {
+	// 	ingress.Spec.TLS = []extensionsv1.IngressTLS{
+	// 		{
+	// 			Hosts: []string{
+	// 				ingressParam.IngressDomain,
+	// 			},
+	// 			SecretName: ingressParam.TLSSecretName,
+	// 		},
+	// 	}
+	// }
 
 	r, err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).Create(ingress)
 	if err != nil {
