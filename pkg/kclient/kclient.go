@@ -17,6 +17,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
+	componentlabels "github.com/redhat-developer/odo-fork/pkg/component/labels"
 	"github.com/redhat-developer/odo-fork/pkg/config"
 	"github.com/redhat-developer/odo-fork/pkg/log"
 	"github.com/redhat-developer/odo-fork/pkg/preference"
@@ -375,18 +376,22 @@ func (c *Client) createSecrets(componentName string, commonObjectMeta metav1.Obj
 	return nil
 }
 
-func (c *Client) CreateTLSSecret(tlsCertificate []byte, tlsPrivKey []byte, urlLabel string, portNumber int) (*corev1.Secret, error) {
+func (c *Client) CreateTLSSecret(tlsCertificate []byte, tlsPrivKey []byte, componentName string, applicationName string, portNumber int) (*corev1.Secret, error) {
 	// TypeMeta:   metav1.TypeMeta{Kind: "Ingress", APIVersion: "extensions/v1beta1"},
 	// ObjectMeta: metav1.ObjectMeta{Name: i.Labels[urlLabels.URLLabel]},
+	labels := componentlabels.GetLabels(componentName, applicationName, true)
 	portAsString := fmt.Sprintf("%v", portNumber)
-	tlsSecretName := urlLabel + "-" + portAsString + "-tlssecret"
+	tlsSecretName := componentName + "-" + portAsString + "-tlssecret"
 	data := make(map[string][]byte)
 	data["tls.crt"] = tlsCertificate
 	data["tls.key"] = tlsPrivKey
 	secretTemplate := corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: tlsSecretName},
-		Type:       corev1.SecretTypeTLS,
-		Data:       data,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   tlsSecretName,
+			Labels: labels,
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: data,
 	}
 
 	secret, err := c.KubeClient.CoreV1().Secrets(c.Namespace).Create(&secretTemplate)
@@ -834,27 +839,19 @@ func (c *Client) CreateIngress(ingressParam IngressParamater, labels map[string]
 					},
 				},
 			},
-			TLS: []extensionsv1.IngressTLS{
-				{
-					Hosts: []string{
-						ingressParam.IngressDomain,
-					},
-					SecretName: ingressParam.TLSSecretName,
-				},
-			},
 		},
 	}
-	// secretNameLength := len(ingressParam.TLSSecretName)
-	// if secretNameLength != 0 {
-	// 	ingress.Spec.TLS = []extensionsv1.IngressTLS{
-	// 		{
-	// 			Hosts: []string{
-	// 				ingressParam.IngressDomain,
-	// 			},
-	// 			SecretName: ingressParam.TLSSecretName,
-	// 		},
-	// 	}
-	// }
+	secretNameLength := len(ingressParam.TLSSecretName)
+	if secretNameLength != 0 {
+		ingress.Spec.TLS = []extensionsv1.IngressTLS{
+			{
+				Hosts: []string{
+					ingressParam.IngressDomain,
+				},
+				SecretName: ingressParam.TLSSecretName,
+			},
+		}
+	}
 
 	r, err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).Create(ingress)
 	if err != nil {
@@ -865,7 +862,19 @@ func (c *Client) CreateIngress(ingressParam IngressParamater, labels map[string]
 
 // DeleteIngress deleted the given route
 func (c *Client) DeleteIngress(name string) error {
-	err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).Delete(name, &metav1.DeleteOptions{})
+	ingress, err := c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return errors.Wrap(err, "unable to get ingress")
+	}
+	ingressTLSArray := ingress.Spec.TLS
+	for _, elem := range ingressTLSArray {
+		err = c.KubeClient.CoreV1().Secrets(c.Namespace).Delete(elem.SecretName, &metav1.DeleteOptions{})
+		if err != nil {
+			return errors.Wrap(err, "unable to delete tls secret")
+		}
+	}
+
+	err = c.KubeClient.ExtensionsV1beta1().Ingresses(c.Namespace).Delete(name, &metav1.DeleteOptions{})
 	if err != nil {
 		return errors.Wrap(err, "unable to delete ingress")
 	}

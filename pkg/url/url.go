@@ -112,11 +112,11 @@ func Create(client *kclient.Client, urlName string, portNumber int, ingressDomai
 		keyPemByteArr := []byte(keyPemEncode)
 
 		// create tls secret
-		secret, err := client.CreateTLSSecret(certPemByteArr, keyPemByteArr, labels[urlLabels.URLLabel], portNumber)
+		secret, err := client.CreateTLSSecret(certPemByteArr, keyPemByteArr, componentName, applicationName, portNumber)
 		if err != nil {
 			fmt.Printf("unable to create tls secret ")
 			fmt.Println(errors.Cause(err))
-			return "", errors.Wrap(err, "unable to create tls secret"+secret.Name)
+			return "", errors.Wrap(err, "unable to create tls secret: "+secret.Name)
 		}
 		secretName = secret.Name
 
