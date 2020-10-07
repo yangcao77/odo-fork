@@ -10,7 +10,7 @@ import (
 )
 
 // WriteJsonDevfile creates a devfile.json file
-func (d *DevfileObj) WriteJsonDevfile() error {
+func WriteJsonDevfile(d DevfileObj) error {
 
 	// Encode data into JSON format
 	jsonData, err := json.MarshalIndent(d.Data, "", "  ")
@@ -31,7 +31,7 @@ func (d *DevfileObj) WriteJsonDevfile() error {
 }
 
 // WriteYamlDevfile creates a devfile.yaml file
-func (d *DevfileObj) WriteYamlDevfile() error {
+func WriteYamlDevfile(d DevfileObj) error {
 
 	// Encode data into YAML format
 	yamlData, err := yaml.Marshal(d.Data)

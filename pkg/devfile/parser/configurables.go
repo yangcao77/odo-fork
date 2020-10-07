@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift/odo/pkg/config"
 	"github.com/openshift/odo/pkg/devfile/parser/data/common"
+	generic_parser "github.com/openshift/odo/pkg/devfile/parser/generic"
 	"github.com/openshift/odo/pkg/util"
 	"github.com/pkg/errors"
 )
@@ -89,7 +90,9 @@ func (d DevfileObj) IsSet(parameter string) bool {
 func (d DevfileObj) setMetadataName(name string) error {
 	metadata := d.Data.GetMetadata()
 	d.Data.SetMetadata(name, metadata.Version)
-	return d.WriteYamlDevfile()
+	d.
+	// return generic_parser.WriteYamlDevfile(d)
+	return nil
 }
 
 // AddEnvVars adds environment variables to all the components in a devfile

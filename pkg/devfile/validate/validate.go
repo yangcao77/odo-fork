@@ -3,10 +3,10 @@ package validate
 import (
 	"fmt"
 
-	"github.com/openshift/odo/pkg/devfile/parser/data/common"
+	"github.com/openshift/odo/pkg/devfile/parser/generic/data/common"
 	"k8s.io/klog"
 
-	v200 "github.com/openshift/odo/pkg/devfile/parser/data/2.0.0"
+	v200 "github.com/openshift/odo/pkg/devfile/parser/generic/data/2.0.0"
 )
 
 // ValidateDevfileData validates whether sections of devfile are odo compatible

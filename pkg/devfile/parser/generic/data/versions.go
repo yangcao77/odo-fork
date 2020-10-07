@@ -3,7 +3,7 @@ package data
 import (
 	"reflect"
 
-	v200 "github.com/openshift/odo/pkg/devfile/parser/data/2.0.0"
+	v200 "github.com/openshift/odo/pkg/devfile/parser/generic/data/2.0.0"
 )
 
 // SupportedApiVersions stores the supported devfile API versions

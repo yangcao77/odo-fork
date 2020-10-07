@@ -3,9 +3,9 @@ package parser
 import (
 	"testing"
 
-	devfileCtx "github.com/openshift/odo/pkg/devfile/parser/context"
-	v200 "github.com/openshift/odo/pkg/devfile/parser/data/2.0.0"
-	"github.com/openshift/odo/pkg/devfile/parser/data/common"
+	devfileCtx "github.com/openshift/odo/pkg/devfile/parser/generic/context"
+	v200 "github.com/openshift/odo/pkg/devfile/parser/generic/data/2.0.0"
+	"github.com/openshift/odo/pkg/devfile/parser/generic/data/common"
 	"github.com/openshift/odo/pkg/testingutil/filesystem"
 )
 

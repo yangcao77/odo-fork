@@ -9,9 +9,9 @@ import (
 
 	"github.com/openshift/odo/pkg/config"
 	"github.com/openshift/odo/pkg/devfile/parser"
-	devfileCtx "github.com/openshift/odo/pkg/devfile/parser/context"
 	"github.com/openshift/odo/pkg/devfile/parser/data"
 	"github.com/openshift/odo/pkg/devfile/parser/data/common"
+	devfileCtx "github.com/openshift/odo/pkg/devfile/parser/generic/context"
 	"github.com/openshift/odo/pkg/envinfo"
 	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/occlient"

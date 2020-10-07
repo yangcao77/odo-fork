@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/openshift/odo/pkg/devfile/parser/data"
+	"github.com/openshift/odo/pkg/devfile/parser/generic/data"
 	"github.com/pkg/errors"
 	"github.com/xeipuuv/gojsonschema"
 	"k8s.io/klog"

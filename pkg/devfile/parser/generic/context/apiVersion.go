@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/openshift/odo/pkg/devfile/parser/data"
+	"github.com/openshift/odo/pkg/devfile/parser/generic/data"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
 )
